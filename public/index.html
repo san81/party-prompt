@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<title>Party Guess</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Telugu:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-screen game-show stage. Answer board in the middle, host caption above it,
+   a big hold-to-talk button anchored at the thumb. Single deliberate dark stage look. */
+:root {
+  color-scheme: dark;
+  --stage: #15132c;
+  --panel: #1f1c40;
+  --line: #36325f;
+  --ink: #f4efe4;
+  --muted: #aaa4cc;
+  --brass: #e8b64a;
+  --brass-ink: #2a1e05;
+  --coral: #ff6b57;
+  --mint: #5ed1a3;
+  --display: 'Bungee', 'Noto Sans Telugu', 'Kohinoor Telugu', 'Telugu Sangam MN', 'Nirmala UI', 'Arial Black', Impact, sans-serif;
+  --body: 'Figtree', 'Noto Sans Telugu', 'Kohinoor Telugu', 'Telugu Sangam MN', 'Nirmala UI', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--stage); color: var(--ink);
+  font: 16px/1.45 var(--body);
+  background-image: radial-gradient(120% 60% at 50% -10%, #2b2660 0%, transparent 60%);
+  background-repeat: no-repeat; background-size: 100% 900px;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+.wrap { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 100%; }
+
+/* Top bar */
+.bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-size: 18px; letter-spacing: .02em; color: var(--brass); margin-right: auto; }
+.pill { font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.pill.on { border-color: var(--mint); color: var(--mint); }
+.pill.warn { border-color: var(--coral); color: var(--coral); }
+.ghost { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--muted); }
+.ghost[aria-pressed="true"] { color: var(--ink); border-color: var(--muted); }
+
+/* Setup */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 7vw, 40px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 60ch; }
+.players { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+input[type=text], select { background: var(--stage); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 16px; text-transform: none; letter-spacing: 0; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.primary { background: var(--brass); color: var(--brass-ink); border: 0; border-radius: 10px; padding: 12px 20px; font-weight: 700; font-size: 16px; }
+.primary:disabled { opacity: .4; cursor: default; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.note.err { color: var(--coral); }
+
+/* Stage */
+.turn { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.who { font-weight: 700; }
+.who small { font-weight: 400; color: var(--muted); }
+.clock { margin-left: auto; font-family: var(--display); font-size: 30px; font-variant-numeric: tabular-nums; min-width: 2.4ch; text-align: right; }
+.clock.hot { color: var(--coral); }
+.meter { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--brass); width: 100%; transition: width .2s linear; }
+.meter.hot i { background: var(--coral); }
+.topic { font-size: clamp(20px, 5vw, 26px); font-weight: 700; margin: 0; text-wrap: balance; }
+.score { font-family: var(--display); color: var(--brass); font-size: 20px; }
+
+.board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; perspective: 800px; }
+@media (min-width: 560px) { .board { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.tile { position: relative; min-height: 50px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel);
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; transform-style: preserve-3d; }
+.tile .n { font-family: var(--display); color: var(--muted); font-size: 15px; min-width: 2ch; }
+.tile .txt { min-width: 0; font-weight: 700; overflow-wrap: anywhere; line-height: 1.2; }
+.tile .pts { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tile.hit { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); animation: flip .45s ease-out; }
+.tile.hit .n, .tile.hit .pts { color: var(--brass-ink); }
+.tile.missed { color: var(--muted); border-style: dashed; }
+.tile.missed .txt { font-weight: 500; }
+@keyframes flip { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
+
+.host { display: flex; gap: 10px; align-items: flex-start; }
+.host .mark { font-family: var(--display); font-size: 12px; color: var(--stage); background: var(--mint); border-radius: 6px; padding: 3px 6px; flex: none; margin-top: 2px; }
+.host p { margin: 0; min-width: 0; }
+.live { min-height: 1.45em; color: var(--muted); font-style: italic; }
+
+.confirm { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--brass); border-radius: 10px; padding: 10px 12px; }
+.confirm p { margin: 0 auto 0 0; }
+.confirm button { border-radius: 8px; padding: 6px 14px; border: 1px solid var(--line); background: var(--stage); }
+.confirm .yes { background: var(--mint); color: var(--stage); border-color: var(--mint); font-weight: 700; }
+
+.feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.feed li { display: flex; gap: 8px; align-items: baseline; font-size: 14px; padding: 5px 10px; border-radius: 6px; background: rgba(255,255,255,.03); }
+.feed .g { min-width: 0; overflow-wrap: anywhere; }
+.feed .r { margin-left: auto; flex: none; font-size: 12px; color: var(--muted); }
+.feed .hit .r { color: var(--mint); }
+.feed .ask .r { color: var(--brass); }
+.feed .pending .r::after { content: '…'; }
+
+.controls { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.ptt { width: 132px; height: 132px; border-radius: 50%; border: 0; background: var(--panel); box-shadow: inset 0 0 0 2px var(--line);
+  font-weight: 700; font-size: 15px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; position: relative; }
+.ptt.live { background: var(--coral); color: var(--stage); box-shadow: none; }
+.ptt.live::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid var(--coral); animation: ring 1.1s ease-out infinite; }
+.ptt:disabled { opacity: .35; cursor: default; }
+@keyframes ring { from { transform: scale(.92); opacity: 1; } to { transform: scale(1.18); opacity: 0; } }
+.typed { display: flex; gap: 8px; width: 100%; max-width: 420px; }
+.typed input { flex: 1; min-width: 0; }
+.typed button { border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0 14px; }
+
+.standings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.standings li { display: flex; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: var(--stage); font-weight: 500; }
+.standings li:first-child { background: var(--brass); color: var(--brass-ink); font-weight: 700; }
+.standings b { font-variant-numeric: tabular-nums; }
+
+/* Match log */
+.log { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.log header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.log h2 { font-size: 14px; margin: 0 auto 0 0; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.log .scroll { overflow-x: auto; max-height: 280px; }
+.log table { border-collapse: collapse; font: 12px/1.4 var(--mono); width: 100%; min-width: 620px; }
+.log th, .log td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.log th { color: var(--muted); font-weight: 500; }
+.log td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.stats { font: 12px var(--mono); color: var(--muted); margin: 0; }
+
+@media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <span class="brand">Party Guess</span>
+    <span class="pill" id="matchPill">Checking…</span>
+    <button class="ghost" id="hostBtn" aria-pressed="true">Host voice</button>
+    <button class="ghost" id="logBtn" aria-pressed="false">Match log</button>
+    <a class="ghost" href="/wheel" style="text-decoration:none">Spin-the-wheel mode</a>
+  </div>
+
+  <section class="card" id="setup">
+    <h1>Name it before the buzzer</h1>
+    <p class="lede">Pass the phone. Each player gets a topic and a hidden board of answers. Hold the button, shout what you think is on it, and the host scores you. Play in English or తెలుగు.</p>
+    <div class="players" id="playerInputs"></div>
+    <div class="row">
+      <label for="lang">Language
+        <select id="lang"><option value="en-US">English</option></select>
+      </label>
+      <label for="turnSecs">Turn length
+        <select id="turnSecs">
+          <option value="45">45 seconds</option>
+          <option value="60" selected>60 seconds</option>
+          <option value="90">90 seconds</option>
+        </select>
+      </label>
+      <button class="primary" id="startBtn">Start game</button>
+    </div>
+    <p class="note" id="setupNote"></p>
+  </section>
+
+  <section id="stage" hidden style="display:flex;flex-direction:column;gap:14px;flex:1">
+    <div class="turn">
+      <span class="who" id="who"></span>
+      <span class="score" id="turnScore">0</span>
+      <span class="clock" id="clock">60</span>
+    </div>
+    <div class="meter" id="meter"><i></i></div>
+    <p class="topic" id="topic"></p>
+    <div class="host"><span class="mark">HOST</span><p id="caption"></p></div>
+    <div class="board" id="board"></div>
+    <div class="confirm" id="confirm" hidden>
+      <p id="confirmText"></p>
+      <button class="yes" id="confirmYes">Yes</button>
+      <button id="confirmNo">No</button>
+    </div>
+    <p class="live" id="live"></p>
+    <ul class="feed" id="feed"></ul>
+    <div class="controls">
+      <button class="ptt" id="ptt" disabled>Hold to talk</button>
+      <form class="typed" id="typed">
+        <input type="text" id="typedGuess" placeholder="Or type a guess" autocomplete="off" aria-label="Type a guess">
+        <button type="submit" id="typedBtn">Guess</button>
+      </form>
+      <button class="primary" id="nextBtn" hidden>Next player</button>
+      <p class="note" id="stageNote"></p>
+    </div>
+  </section>
+
+  <section class="card" id="final" hidden>
+    <h1 id="winner"></h1>
+    <ol class="standings" id="standings"></ol>
+    <div class="row"><button class="primary" id="againBtn">Play again</button></div>
+  </section>
+
+  <section class="log" id="log" hidden>
+    <header>
+      <h2>Match log</h2>
+      <button class="ghost" id="copyLog">Copy as JSON</button>
+    </header>
+    <p class="stats" id="stats">No guesses yet.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Guess</th><th>Result</th><th>Source</th><th class="num">Total ms</th><th class="num">Jev ms</th><th>Jev top choices</th><th>Mentions ≥ .5</th></tr></thead>
+        <tbody id="logRows"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+/* ---------- strings per language ---------- */
+const plural = (n, one, many) => (n === 1 ? one : many);
+const STR = {
+  'en-US': {
+    hold: 'Hold to talk', holdStart: 'Hold to start', listening: 'Listening',
+    typePh: 'Or type a guess', guessBtn: 'Guess', checking: 'checking', notOnBoard: 'not on the board',
+    already: (x) => `already have ${x}`, tooLate: 'too late', ask: (x) => `did you mean ${x}?`,
+    confirmQ: (x) => `Did you mean “${x}”?`, yes: 'Yes', no: 'No', confirmed: 'confirmed',
+    turnOf: (i, n) => `turn ${i} of ${n}`, next: (n) => `Next: ${n}`, finalBtn: 'See final scores', again: 'Play again',
+    and: ' and ',
+    sayIntro: (p, topic, n) => `${p}, you're up. Your topic: ${topic}. There are ${n} answers on the board. Hold the button and start naming them. Go!`,
+    sayHit: (names, pts) => `${names}! ${pts} ${plural(pts, 'point', 'points')}.`,
+    sayAsk: (x) => `Did you mean ${x}?`,
+    sayTen: 'Ten seconds!',
+    sayTime: (p, found, total, pts, missed) => `Time! ${p}, you found ${found} of ${total} for ${pts} ${plural(pts, 'point', 'points')}. ${missed.length ? `You missed ${missed.join(' and ')}.` : 'You cleared the whole board!'}`,
+    winTitle: (w) => `${w} wins`, tieTitle: "It's a tie!", soloTitle: (s) => `${s} points`,
+    sayWin: (w, s) => `${w} wins with ${s} points!`, sayTie: "It's a tie! Play again to settle it.", saySolo: (s) => `You scored ${s} points.`,
+    micBlocked: 'Microphone blocked. Allow it in the browser address bar, or type guesses below.',
+    noVoice: 'This device has no English voice installed, so the host shows captions only.',
+    yesWords: ['yes', 'yeah', 'yep', 'yup', 'correct', 'right', 'sure', 'uh huh', 'yes please', 'thats it', 'that one'],
+    noWords: ['no', 'nope', 'nah', 'wrong', 'not that', 'no thanks'],
+  },
+  'te-IN': {
+    hold: 'నొక్కి పట్టి మాట్లాడండి', holdStart: 'నొక్కితే మొదలు', listening: 'వింటున్నాను',
+    typePh: 'లేదా ఇక్కడ టైప్ చేయండి', guessBtn: 'చెప్పు', checking: 'చూస్తున్నాను', notOnBoard: 'బోర్డులో లేదు',
+    already: (x) => `${x} ఇప్పటికే వచ్చింది`, tooLate: 'సమయం అయిపోయింది', ask: (x) => `${x} అంటున్నారా?`,
+    confirmQ: (x) => `“${x}” అంటున్నారా?`, yes: 'అవును', no: 'కాదు', confirmed: 'ఖాయం',
+    turnOf: (i, n) => `${n} లో ${i}వ వంతు`, next: (n) => `తర్వాత: ${n}`, finalBtn: 'ఫలితాలు చూడండి', again: 'మళ్ళీ ఆడండి',
+    and: ', ',
+    sayIntro: (p, topic, n) => `${p}, మీ వంతు వచ్చింది. మీ అంశం: ${topic}. బోర్డులో ${n} సమాధానాలు ఉన్నాయి. బటన్ నొక్కి పట్టుకుని చెప్పండి. మొదలుపెట్టండి!`,
+    sayHit: (names, pts) => `${names}! ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}.`,
+    sayAsk: (x) => `${x} అంటున్నారా?`,
+    sayTen: 'ఇంకా పది సెకన్లు!',
+    sayTime: (p, found, total, pts, missed) => `సమయం అయిపోయింది! ${p}, ${total} లో ${found} కనిపెట్టారు, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}. ${missed.length ? `మిస్ అయినవి: ${missed.join(', ')}.` : 'బోర్డు మొత్తం పూర్తి చేశారు!'}`,
+    winTitle: (w) => `${w} గెలిచారు`, tieTitle: 'టై అయింది!', soloTitle: (s) => `${s} పాయింట్లు`,
+    sayWin: (w, s) => `${s} పాయింట్లతో ${w} గెలిచారు!`, sayTie: 'టై అయింది! మళ్ళీ ఆడి తేల్చుకోండి.', saySolo: (s) => `మీకు ${s} పాయింట్లు వచ్చాయి.`,
+    micBlocked: 'మైక్రోఫోన్ అనుమతి లేదు. బ్రౌజర్‌లో అనుమతి ఇవ్వండి, లేదా కింద టైప్ చేయండి.',
+    noVoice: 'ఈ పరికరంలో తెలుగు వాయిస్ లేదు, కాబట్టి హోస్ట్ మాటలు తెరపై మాత్రమే కనిపిస్తాయి.',
+    yesWords: ['అవును', 'అవునండి', 'ఆ', 'హా', 'అదే', 'కరెక్ట్', 'yes', 'yeah', 's', 'correct'],
+    noWords: ['కాదు', 'కాదండి', 'లేదు', 'వద్దు', 'no', 'nope'],
+  },
+};
+
+const S = {
+  points: {}, allTopics: [], locales: {}, locale: 'en-US', players: [], scores: {}, turn: 0, turnId: 0, turnSecs: 60,
+  topic: null, matched: new Set(), turnScore: 0, status: 'setup',
+  deadline: 0, clockTimer: null, warned: false, seq: 0, confirm: null,
+  hostOn: true, log: [],
+};
+const T = () => STR[S.locale] || STR['en-US'];
+const topicsFor = (loc) => S.allTopics.filter(t => t.locale === loc);
+
+/* ---------- boot ---------- */
+function load(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
+function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+
+async function boot() {
+  const names = load('pg-players', ['Player 1', 'Player 2', '', '']);
+  $('#playerInputs').innerHTML = names.map((n, i) =>
+    `<label for="p${i}">Player ${i + 1}<input type="text" id="p${i}" value="${esc(n)}" placeholder="${i < 2 ? 'Name' : 'Optional'}"></label>`).join('');
+  try {
+    const [status, data] = await Promise.all([fetch('/api/status').then(r => r.json()), fetch('/api/topics').then(r => r.json())]);
+    S.allTopics = data.topics; S.points = data.points; S.locales = data.locales;
+    $('#lang').innerHTML = Object.entries(S.locales).map(([code, l]) => `<option value="${code}">${esc(l.name)}</option>`).join('');
+    $('#lang').value = S.locales[load('pg-locale', 'en-US')] ? load('pg-locale', 'en-US') : 'en-US';
+    setLocale($('#lang').value);
+    const pill = $('#matchPill');
+    pill.textContent = status.jev ? `Jev · ${status.model}` : 'Local match only';
+    pill.className = 'pill ' + (status.jev ? 'on' : 'warn');
+    pill.title = status.jev ? `Auto-accept ≥ ${status.accept}, ask ≥ ${status.confirm}` : 'Add TYPESAFE_API_KEY to .env and restart the server';
+  } catch {
+    $('#matchPill').textContent = 'Server offline'; $('#matchPill').className = 'pill warn';
+    $('#setupNote').textContent = 'Open this page through the server: run "npm start" and go to http://localhost:3000.';
+    $('#setupNote').classList.add('err'); $('#startBtn').disabled = true;
+  }
+}
+
+function setLocale(code) {
+  S.locale = code; save('pg-locale', code);
+  document.documentElement.lang = code.split('-')[0];
+  pickVoice();
+  const n = topicsFor(code).length;
+  const notes = [`${n} ${plural(n, 'topic', 'topics')} in ${S.locales[code].name}.`];
+  if (!SR) notes.push('Voice input needs Chrome, Edge or Safari. You can still type guesses.');
+  else if (code === 'te-IN') notes.push('Telugu voice input works in Chrome on Android and desktop. Safari support varies.');
+  $('#setupNote').textContent = notes.join(' ');
+  $('#setupNote').classList.remove('err');
+  $('#typedGuess').placeholder = T().typePh;
+  $('#typedBtn').textContent = T().guessBtn;
+  $('#confirmYes').textContent = T().yes;
+  $('#confirmNo').textContent = T().no;
+  $('#againBtn').textContent = T().again;
+}
+
+/* ---------- host voice ---------- */
+let voice = null, canSpeak = true;
+function pickVoice() {
+  if (!('speechSynthesis' in window)) { canSpeak = false; return; }
+  const prefix = S.locale.split('-')[0];
+  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.replace('_', '-').toLowerCase().startsWith(prefix));
+  voice = vs.find(v => v.lang.replace('_', '-') === S.locale && /Google|Samantha|Aria|Jenny|Natural/i.test(v.name))
+    || vs.find(v => v.lang.replace('_', '-') === S.locale) || vs[0] || null;
+  // An English voice reading Telugu is unintelligible, so only speak when a matching voice exists.
+  // Voices load asynchronously; before the list arrives, assume English can use the default voice.
+  const listLoaded = speechSynthesis.getVoices().length > 0;
+  canSpeak = Boolean(voice) || (!listLoaded && prefix === 'en');
+}
+if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = pickVoice;
+
+// Shows the line as a caption and speaks it. Resolves when speech ends (or after a cap).
+function say(text, { interrupt = false } = {}) {
+  $('#caption').textContent = text;
+  if (!S.hostOn || !canSpeak) return Promise.resolve();
+  if (holding && !interrupt) return Promise.resolve(); // don't talk over the player
+  if (interrupt) speechSynthesis.cancel();
+  return new Promise((resolve) => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = S.locale;
+    if (voice) u.voice = voice;
+    u.rate = S.locale === 'en-US' ? 1.08 : 1;
+    u.onend = u.onerror = resolve;
+    speechSynthesis.speak(u);
+    setTimeout(resolve, 1500 + text.length * 80);
+  });
+}
+
+/* ---------- listening ---------- */
+let rec = null, holding = false, listening = false;
+function startListening() {
+  if (S.status === 'intro') startClock();
+  if (!SR || S.status !== 'playing') return;
+  holding = true;
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if (listening) return renderMic();
+  rec = new SR();
+  rec.lang = S.locales[S.locale]?.speech || S.locale;
+  rec.continuous = true; rec.interimResults = true;
+  rec.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) handleUtterance(r[0].transcript); else interim += r[0].transcript;
+    }
+    $('#live').textContent = interim;
+  };
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') $('#stageNote').textContent = T().micBlocked;
+    else if (e.error === 'language-not-supported') $('#stageNote').textContent = `This browser can't recognise ${S.locales[S.locale].name} speech. Try Chrome, or type guesses below.`;
+  };
+  rec.onend = () => {
+    listening = false; renderMic();
+    if (holding && S.status === 'playing') startListening(); // browsers stop after silence; keep going while held
+  };
+  try { rec.start(); listening = true; } catch { /* already started */ }
+  renderMic();
+}
+function stopListening() {
+  holding = false;
+  try { rec && rec.stop(); } catch {}
+  renderMic();
+}
+function renderMic() {
+  const b = $('#ptt');
+  b.classList.toggle('live', holding);
+  b.disabled = !(S.status === 'playing' || S.status === 'intro');
+  b.textContent = S.status === 'intro' ? T().holdStart : holding ? T().listening : T().hold;
+}
+
+const norm = (s) => s.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim();
+function handleUtterance(text) {
+  text = text.trim();
+  $('#live').textContent = '';
+  if (!text) return;
+  if (S.confirm) {
+    const n = norm(text);
+    if (T().yesWords.includes(n)) return resolveConfirm(true);
+    if (T().noWords.includes(n)) return resolveConfirm(false);
+  }
+  submitGuess(text);
+}
+
+/* ---------- matching ---------- */
+async function submitGuess(text) {
+  if (S.status !== 'playing') return;
+  const seq = ++S.seq, turnId = S.turnId, player = currentPlayer();
+  const li = addFeed(seq, text);
+  const t0 = performance.now();
+  let r;
+  try {
+    const res = await fetch('/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topicId: S.topic.id, guess: text, player }) });
+    r = await res.json();
+    if (!res.ok) throw new Error(r.error || res.status);
+  } catch (e) {
+    setFeed(li, 'miss', 'error'); logRow({ guess: text, outcome: 'error', error: String(e.message) }); return;
+  }
+  const roundTrip = Math.round(performance.now() - t0);
+  // Hard buzzer: anything that resolves after the turn ends doesn't score.
+  if (turnId !== S.turnId || S.status !== 'playing') {
+    setFeed(li, 'miss', T().tooLate); logRow({ ...r, roundTrip, outcome: 'late' }); return;
+  }
+  const fresh = r.hits.filter(k => !S.matched.has(k));
+  const repeats = r.hits.filter(k => S.matched.has(k));
+  let outcome;
+  if (fresh.length) {
+    const pts = fresh.reduce((sum, k) => sum + award(k), 0);
+    setFeed(li, 'hit', `+${pts} ${fresh.map(label).join(', ')}`);
+    say(T().sayHit(fresh.map(label).join(T().and), pts));
+    outcome = 'hit';
+  } else if (repeats.length) {
+    setFeed(li, 'miss', T().already(repeats.map(label).join(', '))); outcome = 'repeat';
+  } else if (r.confirm && !S.matched.has(r.confirm)) {
+    setFeed(li, 'ask', T().ask(label(r.confirm)));
+    return askConfirm(r.confirm, li, logRow({ ...r, roundTrip, outcome: 'ask' }));
+  } else {
+    setFeed(li, 'miss', T().notOnBoard); outcome = 'miss';
+  }
+  logRow({ ...r, roundTrip, outcome });
+}
+
+function award(key) {
+  const a = S.topic.answers.find(x => x.key === key);
+  if (!a || S.matched.has(key)) return 0;
+  S.matched.add(key);
+  const pts = S.points[a.difficulty] || 1;
+  S.turnScore += pts;
+  $('#turnScore').textContent = S.turnScore;
+  const tile = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
+  if (tile) { tile.classList.add('hit'); tile.querySelector('.txt').textContent = a.text; }
+  if (S.matched.size === S.topic.answers.length) setTimeout(endTurn, 600);
+  return pts;
+}
+
+function askConfirm(key, li, entry) {
+  resolveConfirm(false);
+  S.confirm = { key, li, entry, timer: setTimeout(() => resolveConfirm(false), 7000) };
+  $('#confirmText').textContent = T().confirmQ(label(key));
+  $('#confirm').hidden = false;
+  say(T().sayAsk(label(key)));
+}
+function resolveConfirm(yes) {
+  const c = S.confirm; if (!c) return;
+  clearConfirm();
+  if (yes && S.status === 'playing') {
+    const pts = award(c.key);
+    if (pts) { setFeed(c.li, 'hit', `+${pts} ${label(c.key)} (${T().confirmed})`); say(T().sayHit(label(c.key), pts)); }
+  } else {
+    setFeed(c.li, 'miss', T().notOnBoard);
+  }
+  if (c.entry) { c.entry.outcome = yes ? 'ask→yes' : 'ask→no'; renderLog(); }
+}
+function clearConfirm() {
+  if (S.confirm) clearTimeout(S.confirm.timer);
+  S.confirm = null; $('#confirm').hidden = true;
+}
+
+/* ---------- turn flow ---------- */
+function currentPlayer() { return S.players[S.turn]; }
+const label = (key) => (S.topic.answers.find(a => a.key === key) || { text: key }).text;
+
+function startGame() {
+  const names = [...document.querySelectorAll('#playerInputs input')].map(i => i.value.trim()).filter(Boolean);
+  if (!names.length) { $('#setupNote').textContent = 'Add at least one player name.'; return; }
+  const pool = topicsFor(S.locale);
+  if (!pool.length) { $('#setupNote').textContent = 'No topics for this language yet.'; return; }
+  save('pg-players', [...names, '', '', ''].slice(0, 4));
+  S.players = names; S.scores = Object.fromEntries(names.map(n => [n, 0]));
+  S.turnSecs = Number($('#turnSecs').value); S.turn = 0;
+  S.topics = shuffle([...pool]);
+  pickVoice();
+  $('#setup').hidden = true; $('#final').hidden = true; $('#stage').hidden = false;
+  beginTurn();
+}
+
+async function beginTurn() {
+  S.turnId++; S.status = 'intro'; S.matched = new Set(); S.turnScore = 0; S.warned = false; S.seq = 0;
+  S.topic = S.topics[S.turn % S.topics.length];
+  clearConfirm();
+  $('#feed').innerHTML = ''; $('#live').textContent = '';
+  $('#stageNote').textContent = S.hostOn && !canSpeak ? T().noVoice : '';
+  $('#nextBtn').hidden = true; $('#typed').hidden = false; $('#ptt').hidden = false;
+  $('#who').innerHTML = `${esc(currentPlayer())} <small>${esc(T().turnOf(S.turn + 1, S.players.length))}</small>`;
+  $('#turnScore').textContent = '0';
+  $('#topic').textContent = S.topic.prompt;
+  setClock(S.turnSecs);
+  $('#board').innerHTML = S.topic.answers.map((a, i) =>
+    `<div class="tile" data-key="${esc(a.key)}"><span class="n">${i + 1}</span><span class="txt"></span><span class="pts">+${S.points[a.difficulty]}</span></div>`).join('');
+  renderMic();
+  fetch('/api/warm', { method: 'POST' }).catch(() => {});
+  const turnId = S.turnId;
+  await say(T().sayIntro(currentPlayer(), S.topic.prompt, S.topic.answers.length), { interrupt: true });
+  if (S.turnId === turnId && S.status === 'intro') startClock();
+}
+
+function startClock() {
+  if (S.status !== 'intro') return;
+  S.status = 'playing';
+  S.deadline = Date.now() + S.turnSecs * 1000;
+  renderMic();
+  clearInterval(S.clockTimer);
+  S.clockTimer = setInterval(() => {
+    const left = Math.max(0, (S.deadline - Date.now()) / 1000);
+    setClock(left);
+    if (left <= 10 && !S.warned) { S.warned = true; say(T().sayTen); }
+    if (left <= 0) endTurn();
+  }, 200);
+}
+function setClock(left) {
+  const hot = S.status === 'playing' && left <= 10;
+  $('#clock').textContent = Math.ceil(left);
+  $('#clock').classList.toggle('hot', hot);
+  $('#meter').classList.toggle('hot', hot);
+  $('#meter i').style.width = `${(left / S.turnSecs) * 100}%`;
+}
+
+function endTurn() {
+  if (S.status !== 'playing') return;
+  S.status = 'reveal';
+  clearInterval(S.clockTimer); setClock(0);
+  stopListening(); clearConfirm(); renderMic();
+  $('#typed').hidden = true; $('#ptt').hidden = true;
+  const missed = S.topic.answers.filter(a => !S.matched.has(a.key));
+  for (const a of missed) {
+    const tile = document.querySelector(`[data-key="${CSS.escape(a.key)}"]`);
+    tile.classList.add('missed'); tile.querySelector('.txt').textContent = a.text;
+  }
+  const p = currentPlayer();
+  S.scores[p] += S.turnScore;
+  say(T().sayTime(p, S.matched.size, S.topic.answers.length, S.turnScore, missed.slice(0, 2).map(a => a.text)), { interrupt: true });
+  const last = S.turn + 1 >= S.players.length;
+  $('#nextBtn').textContent = last ? T().finalBtn : T().next(S.players[S.turn + 1]);
+  $('#nextBtn').hidden = false;
+}
+
+function next() {
+  S.turn++;
+  if (S.turn < S.players.length) return beginTurn();
+  S.status = 'final';
+  $('#stage').hidden = true; $('#final').hidden = false;
+  const ranked = Object.entries(S.scores).sort((a, b) => b[1] - a[1]);
+  const solo = ranked.length === 1, tie = !solo && ranked[0][1] === ranked[1][1];
+  $('#winner').textContent = solo ? T().soloTitle(ranked[0][1]) : tie ? T().tieTitle : T().winTitle(ranked[0][0]);
+  $('#standings').innerHTML = ranked.map(([n, s]) => `<li><span>${esc(n)}</span><b>${s}</b></li>`).join('');
+  say(solo ? T().saySolo(ranked[0][1]) : tie ? T().sayTie : T().sayWin(ranked[0][0], ranked[0][1]), { interrupt: true });
+}
+
+/* ---------- feed + log ---------- */
+function addFeed(seq, text) {
+  const li = document.createElement('li');
+  li.className = 'pending';
+  li.innerHTML = `<span class="g">${esc(text)}</span><span class="r">${esc(T().checking)}</span>`;
+  const feed = $('#feed'); feed.prepend(li);
+  while (feed.children.length > 5) feed.lastChild.remove();
+  return li;
+}
+function setFeed(li, cls, text) { li.className = cls; li.querySelector('.r').textContent = text; }
+
+function logRow(entry) {
+  const row = { at: new Date().toISOString(), locale: S.locale, player: currentPlayer(), topic: S.topic?.id, ...entry };
+  S.log.unshift(row);
+  renderLog();
+  return row;
+}
+function renderLog() {
+  const fmt = (pairs) => (pairs || []).map(([k, p]) => `${k} ${p.toFixed(2)}`).join(', ');
+  $('#logRows').innerHTML = S.log.map(r => `<tr>
+    <td>${esc(r.guess || '')}</td><td>${esc(r.outcome)}${r.confirm ? ' · ' + esc(r.confirm) : ''}</td>
+    <td>${esc(r.source || '')}${r.error ? ' ⚠' : ''}</td>
+    <td class="num">${r.roundTrip ?? ''}</td><td class="num">${r.jev ? r.jev.ms : ''}</td>
+    <td>${esc(fmt(r.jev && r.jev.topChoices))}</td>
+    <td>${esc(fmt(r.jev && r.jev.topMentions.filter(([, p]) => p >= 0.5)))}</td></tr>`).join('');
+  const rows = S.log.filter(r => r.source);
+  if (!rows.length) return;
+  const local = rows.filter(r => r.source === 'local').length;
+  const jevMs = rows.filter(r => r.jev).map(r => r.jev.ms).sort((a, b) => a - b);
+  const med = jevMs.length ? jevMs[Math.floor(jevMs.length / 2)] : null;
+  const tokens = rows.reduce((s, r) => s + (r.jev?.usage?.input_tokens || 0), 0);
+  $('#stats').textContent = `${rows.length} guesses · ${Math.round(local / rows.length * 100)}% local · median Jev ${med ?? '–'} ms · ${tokens} input tokens (~$${(tokens * 0.042 / 1e6).toFixed(5)})`;
+}
+
+/* ---------- utils + wiring ---------- */
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+const ptt = $('#ptt');
+ptt.addEventListener('pointerdown', (e) => { e.preventDefault(); try { ptt.setPointerCapture(e.pointerId); } catch {} startListening(); });
+ptt.addEventListener('pointerup', stopListening);
+ptt.addEventListener('pointercancel', stopListening);
+ptt.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('keydown', (e) => { if (e.code === 'Space' && !e.repeat && !['INPUT', 'SELECT'].includes(document.activeElement.tagName) && !$('#stage').hidden) { e.preventDefault(); startListening(); } });
+document.addEventListener('keyup', (e) => { if (e.code === 'Space' && holding) stopListening(); });
+
+$('#typed').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = $('#typedGuess').value; $('#typedGuess').value = '';
+  if (S.status === 'intro') startClock();
+  handleUtterance(v);
+});
+$('#lang').addEventListener('change', (e) => setLocale(e.target.value));
+$('#confirmYes').onclick = () => resolveConfirm(true);
+$('#confirmNo').onclick = () => resolveConfirm(false);
+$('#startBtn').onclick = startGame;
+$('#nextBtn').onclick = next;
+$('#againBtn').onclick = () => { $('#final').hidden = true; $('#setup').hidden = false; S.status = 'setup'; };
+$('#hostBtn').onclick = (e) => { S.hostOn = !S.hostOn; e.currentTarget.setAttribute('aria-pressed', S.hostOn); if (!S.hostOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
+$('#logBtn').onclick = (e) => { const on = $('#log').hidden; $('#log').hidden = !on; e.currentTarget.setAttribute('aria-pressed', on); };
+$('#copyLog').onclick = async () => {
+  const text = JSON.stringify(S.log, null, 2);
+  try { await navigator.clipboard.writeText(text); $('#copyLog').textContent = 'Copied'; }
+  catch { $('#copyLog').textContent = 'Copy failed'; }
+  setTimeout(() => ($('#copyLog').textContent = 'Copy as JSON'), 1500);
+};
+
+boot();
+</script>
+
+</html>

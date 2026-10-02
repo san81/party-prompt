@@ -1,0 +1,630 @@
+[
+ {
+  "topic": "nye-party",
+  "guess": "champagne",
+  "expect": [
+   "Champagne"
+  ],
+  "why": "exact"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "shampagne",
+  "expect": [
+   "Champagne"
+  ],
+  "why": "speech-to-text slip"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "a bottle of bubbly",
+  "expect": [
+   "Champagne"
+  ],
+  "why": "alias inside a phrase"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "Moët",
+  "expect": [
+   "Champagne"
+  ],
+  "why": "brand name"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "fire works",
+  "expect": [
+   "Fireworks"
+  ],
+  "why": "split word"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "people kissing at twelve",
+  "expect": [
+   "Midnight kiss"
+  ],
+  "why": "paraphrase"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "the big ball in Times Square",
+  "expect": [
+   "Ball drop"
+  ],
+  "why": "paraphrase"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "ball",
+  "expect": [],
+  "soft": [
+   "Ball drop"
+  ],
+  "why": "ambiguous, ask is fine"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "those things you blow into that make noise",
+  "expect": [
+   "Noisemakers"
+  ],
+  "why": "description"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "promises to go to the gym",
+  "expect": [
+   "Resolutions"
+  ],
+  "why": "example of the concept"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "champagne and fireworks",
+  "expect": [
+   "Champagne",
+   "Fireworks"
+  ],
+  "why": "two in one breath"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "um confetti and uh, maybe a countdown",
+  "expect": [
+   "Confetti",
+   "Countdown"
+  ],
+  "why": "fillers + two"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "party",
+  "expect": [],
+  "why": "too vague"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "pizza",
+  "expect": [],
+  "why": "plausible but not on board"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "fun",
+  "expect": [],
+  "why": "too vague"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "old long sign",
+  "expect": [
+   "Auld Lang Syne"
+  ],
+  "why": "mis-transcribed song"
+ },
+ {
+  "topic": "nye-party",
+  "guess": "eating grapes",
+  "expect": [
+   "Twelve grapes"
+  ],
+  "why": "partial"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "fridge",
+  "expect": [
+   "Refrigerator"
+  ],
+  "why": "alias"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "frig",
+  "expect": [
+   "Refrigerator"
+  ],
+  "why": "clipped"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "the thing you drain pasta in",
+  "expect": [
+   "Colander"
+  ],
+  "why": "description"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "kitchen aid mixer",
+  "expect": [],
+  "why": "not on board"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "hobs",
+  "expect": [
+   "Stove"
+  ],
+  "why": "UK word"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "salt and pepper",
+  "expect": [
+   "Spice rack"
+  ],
+  "soft": [
+   "Spice rack"
+  ],
+  "why": "loose category"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "microwave oven",
+  "expect": [
+   "Microwave"
+  ],
+  "why": "contains 'oven' alias of stove"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "a place to wash dishes",
+  "expect": [
+   "Sink",
+   "Dishwasher"
+  ],
+  "soft": [
+   "Sink",
+   "Dishwasher"
+  ],
+  "why": "genuinely ambiguous"
+ },
+ {
+  "topic": "kitchen",
+  "guess": "pot holder",
+  "expect": [
+   "Oven mitts"
+  ],
+  "why": "alias singular"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "SPF 50",
+  "expect": [
+   "Sunscreen"
+  ],
+  "why": "alias + number"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "shades",
+  "expect": [
+   "Sunglasses"
+  ],
+  "why": "slang"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "Ray-Bans",
+  "expect": [
+   "Sunglasses"
+  ],
+  "why": "brand"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "flip flops",
+  "expect": [
+   "Flip-flops"
+  ],
+  "why": "hyphen"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "thongs",
+  "expect": [
+   "Flip-flops"
+  ],
+  "why": "Australian English"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "esky",
+  "expect": [
+   "Cooler"
+  ],
+  "why": "Australian English"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "building castles",
+  "expect": [
+   "Sandcastle"
+  ],
+  "why": "activity phrasing"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "seagulls",
+  "expect": [],
+  "why": "plausible, not on board"
+ },
+ {
+  "topic": "beach-day",
+  "guess": "surfboard",
+  "expect": [],
+  "soft": [
+   "Boogie board"
+  ],
+  "why": "near miss, ask is fine"
+ },
+ {
+  "topic": "late-for-work",
+  "guess": "my alarm didn't go off",
+  "expect": [
+   "Overslept"
+  ],
+  "why": "alias"
+ },
+ {
+  "topic": "late-for-work",
+  "guess": "got a flat",
+  "expect": [
+   "Car trouble"
+  ],
+  "why": "paraphrase"
+ },
+ {
+  "topic": "late-for-work",
+  "guess": "the subway was delayed",
+  "expect": [
+   "Train or bus delay"
+  ],
+  "why": "synonym"
+ },
+ {
+  "topic": "late-for-work",
+  "guess": "dropping my daughter at school",
+  "expect": [
+   "Kids"
+  ],
+  "why": "paraphrase"
+ },
+ {
+  "topic": "late-for-work",
+  "guess": "it was snowing",
+  "expect": [
+   "Bad weather"
+  ],
+  "why": "example"
+ },
+ {
+  "topic": "late-for-work",
+  "guess": "Starbucks line",
+  "expect": [
+   "Coffee run"
+  ],
+  "why": "brand"
+ },
+ {
+  "topic": "late-for-work",
+  "guess": "zombies",
+  "expect": [],
+  "why": "nonsense"
+ },
+ {
+  "topic": "late-for-work",
+  "guess": "traffic and I overslept",
+  "expect": [
+   "Traffic",
+   "Overslept"
+  ],
+  "why": "two in one breath"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "గాలిపటాలు",
+  "expect": [
+   "గాలిపటాలు"
+  ],
+  "why": "exact"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "గాలిపటం",
+  "expect": [
+   "గాలిపటాలు"
+  ],
+  "why": "singular form"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "kites",
+  "expect": [
+   "గాలిపటాలు"
+  ],
+  "why": "English word"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "galipatalu",
+  "expect": [
+   "గాలిపటాలు"
+  ],
+  "why": "romanized Telugu"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "పతంగులు ఎగరేయడం",
+  "expect": [
+   "గాలిపటాలు"
+  ],
+  "why": "alias inside a phrase"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "ముగ్గులు మరియు గాలిపటాలు",
+  "expect": [
+   "ముగ్గులు",
+   "గాలిపటాలు"
+  ],
+  "why": "two joined by మరియు"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "రంగోలి ఇంకా భోగి మంటలు",
+  "expect": [
+   "ముగ్గులు",
+   "భోగి మంటలు"
+  ],
+  "why": "two joined by ఇంకా"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "హరిదాస్",
+  "expect": [
+   "హరిదాసులు"
+  ],
+  "why": "speech-to-text variant"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "kodi pandelu",
+  "expect": [
+   "కోడి పందేలు"
+  ],
+  "why": "romanized spelling variant"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "చలి మంట",
+  "expect": [
+   "భోగి మంటలు"
+  ],
+  "why": "paraphrase: winter fire"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "ఆకాశంలో ఎగిరేవి",
+  "expect": [
+   "గాలిపటాలు"
+  ],
+  "why": "description: things that fly in the sky"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "ఎద్దులను ఆడించేవాళ్ళు",
+  "expect": [
+   "గంగిరెద్దులు"
+  ],
+  "why": "description: people who make bulls dance"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "స్వీట్లు",
+  "expect": [],
+  "why": "loose category, ask is fine",
+  "soft": [
+   "అరిసెలు",
+   "పొంగలి"
+  ]
+ },
+ {
+  "topic": "sankranti",
+  "guess": "బిర్యానీ",
+  "expect": [],
+  "why": "plausible food, not on board"
+ },
+ {
+  "topic": "sankranti",
+  "guess": "పండుగ",
+  "expect": [],
+  "why": "too vague"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "మంగళసూత్రం",
+  "expect": [
+   "తాళి"
+  ],
+  "why": "synonym alias"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "పెళ్లికూతురు",
+  "expect": [
+   "పెళ్ళికూతురు"
+  ],
+  "why": "ల vs ళ spelling"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "bride and groom",
+  "expect": [
+   "పెళ్ళికూతురు",
+   "పెళ్ళికొడుకు"
+  ],
+  "why": "two, in English"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "పెళ్ళికూతురు ఇంకా పెళ్ళికొడుకు",
+  "expect": [
+   "పెళ్ళికూతురు",
+   "పెళ్ళికొడుకు"
+  ],
+  "why": "two, in Telugu"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "సన్నాయి మేళం",
+  "expect": [
+   "మేళతాళాలు"
+  ],
+  "why": "two aliases of one answer"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "తల మీద జీలకర్ర బెల్లం పెట్టడం",
+  "expect": [
+   "జీలకర్ర బెల్లం"
+  ],
+  "why": "describing the ritual"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "బ్యాండ్ బాజా",
+  "expect": [
+   "మేళతాళాలు"
+  ],
+  "why": "code-mixed slang"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "బియ్యం పోసుకోవడం",
+  "expect": [],
+  "why": "ambiguous rice rituals, ask is fine",
+  "soft": [
+   "తలంబ్రాలు",
+   "అక్షింతలు"
+  ]
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "కేక్ కటింగ్",
+  "expect": [],
+  "why": "not on board"
+ },
+ {
+  "topic": "telugu-wedding",
+  "guess": "ఏడడుగులు",
+  "expect": [],
+  "why": "real ritual, not on board"
+ },
+ {
+  "topic": "vantillu",
+  "guess": "కుక్కర్",
+  "expect": [
+   "ప్రెజర్ కుక్కర్"
+  ],
+  "why": "short form"
+ },
+ {
+  "topic": "vantillu",
+  "guess": "mixie",
+  "expect": [
+   "మిక్సీ"
+  ],
+  "why": "English word"
+ },
+ {
+  "topic": "vantillu",
+  "guess": "ఫ్రిడ్జ్",
+  "expect": [
+   "ఫ్రిజ్"
+  ],
+  "why": "spelling variant"
+ },
+ {
+  "topic": "vantillu",
+  "guess": "ఆవకాయ",
+  "expect": [
+   "ఊరగాయ జాడీ"
+  ],
+  "why": "specific pickle"
+ },
+ {
+  "topic": "vantillu",
+  "guess": "దోసెలు వేసే పెనం",
+  "expect": [
+   "పెనం"
+  ],
+  "why": "answer inside a phrase"
+ },
+ {
+  "topic": "vantillu",
+  "guess": "మసాలా డబ్బా",
+  "expect": [
+   "పోపుల పెట్టె"
+  ],
+  "why": "synonym not in aliases"
+ },
+ {
+  "topic": "vantillu",
+  "guess": "గ్రైండర్",
+  "expect": [
+   "మిక్సీ"
+  ],
+  "why": "English loanword in Telugu script",
+  "soft": [
+   "రుబ్బురోలు"
+  ]
+ },
+ {
+  "topic": "vantillu",
+  "guess": "కూరగాయలు కోసే కత్తి",
+  "expect": [],
+  "why": "description, ask is fine",
+  "soft": [
+   "కత్తిపీట"
+  ]
+ },
+ {
+  "topic": "vantillu",
+  "guess": "మైక్రోవేవ్",
+  "expect": [],
+  "why": "not on board"
+ },
+ {
+  "topic": "vantillu",
+  "guess": "stove and cooker",
+  "expect": [
+   "గ్యాస్ స్టవ్",
+   "ప్రెజర్ కుక్కర్"
+  ],
+  "why": "two, in English"
+ }
+]

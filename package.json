@@ -1,0 +1,16 @@
+{
+  "name": "party-guess-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Voice-hosted party guessing game with Jev semantic matching (web prototype)",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "eval": "node eval/run.js",
+    "probe": "node eval/probe-language.js",
+    "lint-topics": "node eval/lint-topics.js"
+  }
+}

@@ -1,0 +1,7 @@
+.env
+node_modules/
+logs/*.jsonl
+eval/results-*.json
+eval/probe-*.json
+CLAUDE.local.md
+.claude/settings.local.json
