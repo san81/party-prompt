@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: party-prompt
+    runtime: node
+    buildCommand: "echo 'no dependencies'"
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: TYPESAFE_API_KEY
+        sync: false
