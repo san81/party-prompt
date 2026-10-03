@@ -152,7 +152,10 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .feed .pending .r::after { content: '…'; }
 .controls { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-bottom: env(safe-area-inset-bottom, 0px); }
 .ptt { width: 132px; height: 132px; border-radius: 50%; border: 0; background: var(--panel); box-shadow: inset 0 0 0 2px var(--line);
-  font-weight: 700; font-size: 15px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; position: relative; padding: 10px; }
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.ptt-ic { font-size: 40px; line-height: 1; pointer-events: none; }
+.ptt-tx { font-size: 12px; font-weight: 700; letter-spacing: .02em; pointer-events: none; }
 .ptt.live { background: var(--coral); color: var(--stage); box-shadow: none; }
 .ptt.live::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid var(--coral); animation: ring 1.1s ease-out infinite; }
 .ptt:disabled { opacity: .35; cursor: default; }
@@ -220,6 +223,13 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
               <option value="90">90 seconds</option>
             </select>
           </label>
+          <label class="field" for="topicStyle">Topics
+            <select id="topicStyle">
+              <option value="all">All boards</option>
+              <option value="contextual">Contextual (Jev)</option>
+              <option value="classic">Classic</option>
+            </select>
+          </label>
         </div>
         <p class="note" id="langNote"></p>
       </section>
@@ -263,7 +273,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <p class="live" id="live"></p>
     <ul class="feed" id="feed"></ul>
     <div class="controls">
-      <button class="ptt" id="ptt" disabled>Hold to talk</button>
+      <button class="ptt" id="ptt" disabled></button>
       <form class="typed" id="typed">
         <input type="text" id="typedGuess" placeholder="Or type a guess" autocomplete="off" aria-label="Type a guess">
         <button type="submit" id="typedBtn">Guess</button>
@@ -315,14 +325,14 @@ const plural = (n, one, many) => (n === 1 ? one : many);
 const pick1 = (arr) => arr[randInt(arr.length)];
 const STR = {
   'en-US': {
-    hold: 'Hold to talk', holdStart: 'Hold to start', listening: 'Listening',
+    play: 'Tap to talk', playStart: 'Tap to start', pause: 'Listening',
     typePh: 'Or type a guess', guessBtn: 'Guess', checking: 'checking', notOnBoard: 'not on the board',
     already: (x) => `already have ${x}`, tooLate: 'too late', ask: (x) => `did you mean ${x}?`,
     confirmQ: (x) => `Did you mean “${x}”?`, yes: 'Yes', no: 'No', confirmed: 'confirmed',
     nextUp: 'Next up', startingIn: (n) => `Starting in <b>${n}</b>`, startNow: 'Start now', spinAgain: 'Spin again',
     back: 'Back to the wheel', and: ' and ',
     sayUp: (p) => pick1([`${p}, you're up!`, `It's ${p}! Get ready!`, `${p}, the mic is yours!`]),
-    sayIntro: (topic, n) => `Your topic: ${topic}. There are ${n} answers on the board. Hold the button and shout them out. Go!`,
+    sayIntro: (topic, n) => `Your topic: ${topic}. There are ${n} answers on the board. Tap the button and shout them out. Go!`,
     cheers: ['Nice!', 'Boom!', 'Yes!', 'Superb!', 'Too good!', 'Nailed it!'],
     sayHit: (names, pts) => `${pick1(STR['en-US'].cheers)} ${names}, ${pts} ${plural(pts, 'point', 'points')}.`,
     sayAsk: (x) => `Did you mean ${x}?`,
@@ -336,14 +346,14 @@ const STR = {
     noWords: ['no', 'nope', 'nah', 'wrong', 'not that', 'no thanks'],
   },
   'te-IN': {
-    hold: 'నొక్కి పట్టి మాట్లాడండి', holdStart: 'నొక్కితే మొదలు', listening: 'వింటున్నాను',
+    play: 'నొక్కి మాట్లాడండి', playStart: 'నొక్కితే మొదలు', pause: 'వింటున్నాను',
     typePh: 'లేదా ఇక్కడ టైప్ చేయండి', guessBtn: 'చెప్పు', checking: 'చూస్తున్నాను', notOnBoard: 'బోర్డులో లేదు',
     already: (x) => `${x} ఇప్పటికే వచ్చింది`, tooLate: 'సమయం అయిపోయింది', ask: (x) => `${x} అంటున్నారా?`,
     confirmQ: (x) => `“${x}” అంటున్నారా?`, yes: 'అవును', no: 'కాదు', confirmed: 'ఖాయం',
     nextUp: 'తదుపరి ఆటగాడు', startingIn: (n) => `<b>${n}</b> సెకన్లలో మొదలు`, startNow: 'ఇప్పుడే మొదలుపెట్టు', spinAgain: 'మళ్ళీ తిప్పు',
     back: 'మళ్ళీ చక్రం దగ్గరికి', and: ', ',
     sayUp: (p) => pick1([`${p}, మీ వంతు వచ్చింది!`, `${p}! రెడీనా?`, `${p}, మైక్ మీదే!`]),
-    sayIntro: (topic, n) => `మీ అంశం: ${topic}. బోర్డులో ${n} సమాధానాలు ఉన్నాయి. బటన్ నొక్కి పట్టుకుని గట్టిగా చెప్పండి. మొదలుపెట్టండి!`,
+    sayIntro: (topic, n) => `మీ అంశం: ${topic}. బోర్డులో ${n} సమాధానాలు ఉన్నాయి. బటన్ నొక్కి గట్టిగా చెప్పండి. మొదలుపెట్టండి!`,
     cheers: ['సూపర్!', 'భలే!', 'అదరగొట్టావ్!', 'కేక!', 'వావ్!', 'అదిరింది!'],
     sayHit: (names, pts) => `${pick1(STR['te-IN'].cheers)} ${names}, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}.`,
     sayAsk: (x) => `${x} అంటున్నారా?`,
@@ -456,6 +466,9 @@ const Sound = (() => {
     miss() { if (ready()) tone(220, now(), 0.22, 0.14, { type: 'triangle', glide: 150 }); },
     repeat() { if (ready()) { const t = now(); tone(660, t, 0.06, 0.12); tone(660, t + 0.1, 0.06, 0.12); } },
     ask() { if (ready()) tone(523.25, now(), 0.25, 0.18, { type: 'triangle', glide: 784 }); },
+    micOn()  { if (ready()) tone(880,  now(), 0.07, 0.18, { type: 'sine' }); },
+    micOff() { if (ready()) tone(660,  now(), 0.07, 0.12, { type: 'sine' }); },
+    micEnd() { if (ready()) { const t = now(); tone(440, t, 0.06, 0.12, { type: 'sine' }); tone(330, t + 0.08, 0.1, 0.12, { type: 'sine' }); } },
     cheer() {
       if (!ready()) return; const t = now();
       for (let i = 0; i < 8; i++) tone(1046.5 * (1 + (i % 4) * 0.25), t + i * 0.06, 0.12, 0.12, { type: 'triangle' });
@@ -501,7 +514,7 @@ const Sound = (() => {
 
   // Lower the music while someone talks (the mic would hear it) and while the host speaks.
   let duckMic = false, duckHost = false;
-  function applyDuck() { if (ctx) musicDuck.gain.setTargetAtTime(duckMic ? 0.0001 : duckHost ? 0.3 : 1, now(), 0.05); }
+  function applyDuck() { if (ctx) musicDuck.gain.setTargetAtTime(duckMic ? 0.25 : duckHost ? 0.3 : 1, now(), 0.05); }
 
   return {
     resume, sfx, music, prefs,
@@ -541,7 +554,7 @@ function confetti(bursts = 1) {
 /* ======================= state ======================= */
 const S = {
   points: {}, allTopics: [], locales: {},
-  locale: load('sg-locale', 'en-US'), turnSecs: load('sg-secs', 60),
+  locale: load('sg-locale', 'en-US'), style: load('sg-style', 'all'), turnSecs: load('sg-secs', 60),
   names: load('sg-names', ['Ravi', 'Lakshmi', 'Arjun', 'Divya', 'Kiran', 'Sneha']),
   scores: load('sg-scores', {}),       // name -> { points, turns }
   played: load('sg-played', []),        // names already played this round (when "once each" is on)
@@ -551,7 +564,12 @@ const S = {
   hostOn: load('sg-host', true), log: [], lastTopic: null,
 };
 const T = () => STR[S.locale] || STR['en-US'];
-const topicsFor = (loc) => S.allTopics.filter(t => t.locale === loc);
+function topicsFor(loc) {
+  const all = S.allTopics.filter(t => t.locale === loc);
+  if (S.style === 'all') return all;
+  const styled = all.filter(t => t.style === S.style);
+  return styled.length ? styled : all;
+}
 
 /* ======================= wheel ======================= */
 const W = { angle: 0, spinning: false };
@@ -761,6 +779,7 @@ function startListening() {
   if (!SR || S.status !== 'playing') return;
   holding = true;
   Sound.duckForMic(true);
+  Sound.sfx.micOn();
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   if (listening) return renderMic();
   rec = new SR();
@@ -784,6 +803,7 @@ function startListening() {
 }
 function stopListening() {
   holding = false; Sound.duckForMic(false);
+  Sound.sfx.micOff();
   try { rec && rec.stop(); } catch {}
   renderMic();
 }
@@ -791,7 +811,9 @@ function renderMic() {
   const b = $('#ptt');
   b.classList.toggle('live', holding);
   b.disabled = !(S.status === 'playing' || S.status === 'intro');
-  b.textContent = S.status === 'intro' ? T().holdStart : holding ? T().listening : T().hold;
+  const label = S.status === 'intro' ? T().playStart : holding ? T().pause : T().play;
+  b.setAttribute('aria-label', label);
+  b.innerHTML = `<span class="ptt-ic">${holding ? '⏸' : '▶'}</span><span class="ptt-tx">${esc(label)}</span>`;
 }
 const norm = (s) => s.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim();
 function handleUtterance(text) {
@@ -872,7 +894,7 @@ function clearConfirm() { if (S.confirm) clearTimeout(S.confirm.timer); S.confir
 // Random topic without repeats: each language keeps a shuffled deck that refills when empty.
 function nextTopic() {
   const pool = topicsFor(S.locale).map(t => t.id);
-  const key = `sg-deck-${S.locale}`;
+  const key = `sg-deck-${S.locale}-${S.style}`;
   let deck = load(key, []).filter(id => pool.includes(id));
   if (!deck.length) { deck = shuffle(pool.filter(id => id !== S.lastTopic)); if (!deck.length) deck = shuffle([...pool]); }
   const id = deck.pop(); save(key, deck); S.lastTopic = id;
@@ -940,7 +962,7 @@ function endTurn() {
   S.status = 'reveal';
   clearInterval(S.clockTimer); setClock(0);
   stopListening(); clearConfirm(); renderMic();
-  Sound.music.stop();
+  Sound.music.stop(); Sound.sfx.micEnd();
   const total = S.topic.answers.length, found = S.matched.size;
   if (found === total) { Sound.sfx.cheer(); confetti(3); } else Sound.sfx.buzzer();
   $('#typed').hidden = true; $('#ptt').hidden = true;
@@ -1053,6 +1075,7 @@ $('#resetScores').onclick = (e) => {
 $('#onceEach').addEventListener('change', (e) => { S.onceEach = e.target.checked; save('sg-once', S.onceEach); renderNames(); });
 $('#lang').addEventListener('change', (e) => setLocale(e.target.value));
 $('#turnSecs').addEventListener('change', (e) => { S.turnSecs = Number(e.target.value); save('sg-secs', S.turnSecs); });
+$('#topicStyle').addEventListener('change', (e) => { S.style = e.target.value; save('sg-style', S.style); setLocale(S.locale); });
 
 $('#musicBtn').onclick = (e) => { const on = !Sound.prefs.music; Sound.setMusic(on); setToggle(e.currentTarget, on); };
 $('#sfxBtn').onclick = (e) => { const on = !Sound.prefs.sfx; Sound.setSfx(on); setToggle(e.currentTarget, on); };
@@ -1065,17 +1088,13 @@ $('#copyLog').onclick = async () => {
 };
 
 const ptt = $('#ptt');
-ptt.addEventListener('pointerdown', (e) => { e.preventDefault(); Sound.resume(); try { ptt.setPointerCapture(e.pointerId); } catch {} startListening(); });
-ptt.addEventListener('pointerup', stopListening);
-ptt.addEventListener('pointercancel', stopListening);
-ptt.addEventListener('contextmenu', (e) => e.preventDefault());
+ptt.addEventListener('click', () => { Sound.resume(); holding ? stopListening() : startListening(); });
 document.addEventListener('keydown', (e) => {
   if (e.code !== 'Space' || e.repeat || ['INPUT', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName)) return;
-  if (!$('#stage').hidden) { e.preventDefault(); startListening(); }
+  if (!$('#stage').hidden) { e.preventDefault(); holding ? stopListening() : startListening(); }
   else if (!$('#pick').hidden) { /* ignore */ }
   else { e.preventDefault(); spin(); }
 });
-document.addEventListener('keyup', (e) => { if (e.code === 'Space' && holding) stopListening(); });
 $('#typed').addEventListener('submit', (e) => {
   e.preventDefault();
   const v = $('#typedGuess').value; $('#typedGuess').value = '';
@@ -1090,6 +1109,7 @@ async function boot() {
   setToggle($('#musicBtn'), Sound.prefs.music); setToggle($('#sfxBtn'), Sound.prefs.sfx); setToggle($('#hostBtn'), S.hostOn);
   $('#onceEach').checked = S.onceEach;
   $('#turnSecs').value = String(S.turnSecs);
+  $('#topicStyle').value = S.style;
   renderNames(); renderLeaders();
   try {
     const [status, data] = await Promise.all([fetch('/api/status').then(r => r.json()), fetch('/api/topics').then(r => r.json())]);

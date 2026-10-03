@@ -31,7 +31,7 @@ const routes = {
   'GET /api/topics': () => ({
     points: POINTS,
     locales: Object.fromEntries(Object.entries(LOCALES).map(([code, l]) => [code, { name: l.name, speech: l.speech }])),
-    topics: TOPICS.map(({ id, locale, prompt, answers }) => ({ id, locale, prompt, answers: answers.map(({ key, text, difficulty }) => ({ key, text, difficulty })) })),
+    topics: TOPICS.map(({ id, locale, style, prompt, answers }) => ({ id, locale, style, prompt, answers: answers.map(({ key, text, difficulty }) => ({ key, text, difficulty })) })),
   }),
 
   'POST /api/match': async (req) => {

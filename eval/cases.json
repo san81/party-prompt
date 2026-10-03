@@ -1,630 +1,129 @@
 [
- {
-  "topic": "nye-party",
-  "guess": "champagne",
-  "expect": [
-   "Champagne"
-  ],
-  "why": "exact"
- },
- {
-  "topic": "nye-party",
-  "guess": "shampagne",
-  "expect": [
-   "Champagne"
-  ],
-  "why": "speech-to-text slip"
- },
- {
-  "topic": "nye-party",
-  "guess": "a bottle of bubbly",
-  "expect": [
-   "Champagne"
-  ],
-  "why": "alias inside a phrase"
- },
- {
-  "topic": "nye-party",
-  "guess": "Moët",
-  "expect": [
-   "Champagne"
-  ],
-  "why": "brand name"
- },
- {
-  "topic": "nye-party",
-  "guess": "fire works",
-  "expect": [
-   "Fireworks"
-  ],
-  "why": "split word"
- },
- {
-  "topic": "nye-party",
-  "guess": "people kissing at twelve",
-  "expect": [
-   "Midnight kiss"
-  ],
-  "why": "paraphrase"
- },
- {
-  "topic": "nye-party",
-  "guess": "the big ball in Times Square",
-  "expect": [
-   "Ball drop"
-  ],
-  "why": "paraphrase"
- },
- {
-  "topic": "nye-party",
-  "guess": "ball",
-  "expect": [],
-  "soft": [
-   "Ball drop"
-  ],
-  "why": "ambiguous, ask is fine"
- },
- {
-  "topic": "nye-party",
-  "guess": "those things you blow into that make noise",
-  "expect": [
-   "Noisemakers"
-  ],
-  "why": "description"
- },
- {
-  "topic": "nye-party",
-  "guess": "promises to go to the gym",
-  "expect": [
-   "Resolutions"
-  ],
-  "why": "example of the concept"
- },
- {
-  "topic": "nye-party",
-  "guess": "champagne and fireworks",
-  "expect": [
-   "Champagne",
-   "Fireworks"
-  ],
-  "why": "two in one breath"
- },
- {
-  "topic": "nye-party",
-  "guess": "um confetti and uh, maybe a countdown",
-  "expect": [
-   "Confetti",
-   "Countdown"
-  ],
-  "why": "fillers + two"
- },
- {
-  "topic": "nye-party",
-  "guess": "party",
-  "expect": [],
-  "why": "too vague"
- },
- {
-  "topic": "nye-party",
-  "guess": "pizza",
-  "expect": [],
-  "why": "plausible but not on board"
- },
- {
-  "topic": "nye-party",
-  "guess": "fun",
-  "expect": [],
-  "why": "too vague"
- },
- {
-  "topic": "nye-party",
-  "guess": "old long sign",
-  "expect": [
-   "Auld Lang Syne"
-  ],
-  "why": "mis-transcribed song"
- },
- {
-  "topic": "nye-party",
-  "guess": "eating grapes",
-  "expect": [
-   "Twelve grapes"
-  ],
-  "why": "partial"
- },
- {
-  "topic": "kitchen",
-  "guess": "fridge",
-  "expect": [
-   "Refrigerator"
-  ],
-  "why": "alias"
- },
- {
-  "topic": "kitchen",
-  "guess": "frig",
-  "expect": [
-   "Refrigerator"
-  ],
-  "why": "clipped"
- },
- {
-  "topic": "kitchen",
-  "guess": "the thing you drain pasta in",
-  "expect": [
-   "Colander"
-  ],
-  "why": "description"
- },
- {
-  "topic": "kitchen",
-  "guess": "kitchen aid mixer",
-  "expect": [],
-  "why": "not on board"
- },
- {
-  "topic": "kitchen",
-  "guess": "hobs",
-  "expect": [
-   "Stove"
-  ],
-  "why": "UK word"
- },
- {
-  "topic": "kitchen",
-  "guess": "salt and pepper",
-  "expect": [
-   "Spice rack"
-  ],
-  "soft": [
-   "Spice rack"
-  ],
-  "why": "loose category"
- },
- {
-  "topic": "kitchen",
-  "guess": "microwave oven",
-  "expect": [
-   "Microwave"
-  ],
-  "why": "contains 'oven' alias of stove"
- },
- {
-  "topic": "kitchen",
-  "guess": "a place to wash dishes",
-  "expect": [
-   "Sink",
-   "Dishwasher"
-  ],
-  "soft": [
-   "Sink",
-   "Dishwasher"
-  ],
-  "why": "genuinely ambiguous"
- },
- {
-  "topic": "kitchen",
-  "guess": "pot holder",
-  "expect": [
-   "Oven mitts"
-  ],
-  "why": "alias singular"
- },
- {
-  "topic": "beach-day",
-  "guess": "SPF 50",
-  "expect": [
-   "Sunscreen"
-  ],
-  "why": "alias + number"
- },
- {
-  "topic": "beach-day",
-  "guess": "shades",
-  "expect": [
-   "Sunglasses"
-  ],
-  "why": "slang"
- },
- {
-  "topic": "beach-day",
-  "guess": "Ray-Bans",
-  "expect": [
-   "Sunglasses"
-  ],
-  "why": "brand"
- },
- {
-  "topic": "beach-day",
-  "guess": "flip flops",
-  "expect": [
-   "Flip-flops"
-  ],
-  "why": "hyphen"
- },
- {
-  "topic": "beach-day",
-  "guess": "thongs",
-  "expect": [
-   "Flip-flops"
-  ],
-  "why": "Australian English"
- },
- {
-  "topic": "beach-day",
-  "guess": "esky",
-  "expect": [
-   "Cooler"
-  ],
-  "why": "Australian English"
- },
- {
-  "topic": "beach-day",
-  "guess": "building castles",
-  "expect": [
-   "Sandcastle"
-  ],
-  "why": "activity phrasing"
- },
- {
-  "topic": "beach-day",
-  "guess": "seagulls",
-  "expect": [],
-  "why": "plausible, not on board"
- },
- {
-  "topic": "beach-day",
-  "guess": "surfboard",
-  "expect": [],
-  "soft": [
-   "Boogie board"
-  ],
-  "why": "near miss, ask is fine"
- },
- {
-  "topic": "late-for-work",
-  "guess": "my alarm didn't go off",
-  "expect": [
-   "Overslept"
-  ],
-  "why": "alias"
- },
- {
-  "topic": "late-for-work",
-  "guess": "got a flat",
-  "expect": [
-   "Car trouble"
-  ],
-  "why": "paraphrase"
- },
- {
-  "topic": "late-for-work",
-  "guess": "the subway was delayed",
-  "expect": [
-   "Train or bus delay"
-  ],
-  "why": "synonym"
- },
- {
-  "topic": "late-for-work",
-  "guess": "dropping my daughter at school",
-  "expect": [
-   "Kids"
-  ],
-  "why": "paraphrase"
- },
- {
-  "topic": "late-for-work",
-  "guess": "it was snowing",
-  "expect": [
-   "Bad weather"
-  ],
-  "why": "example"
- },
- {
-  "topic": "late-for-work",
-  "guess": "Starbucks line",
-  "expect": [
-   "Coffee run"
-  ],
-  "why": "brand"
- },
- {
-  "topic": "late-for-work",
-  "guess": "zombies",
-  "expect": [],
-  "why": "nonsense"
- },
- {
-  "topic": "late-for-work",
-  "guess": "traffic and I overslept",
-  "expect": [
-   "Traffic",
-   "Overslept"
-  ],
-  "why": "two in one breath"
- },
- {
-  "topic": "sankranti",
-  "guess": "గాలిపటాలు",
-  "expect": [
-   "గాలిపటాలు"
-  ],
-  "why": "exact"
- },
- {
-  "topic": "sankranti",
-  "guess": "గాలిపటం",
-  "expect": [
-   "గాలిపటాలు"
-  ],
-  "why": "singular form"
- },
- {
-  "topic": "sankranti",
-  "guess": "kites",
-  "expect": [
-   "గాలిపటాలు"
-  ],
-  "why": "English word"
- },
- {
-  "topic": "sankranti",
-  "guess": "galipatalu",
-  "expect": [
-   "గాలిపటాలు"
-  ],
-  "why": "romanized Telugu"
- },
- {
-  "topic": "sankranti",
-  "guess": "పతంగులు ఎగరేయడం",
-  "expect": [
-   "గాలిపటాలు"
-  ],
-  "why": "alias inside a phrase"
- },
- {
-  "topic": "sankranti",
-  "guess": "ముగ్గులు మరియు గాలిపటాలు",
-  "expect": [
-   "ముగ్గులు",
-   "గాలిపటాలు"
-  ],
-  "why": "two joined by మరియు"
- },
- {
-  "topic": "sankranti",
-  "guess": "రంగోలి ఇంకా భోగి మంటలు",
-  "expect": [
-   "ముగ్గులు",
-   "భోగి మంటలు"
-  ],
-  "why": "two joined by ఇంకా"
- },
- {
-  "topic": "sankranti",
-  "guess": "హరిదాస్",
-  "expect": [
-   "హరిదాసులు"
-  ],
-  "why": "speech-to-text variant"
- },
- {
-  "topic": "sankranti",
-  "guess": "kodi pandelu",
-  "expect": [
-   "కోడి పందేలు"
-  ],
-  "why": "romanized spelling variant"
- },
- {
-  "topic": "sankranti",
-  "guess": "చలి మంట",
-  "expect": [
-   "భోగి మంటలు"
-  ],
-  "why": "paraphrase: winter fire"
- },
- {
-  "topic": "sankranti",
-  "guess": "ఆకాశంలో ఎగిరేవి",
-  "expect": [
-   "గాలిపటాలు"
-  ],
-  "why": "description: things that fly in the sky"
- },
- {
-  "topic": "sankranti",
-  "guess": "ఎద్దులను ఆడించేవాళ్ళు",
-  "expect": [
-   "గంగిరెద్దులు"
-  ],
-  "why": "description: people who make bulls dance"
- },
- {
-  "topic": "sankranti",
-  "guess": "స్వీట్లు",
-  "expect": [],
-  "why": "loose category, ask is fine",
-  "soft": [
-   "అరిసెలు",
-   "పొంగలి"
-  ]
- },
- {
-  "topic": "sankranti",
-  "guess": "బిర్యానీ",
-  "expect": [],
-  "why": "plausible food, not on board"
- },
- {
-  "topic": "sankranti",
-  "guess": "పండుగ",
-  "expect": [],
-  "why": "too vague"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "మంగళసూత్రం",
-  "expect": [
-   "తాళి"
-  ],
-  "why": "synonym alias"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "పెళ్లికూతురు",
-  "expect": [
-   "పెళ్ళికూతురు"
-  ],
-  "why": "ల vs ళ spelling"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "bride and groom",
-  "expect": [
-   "పెళ్ళికూతురు",
-   "పెళ్ళికొడుకు"
-  ],
-  "why": "two, in English"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "పెళ్ళికూతురు ఇంకా పెళ్ళికొడుకు",
-  "expect": [
-   "పెళ్ళికూతురు",
-   "పెళ్ళికొడుకు"
-  ],
-  "why": "two, in Telugu"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "సన్నాయి మేళం",
-  "expect": [
-   "మేళతాళాలు"
-  ],
-  "why": "two aliases of one answer"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "తల మీద జీలకర్ర బెల్లం పెట్టడం",
-  "expect": [
-   "జీలకర్ర బెల్లం"
-  ],
-  "why": "describing the ritual"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "బ్యాండ్ బాజా",
-  "expect": [
-   "మేళతాళాలు"
-  ],
-  "why": "code-mixed slang"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "బియ్యం పోసుకోవడం",
-  "expect": [],
-  "why": "ambiguous rice rituals, ask is fine",
-  "soft": [
-   "తలంబ్రాలు",
-   "అక్షింతలు"
-  ]
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "కేక్ కటింగ్",
-  "expect": [],
-  "why": "not on board"
- },
- {
-  "topic": "telugu-wedding",
-  "guess": "ఏడడుగులు",
-  "expect": [],
-  "why": "real ritual, not on board"
- },
- {
-  "topic": "vantillu",
-  "guess": "కుక్కర్",
-  "expect": [
-   "ప్రెజర్ కుక్కర్"
-  ],
-  "why": "short form"
- },
- {
-  "topic": "vantillu",
-  "guess": "mixie",
-  "expect": [
-   "మిక్సీ"
-  ],
-  "why": "English word"
- },
- {
-  "topic": "vantillu",
-  "guess": "ఫ్రిడ్జ్",
-  "expect": [
-   "ఫ్రిజ్"
-  ],
-  "why": "spelling variant"
- },
- {
-  "topic": "vantillu",
-  "guess": "ఆవకాయ",
-  "expect": [
-   "ఊరగాయ జాడీ"
-  ],
-  "why": "specific pickle"
- },
- {
-  "topic": "vantillu",
-  "guess": "దోసెలు వేసే పెనం",
-  "expect": [
-   "పెనం"
-  ],
-  "why": "answer inside a phrase"
- },
- {
-  "topic": "vantillu",
-  "guess": "మసాలా డబ్బా",
-  "expect": [
-   "పోపుల పెట్టె"
-  ],
-  "why": "synonym not in aliases"
- },
- {
-  "topic": "vantillu",
-  "guess": "గ్రైండర్",
-  "expect": [
-   "మిక్సీ"
-  ],
-  "why": "English loanword in Telugu script",
-  "soft": [
-   "రుబ్బురోలు"
-  ]
- },
- {
-  "topic": "vantillu",
-  "guess": "కూరగాయలు కోసే కత్తి",
-  "expect": [],
-  "why": "description, ask is fine",
-  "soft": [
-   "కత్తిపీట"
-  ]
- },
- {
-  "topic": "vantillu",
-  "guess": "మైక్రోవేవ్",
-  "expect": [],
-  "why": "not on board"
- },
- {
-  "topic": "vantillu",
-  "guess": "stove and cooker",
-  "expect": [
-   "గ్యాస్ స్టవ్",
-   "ప్రెజర్ కుక్కర్"
-  ],
-  "why": "two, in English"
- }
+  {"topic":"phone-stress","guess":"my battery is about to die","expect":["Battery at 1%"],"why":"description of low battery"},
+  {"topic":"phone-stress","guess":"one percent","expect":["Battery at 1%"],"why":"direct stat"},
+  {"topic":"phone-stress","guess":"red battery warning","expect":["Battery at 1%"],"why":"visual description"},
+  {"topic":"phone-stress","guess":"they saw my message but didn't reply","expect":["Forgot to reply someone"],"why":"contextual description of left on read"},
+  {"topic":"phone-stress","guess":"left on read","expect":["Forgot to reply someone"],"why":"alias phrase"},
+  {"topic":"phone-stress","guess":"can't take any more photos","expect":["Storage full"],"why":"consequence of storage full"},
+  {"topic":"phone-stress","guess":"phone says no storage","expect":["Storage full"],"why":"paraphrase"},
+  {"topic":"phone-stress","guess":"the screen shattered when I dropped it","expect":["Cracked screen"],"why":"descriptive consequence"},
+  {"topic":"phone-stress","guess":"video keeps loading","expect":["Buffering"],"why":"description of buffering"},
+  {"topic":"phone-stress","guess":"that spinning circle","expect":["Buffering"],"why":"visual description of loading indicator"},
+  {"topic":"phone-stress","guess":"autocorrect embarrassed me","expect":["Autocorrect sending the wrong word"],"why":"consequence"},
+  {"topic":"phone-stress","guess":"it changed what I typed","expect":["Autocorrect sending the wrong word"],"why":"description of autocorrect"},
+  {"topic":"phone-stress","guess":"stuck in a group I can't leave","expect":["Group chat you cannot leave"],"why":"paraphrase"},
+  {"topic":"phone-stress","guess":"phone is burning hot","expect":["Phone overheating"],"why":"physical description"},
+  {"topic":"phone-stress","guess":"it won't scan my face in the dark","expect":["Face ID not recognising you"],"why":"contextual failure description"},
+  {"topic":"phone-stress","guess":"dropped it face down and my heart stopped","expect":["Dropping it face-down"],"why":"emotional description"},
+  {"topic":"phone-stress","guess":"that update reminder I keep ignoring","expect":["Software update you keep postponing"],"why":"behavioral description"},
+  {"topic":"phone-stress","guess":"battery and storage","expect":["Battery at 1%","Storage full"],"why":"multi-hit"},
+  {"topic":"phone-stress","guess":"pizza","expect":[],"why":"not on board"},
+
+  {"topic":"family-whatsapp","guess":"good morning with flowers every single day","expect":["Good morning message with flowers"],"why":"description"},
+  {"topic":"family-whatsapp","guess":"some uncle sharing news that isn't true","expect":["Forwarded fake news"],"why":"contextual paraphrase"},
+  {"topic":"family-whatsapp","guess":"is this true messages","expect":["Forwarded fake news"],"why":"alias phrase"},
+  {"topic":"family-whatsapp","guess":"they edited my photo for my birthday","expect":["Birthday edited photo"],"why":"paraphrase"},
+  {"topic":"family-whatsapp","guess":"someone sent something meant for another group","expect":["Message sent to the wrong group"],"why":"description of accidental message"},
+  {"topic":"family-whatsapp","guess":"forward this to ten people or else","expect":["Religious forward with a share request"],"why":"content description"},
+  {"topic":"family-whatsapp","guess":"aunty suggesting a marriage alliance","expect":["Marriage match suggestion"],"why":"contextual paraphrase"},
+  {"topic":"family-whatsapp","guess":"grandpa using a skull emoji when he means thumbs up","expect":["Elder using the wrong emoji"],"why":"descriptive example"},
+  {"topic":"family-whatsapp","guess":"surprise video call to announce news","expect":["Surprise video call announcing big news"],"why":"paraphrase"},
+  {"topic":"family-whatsapp","guess":"dad's corny jokes nobody asked for","expect":["Dad jokes nobody asked for"],"why":"paraphrase"},
+  {"topic":"family-whatsapp","guess":"same old joke that was shared a year ago","expect":["Same old forward sent again"],"why":"description"},
+  {"topic":"family-whatsapp","guess":"football","expect":[],"why":"not on board"},
+
+  {"topic":"feels-forever","guess":"watching the clock in last period","expect":["Last five minutes of school"],"why":"behavior description"},
+  {"topic":"feels-forever","guess":"that spinning wheel on the screen","expect":["Buffering video"],"why":"visual description of loading"},
+  {"topic":"feels-forever","guess":"phone charging from basically zero","expect":["Phone charging from 1%"],"why":"paraphrase"},
+  {"topic":"feels-forever","guess":"delivery app says arriving now for forty minutes","expect":["Waiting for a food delivery"],"why":"contextual irony"},
+  {"topic":"feels-forever","guess":"sitting in the hospital waiting room past your appointment","expect":["Doctor waiting room"],"why":"description"},
+  {"topic":"feels-forever","guess":"double blue ticks but no reply","expect":["Waiting for a reply from someone you like"],"why":"WhatsApp-specific description"},
+  {"topic":"feels-forever","guess":"99 percent and it just stopped","expect":["Download stuck at 99%"],"why":"description"},
+  {"topic":"feels-forever","guess":"when you cannot skip the ad yet","expect":["Unskippable ad before a video"],"why":"description"},
+  {"topic":"feels-forever","guess":"counting the pressure cooker whistles","expect":["Counting pressure cooker whistles"],"why":"near exact"},
+  {"topic":"feels-forever","guess":"staring at the microwave for the last few seconds","expect":["Microwave last ten seconds"],"why":"behavioral description"},
+  {"topic":"feels-forever","guess":"vacation","expect":[],"why":"not on board"},
+
+  {"topic":"homework-excuses","guess":"I totally forgot","expect":["I forgot"],"why":"near exact"},
+  {"topic":"homework-excuses","guess":"notebook is still at home","expect":["Left it at home"],"why":"paraphrase"},
+  {"topic":"homework-excuses","guess":"there was no electricity","expect":["Power cut"],"why":"paraphrase"},
+  {"topic":"homework-excuses","guess":"I had a fever","expect":["I was sick"],"why":"alias"},
+  {"topic":"homework-excuses","guess":"the dog destroyed it","expect":["The dog ate it"],"why":"paraphrase"},
+  {"topic":"homework-excuses","guess":"my cousins were visiting","expect":["Relatives came home"],"why":"paraphrase"},
+  {"topic":"homework-excuses","guess":"we went to a wedding function","expect":["Went to a wedding"],"why":"near exact"},
+  {"topic":"homework-excuses","guess":"my little brother tore the pages","expect":["Little sibling tore it"],"why":"paraphrase"},
+  {"topic":"homework-excuses","guess":"nobody told me there was homework","expect":["Didn't know there was homework"],"why":"paraphrase"},
+  {"topic":"homework-excuses","guess":"I fell asleep early","expect":["Fell asleep"],"why":"near exact"},
+  {"topic":"homework-excuses","guess":"ipl match was on","expect":["Was watching the cricket match"],"why":"alias"},
+  {"topic":"homework-excuses","guess":"it rained and the book got soaked","expect":["It got wet in the rain"],"why":"description"},
+  {"topic":"homework-excuses","guess":"I did it but left it at home","expect":["Did it but forgot to bring it"],"why":"paraphrase"},
+  {"topic":"homework-excuses","guess":"I forgot and it rained","expect":["I forgot","It got wet in the rain"],"why":"multi-hit"},
+  {"topic":"homework-excuses","guess":"the teacher did not give homework","expect":[],"why":"not on board"},
+
+  {"topic":"wont-admit","guess":"sniff leftovers to check if they've gone off","expect":["Sniff food to check if it has gone bad"],"why":"paraphrase"},
+  {"topic":"wont-admit","guess":"I talk to myself when I'm home alone","expect":["Talk to yourself out loud"],"why":"paraphrase"},
+  {"topic":"wont-admit","guess":"pretend to be on a call so someone walks past","expect":["Fake a phone call to avoid someone"],"why":"contextual description"},
+  {"topic":"wont-admit","guess":"scrolling back years on someone's instagram","expect":["Stalk someone's old Instagram photos"],"why":"behavioral description"},
+  {"topic":"wont-admit","guess":"singing as loud as I want when nobody is home","expect":["Sing at the top of your voice when home alone"],"why":"description"},
+  {"topic":"wont-admit","guess":"pretend to be asleep when someone walks in","expect":["Pretend to sleep to avoid a conversation"],"why":"paraphrase"},
+  {"topic":"wont-admit","guess":"pick up the phone ten seconds after putting it down","expect":["Check your phone again two seconds after putting it down"],"why":"behavioral description"},
+  {"topic":"wont-admit","guess":"five second rule","expect":["Eat food that fell on the floor"],"why":"cultural shorthand"},
+  {"topic":"wont-admit","guess":"breathe into your hand to check your breath","expect":["Check your own breath or smell"],"why":"action description"},
+  {"topic":"wont-admit","guess":"reading old chats from years ago when you miss someone","expect":["Read old conversations when missing someone"],"why":"description"},
+  {"topic":"wont-admit","guess":"saying I am five minutes away before I have even left","expect":["Lie about being five minutes away"],"why":"description"},
+  {"topic":"wont-admit","guess":"going to the gym","expect":[],"why":"not on board"},
+
+  {"topic":"sleepy-class","guess":"my head just kept dropping forward","expect":["Head slowly drooping forward"],"why":"description"},
+  {"topic":"sleepy-class","guess":"read the same sentence five times","expect":["Reading the same line five times"],"why":"near exact"},
+  {"topic":"sleepy-class","guess":"pen falls out of hand","expect":["Pen slipping from your fingers"],"why":"near exact"},
+  {"topic":"sleepy-class","guess":"scribbling random things in the margin","expect":["Random doodles on the page"],"why":"paraphrase"},
+  {"topic":"sleepy-class","guess":"suddenly jerking your head up","expect":["Snapping awake with a jerk"],"why":"description"},
+  {"topic":"sleepy-class","guess":"notes becoming completely unreadable","expect":["Handwriting turning into a scrawl"],"why":"description"},
+  {"topic":"sleepy-class","guess":"eyes just would not stay open","expect":["Eyes blinking slower and slower"],"why":"description"},
+  {"topic":"sleepy-class","guess":"the teacher's voice became just noise in the background","expect":["Teacher's voice fading into background"],"why":"description"},
+  {"topic":"sleepy-class","guess":"holding your chin up with your elbow on the desk","expect":["Propping chin on hand"],"why":"description"},
+  {"topic":"sleepy-class","guess":"had a quick dream and woke up not knowing where I was","expect":["Brief dream before snapping back"],"why":"description"},
+  {"topic":"sleepy-class","guess":"vacation","expect":[],"why":"not on board"},
+
+  {"topic":"auto-ride","guess":"arguing about the price before even getting in","expect":["Haggling over the fare"],"why":"description"},
+  {"topic":"auto-ride","guess":"hair flying everywhere from the wind","expect":["Wind blasting through the open sides"],"why":"consequence description"},
+  {"topic":"auto-ride","guess":"driver went through some tiny back road","expect":["Shortcut through a narrow lane"],"why":"description"},
+  {"topic":"auto-ride","guess":"gripping the side as he turned sharply","expect":["Hanging on around a sharp turn"],"why":"behavioral description"},
+  {"topic":"auto-ride","guess":"driver was on his phone the whole time","expect":["Driver on a call with one hand on the wheel"],"why":"description"},
+  {"topic":"auto-ride","guess":"almost crashed overtaking a bus","expect":["Dangerous overtake of a bus"],"why":"description"},
+  {"topic":"auto-ride","guess":"smell of exhaust the whole ride","expect":["Petrol fume smell"],"why":"description"},
+  {"topic":"auto-ride","guess":"didn't have the exact amount","expect":["No exact change for the fare"],"why":"paraphrase"},
+  {"topic":"auto-ride","guess":"he just stopped in the middle of the road for no reason","expect":["Sudden random stop in traffic"],"why":"description"},
+  {"topic":"auto-ride","guess":"he charged me way more than agreed","expect":["Getting overcharged and arguing"],"why":"description"},
+  {"topic":"auto-ride","guess":"four of us crammed in","expect":["Three people squeezed in a two-seater"],"why":"similar overcrowding description"},
+  {"topic":"auto-ride","guess":"pizza","expect":[],"why":"not on board"},
+
+  {"topic":"sankranti","guess":"గాలిపటాలు","expect":["గాలిపటాలు"],"why":"exact"},
+  {"topic":"sankranti","guess":"గాలిపటం","expect":["గాలిపటాలు"],"why":"alias"},
+  {"topic":"sankranti","guess":"kites","expect":["గాలిపటాలు"],"why":"gloss alias"},
+  {"topic":"sankranti","guess":"ఆకాశంలో ఎగిరేవి","expect":["గాలిపటాలు"],"why":"contextual Telugu description"},
+  {"topic":"sankranti","guess":"ముగ్గులు మరియు గాలిపటాలు","expect":["ముగ్గులు","గాలిపటాలు"],"why":"multi-hit"},
+  {"topic":"sankranti","guess":"రంగోలి ఇంకా భోగి మంటలు","expect":["ముగ్గులు","భోగి మంటలు"],"why":"multi-hit with alias"},
+  {"topic":"sankranti","guess":"హరిదాస్","expect":["హరిదాసులు"],"why":"speech-to-text abbreviation"},
+  {"topic":"sankranti","guess":"ఎద్దులను ఆడించేవాళ్ళు","expect":["గంగిరెద్దులు"],"why":"Telugu contextual description"},
+  {"topic":"sankranti","guess":"చలి మంట","expect":["భోగి మంటలు"],"why":"descriptive Telugu alias"},
+  {"topic":"sankranti","guess":"స్వీట్లు","expect":[],"why":"not on board"},
+
+  {"topic":"telugu-wedding","guess":"మంగళసూత్రం","expect":["తాళి"],"why":"alias"},
+  {"topic":"telugu-wedding","guess":"పెళ్లికూతురు","expect":["పెళ్ళికూతురు"],"why":"alternate spelling"},
+  {"topic":"telugu-wedding","guess":"bride and groom","expect":["పెళ్ళికూతురు","పెళ్ళికొడుకు"],"why":"multi-hit gloss"},
+  {"topic":"telugu-wedding","guess":"సన్నాయి మేళం","expect":["మేళతాళాలు"],"why":"alias"},
+  {"topic":"telugu-wedding","guess":"తల మీద జీలకర్ర బెల్లం పెట్టడం","expect":["జీలకర్ర బెల్లం"],"why":"descriptive Telugu phrase"},
+  {"topic":"telugu-wedding","guess":"బ్యాండ్ బాజా","expect":["మేళతాళాలు"],"why":"Hindi loanword alias"},
+  {"topic":"telugu-wedding","guess":"కేక్ కటింగ్","expect":[],"why":"not at a Telugu wedding"},
+
+  {"topic":"vantillu","guess":"కూకర్ విజిల్ నిద్ర లేపింది","expect":["కూకర్ విజిల్ నిద్ర లేపడం"],"why":"near exact Telugu"},
+  {"topic":"vantillu","guess":"మిక్సీ చాలా శబ్దం చేస్తోంది","expect":["మిక్సీ శబ్దం ఇంట్లో నిండిపోవడం"],"why":"contextual Telugu description"},
+  {"topic":"vantillu","guess":"వంట వాసన అందరికీ తెలుస్తోంది","expect":["వంట వాసన పక్కింటికీ వెళ్ళడం"],"why":"description"},
+  {"topic":"vantillu","guess":"గ్యాస్ అయిపోయింది","expect":["పొగడ్డ గ్యాస్ అయిపోవడం"],"why":"alias"},
+  {"topic":"vantillu","guess":"అమ్మ పాటలు పాడుతూ వంట చేస్తోంది","expect":["అమ్మ పాటలు పాడుతూ వంట చేయడం"],"why":"near exact"},
+  {"topic":"vantillu","guess":"అందరూ తినేముందే టిఫిన్ రెడీ అవలేదు","expect":["టిఫిన్ రెడీ కాకముందే హడావుడి"],"why":"contextual description"},
+  {"topic":"vantillu","guess":"మసాలా వాసనకు తుమ్ము వచ్చింది","expect":["మసాలా వాసనకి తుమ్ము వచ్చిన"],"why":"near exact"},
+  {"topic":"vantillu","guess":"కూరగాయలు కోసే శబ్దం","expect":["కత్తిపీట మీద కూరగాయలు కోసే శబ్దం"],"why":"partial match"},
+  {"topic":"vantillu","guess":"stove and cooker","expect":[],"why":"old board answer no longer present"}
 ]
