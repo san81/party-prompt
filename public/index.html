@@ -817,25 +817,18 @@ if ('speechSynthesis' in window) {
   try { speechSynthesis.cancel(); speechSynthesis.resume(); } catch {}
 }
 
-// Mobile browsers (iOS Safari especially) only allow the FIRST speechSynthesis.speak()
-// from inside a user gesture, so on touch devices we "unlock" speech by speaking a silent
-// utterance on the first tap. On desktop Chrome that primer utterance can get stuck
-// "speaking" forever and block every later (non-interrupt) host line, so we skip it there —
-// desktop speech works without priming. We still resume the audio context everywhere.
-const needsSpeechPrime = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+// Resume the (gesture-gated) audio context on the first interaction. We deliberately do
+// NOT speak a silent "primer" utterance here: a volume-0/empty utterance hangs the speech
+// engine (never fires onend) on both desktop Chrome and mobile Safari/Chrome, which then
+// blocks every real host line. Instead, speech unlocks naturally — in sequence mode the
+// first host line (the turn intro) runs inside the "Start" tap, which is the user gesture
+// iOS/Android require. pickVoice() is re-run because voices often load after first interaction.
 let audioUnlocked = false;
 function unlockAudio() {
   if (audioUnlocked) return;
   audioUnlocked = true;
   Sound.resume();
-  if (needsSpeechPrime && 'speechSynthesis' in window) {
-    try {
-      const u = new SpeechSynthesisUtterance(' ');
-      u.volume = 0;
-      speechSynthesis.speak(u);
-    } catch {}
-  }
-  pickVoice(); // voices often finish loading only after the first interaction on mobile
+  pickVoice();
 }
 
 function say(text, { interrupt = false } = {}) {
