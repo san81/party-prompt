@@ -139,6 +139,8 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
   <div class="bar">
     <span class="brand">Party Guess</span>
     <span class="pill" id="matchPill">Checking…</span>
+    <button class="ghost" id="musicBtn" aria-pressed="true">Music</button>
+    <button class="ghost" id="sfxBtn" aria-pressed="true">Sound FX</button>
     <button class="ghost" id="hostBtn" aria-pressed="true">Host voice</button>
     <button class="ghost" id="logBtn" aria-pressed="false">Match log</button>
     <a class="ghost" href="/wheel" style="text-decoration:none">Spin-the-wheel mode</a>
@@ -225,25 +227,104 @@ const $ = (s) => document.querySelector(s);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 /* ---------- mic beeps (Web Audio) ---------- */
-const Beep = (() => {
-  let ctx = null;
-  function init() { if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) ctx = new AC(); } return ctx; }
-  function tone(freq, dur, peak) {
-    const c = init(); if (!c) return;
-    if (c.state === 'suspended') c.resume();
-    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
-    o.type = 'sine'; o.frequency.value = freq;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(peak, t + 0.005);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.005 + dur);
-    o.connect(g).connect(c.destination); o.start(t); o.stop(t + 0.005 + dur + 0.02);
+// Everything is synthesised with Web Audio, so there are no sound files to load.
+// Background music plus the mic beeps, mirroring the spin-the-wheel page so both
+// modes share the same Music / SFX toggles and ducking behaviour.
+const Sound = (() => {
+  let ctx = null, master, sfxBus, musicBus, musicDuck, noiseBuf;
+  const prefs = { music: load('pg-music', true), sfx: load('pg-sfx', true) };
+  const rand = () => Math.random();
+  const randInt = (n) => Math.floor(Math.random() * n);
+
+  function init() {
+    if (ctx) return ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
+    sfxBus = ctx.createGain(); sfxBus.gain.value = prefs.sfx ? 0.55 : 0; sfxBus.connect(master);
+    musicDuck = ctx.createGain(); musicDuck.gain.value = 1; musicDuck.connect(master);
+    musicBus = ctx.createGain(); musicBus.gain.value = prefs.music ? 0.26 : 0; musicBus.connect(musicDuck);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return ctx;
   }
+  function resume() { if (init() && ctx.state === 'suspended') ctx.resume(); }
+  const now = () => ctx.currentTime;
+
+  function env(g, t, peak, attack, decay) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+  }
+  function tone(freq, t, dur, peak, { type = 'sine', bus = sfxBus, attack = 0.005, glide } = {}) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + attack + dur);
+    env(g, t, peak, attack, dur);
+    o.connect(g).connect(bus); o.start(t); o.stop(t + attack + dur + 0.05);
+  }
+  function noise(t, dur, peak, { bus = sfxBus, type = 'bandpass', freq = 1200, q = 1 } = {}) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    env(g, t, peak, 0.002, dur);
+    s.connect(f).connect(g).connect(bus); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
+  }
+  const ready = () => ctx && prefs.sfx;
+
+  const sfx = {
+    micOn()  { if (ready()) tone(880, now(), 0.07, 0.18, { type: 'sine' }); },
+    micOff() { if (ready()) tone(660, now(), 0.07, 0.12, { type: 'sine' }); },
+    micEnd() { if (ready()) { const t = now(); tone(440, t, 0.06, 0.12, { type: 'sine' }); tone(330, t + 0.08, 0.1, 0.12, { type: 'sine' }); } },
+  };
+
+  // Background music: a light four-chord loop that speeds up for the last ten seconds.
+  const music = (() => {
+    let timer = null, next = 0, step = 0, bpm = 112, intense = false, mel = [];
+    const roots = [110, 87.31, 130.81, 98];                    // A2, F2, C3, G2
+    const scale = [440, 523.25, 587.33, 659.25, 783.99, 880];  // A minor pentatonic
+    const melodySteps = [0, 3, 6, 8, 11, 14];
+    function compose() {
+      mel = [0, 1, 2, 3].map(() => {
+        const bar = {}; let i = randInt(scale.length);
+        for (const s of melodySteps) { if (rand() < 0.75) { i = Math.max(0, Math.min(scale.length - 1, i + randInt(3) - 1)); bar[s] = scale[i]; } }
+        return bar;
+      });
+    }
+    function kick(t) { tone(130, t, 0.14, 0.55, { type: 'sine', bus: musicBus, glide: 45 }); }
+    function snare(t) { noise(t, 0.09, 0.32, { bus: musicBus, freq: 1800, q: 0.8 }); }
+    function hat(t, v) { noise(t, 0.03, v, { bus: musicBus, type: 'highpass', freq: 7000 }); }
+    function bass(t, f) { tone(f, t, 0.16, 0.32, { type: 'triangle', bus: musicBus }); }
+    function bell(t, f) { tone(f, t, 0.22, 0.12, { type: 'sine', bus: musicBus }); tone(f * 2, t, 0.1, 0.03, { type: 'sine', bus: musicBus }); }
+    function play(s, t) {
+      const st = s % 16, bar = Math.floor(s / 16) % 4, root = roots[bar];
+      if (st === 0 || st === 8 || (intense && (st === 4 || st === 12))) kick(t);
+      if (st === 4 || st === 12) snare(t);
+      if (intense || st % 4 === 2) hat(t, st % 4 === 2 ? 0.12 : 0.05);
+      if ([0, 3, 6, 8, 11, 14].includes(st)) bass(t, st === 6 || st === 14 ? root * 2 : root);
+      if (mel[bar][st]) bell(t, mel[bar][st]);
+      if (intense && st % 2 === 1) tone(scale[(st + bar) % scale.length] * 2, t, 0.06, 0.04, { type: 'square', bus: musicBus });
+    }
+    function sched() { while (next < ctx.currentTime + 0.12) { play(step, next); next += 60 / bpm / 4; step++; } }
+    return {
+      start() { if (!init() || timer) return; compose(); intense = false; bpm = 112; step = 0; next = ctx.currentTime + 0.06; timer = setInterval(sched, 25); },
+      stop() { clearInterval(timer); timer = null; },
+      setIntense(v) { intense = v; bpm = v ? 136 : 112; },
+      get playing() { return Boolean(timer); },
+    };
+  })();
+
+  // Lower the music while someone talks (the mic would hear it) and while the host speaks.
+  let duckMic = false, duckHost = false;
+  function applyDuck() { if (ctx) musicDuck.gain.setTargetAtTime(duckMic ? 0.25 : duckHost ? 0.3 : 1, now(), 0.05); }
+
   return {
-    on()  { tone(880, 0.07, 0.18); },
-    off() { tone(660, 0.07, 0.12); },
-    end() { tone(440, 0.06, 0.12); setTimeout(() => tone(330, 0.10, 0.12), 80); },
-    // Silently create/resume the context inside a user gesture (mobile requirement).
-    resume() { const c = init(); if (c && c.state === 'suspended') c.resume(); },
+    resume, sfx, music, prefs,
+    duckForMic(v) { duckMic = v; applyDuck(); },
+    duckForHost(v) { duckHost = v; applyDuck(); },
+    setMusic(on) { prefs.music = on; save('pg-music', on); if (ctx) musicBus.gain.setTargetAtTime(on ? 0.26 : 0, now(), 0.05); },
+    setSfx(on) { prefs.sfx = on; save('pg-sfx', on); if (ctx) sfxBus.gain.setTargetAtTime(on ? 0.55 : 0, now(), 0.05); },
   };
 })();
 
@@ -310,6 +391,8 @@ function load(key, fallback) { try { return JSON.parse(localStorage.getItem(key)
 function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
 
 async function boot() {
+  $('#musicBtn').setAttribute('aria-pressed', Sound.prefs.music);
+  $('#sfxBtn').setAttribute('aria-pressed', Sound.prefs.sfx);
   S.style = load('pg-style', 'all');
   $('#topicStyle').value = S.style;
   const names = load('pg-players', ['Player 1', 'Player 2', '', '']);
@@ -371,7 +454,7 @@ let audioUnlocked = false;
 function unlockAudio() {
   if (audioUnlocked) return;
   audioUnlocked = true;
-  Beep.resume();
+  Sound.resume();
   if ('speechSynthesis' in window) {
     try {
       const u = new SpeechSynthesisUtterance(' ');
@@ -393,9 +476,12 @@ function say(text, { interrupt = false } = {}) {
     u.lang = S.locale;
     if (voice) u.voice = voice;
     u.rate = S.locale === 'en-US' ? 1.08 : 1;
-    u.onend = u.onerror = resolve;
+    let done = false;
+    const finish = () => { if (done) return; done = true; Sound.duckForHost(false); resolve(); };
+    u.onend = u.onerror = finish;
+    Sound.duckForHost(true);
     speechSynthesis.speak(u);
-    setTimeout(resolve, 1500 + text.length * 80);
+    setTimeout(finish, 1500 + text.length * 80);
   });
 }
 
@@ -405,7 +491,8 @@ function startListening() {
   if (S.status === 'intro') startClock();
   if (!SR || S.status !== 'playing') return;
   holding = true;
-  Beep.on();
+  Sound.duckForMic(true);
+  Sound.sfx.micOn();
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   if (listening) return renderMic();
   rec = new SR();
@@ -432,7 +519,8 @@ function startListening() {
 }
 function stopListening() {
   holding = false;
-  Beep.off();
+  Sound.duckForMic(false);
+  Sound.sfx.micOff();
   try { rec && rec.stop(); } catch {}
   renderMic();
 }
@@ -575,12 +663,13 @@ function startClock() {
   if (S.status !== 'intro') return;
   S.status = 'playing';
   S.deadline = Date.now() + S.turnSecs * 1000;
+  Sound.music.start();
   renderMic();
   clearInterval(S.clockTimer);
   S.clockTimer = setInterval(() => {
     const left = Math.max(0, (S.deadline - Date.now()) / 1000);
     setClock(left);
-    if (left <= 10 && !S.warned) { S.warned = true; say(T().sayTen); }
+    if (left <= 10 && !S.warned) { S.warned = true; Sound.music.setIntense(true); say(T().sayTen); }
     if (left <= 0) endTurn();
   }, 200);
 }
@@ -597,7 +686,7 @@ function endTurn() {
   S.status = 'reveal';
   clearInterval(S.clockTimer); setClock(0);
   stopListening(); clearConfirm(); renderMic();
-  Beep.end();
+  Sound.music.stop(); Sound.sfx.micEnd();
   $('#typed').hidden = true; $('#ptt').hidden = true;
   const missed = S.topic.answers.filter(a => !S.matched.has(a.key));
   for (const a of missed) {
@@ -683,6 +772,8 @@ $('#confirmNo').onclick = () => resolveConfirm(false);
 $('#startBtn').onclick = startGame;
 $('#nextBtn').onclick = next;
 $('#againBtn').onclick = () => { $('#final').hidden = true; $('#setup').hidden = false; S.status = 'setup'; };
+$('#musicBtn').onclick = (e) => { const on = !Sound.prefs.music; Sound.setMusic(on); e.currentTarget.setAttribute('aria-pressed', on); };
+$('#sfxBtn').onclick = (e) => { const on = !Sound.prefs.sfx; Sound.setSfx(on); e.currentTarget.setAttribute('aria-pressed', on); };
 $('#hostBtn').onclick = (e) => { S.hostOn = !S.hostOn; e.currentTarget.setAttribute('aria-pressed', S.hostOn); if (!S.hostOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
 $('#logBtn').onclick = (e) => { const on = $('#log').hidden; $('#log').hidden = !on; e.currentTarget.setAttribute('aria-pressed', on); };
 $('#copyLog').onclick = async () => {
