@@ -853,10 +853,24 @@ function say(text, { interrupt = false } = {}) {
 }
 
 /* ======================= listening ======================= */
-let rec = null, holding = false, listening = false;
+let rec = null, holding = false, listening = false, micReady = false, micResolved = false;
+
+// Ask for microphone permission during the (untimed) intro, so the browser's permission
+// prompt doesn't eat into the player's turn. Once granted, SpeechRecognition starts with
+// no second prompt. Called from a user gesture (the Start tap) so the prompt is allowed.
+// micResolved flips once the prompt is answered either way, so the clock can wait for it.
+function warmMic() {
+  if (micResolved) return;
+  if (!navigator.mediaDevices?.getUserMedia) { micResolved = true; return; }
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then((stream) => { stream.getTracks().forEach((t) => t.stop()); micReady = true; micResolved = true; })
+    .catch(() => { micResolved = true; /* denied/unavailable; startListening surfaces it */ });
+}
+
 function startListening() {
-  if (S.status === 'intro') startClock();
+  if (S.status === 'intro') { startClock(); return; }  // startClock begins listening itself
   if (!SR || S.status !== 'playing') return;
+  if (holding && listening) return renderMic();         // already listening
   holding = true;
   Sound.duckForMic(true);
   Sound.sfx.micOn();
@@ -983,6 +997,7 @@ function nextTopic() {
 
 async function startTurn() {
   if (!topicsFor(S.locale).length) { $('#wheelSub').textContent = 'No topics for this language yet.'; return; }
+  warmMic();   // request mic permission now, during the untimed intro, not when the clock starts
   pickVoice();
   S.turnId++; S.status = 'intro'; S.matched = new Set(); S.turnScore = 0;
   S.halfDone = false; S.warned = false; S.lastSec = null;
@@ -1006,7 +1021,14 @@ async function startTurn() {
   fetch('/api/warm', { method: 'POST' }).catch(() => {});
   const turnId = S.turnId;
   await say(T().sayIntro(S.topic.prompt, S.topic.answers.length), { interrupt: true });
-  if (S.turnId === turnId && S.status === 'intro') startClock();
+  // Auto-start the clock after the intro, but not while the mic permission prompt is still
+  // open — otherwise the timer would run while the player answers it. Wait for it to resolve.
+  const tryStart = () => {
+    if (S.turnId !== turnId || S.status !== 'intro') return;   // turn changed or already started
+    if (micResolved) startClock();
+    else setTimeout(tryStart, 150);
+  };
+  tryStart();
 }
 
 function startClock() {
@@ -1014,6 +1036,7 @@ function startClock() {
   S.status = 'playing';
   S.deadline = Date.now() + S.turnSecs * 1000;
   Sound.sfx.go(); Sound.music.start();
+  startListening();   // open the mic the instant the clock starts; button flips to pause
   renderMic();
   clearInterval(S.clockTimer);
   S.clockTimer = setInterval(() => {
