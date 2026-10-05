@@ -754,6 +754,25 @@ function pickVoice() {
 }
 if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = pickVoice;
 
+// Mobile browsers (iOS Safari especially) only allow the FIRST speechSynthesis.speak()
+// from inside a user gesture. Our host lines fire from timers (after the spin, on a
+// countdown), so we "unlock" speech by speaking a silent utterance on the first tap.
+// Harmless and inaudible on desktop. Also resumes the (gesture-gated) audio context.
+let audioUnlocked = false;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  Sound.resume();
+  if ('speechSynthesis' in window) {
+    try {
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      speechSynthesis.speak(u);
+    } catch {}
+  }
+  pickVoice(); // voices often finish loading only after the first interaction on mobile
+}
+
 function say(text, { interrupt = false } = {}) {
   $('#caption').textContent = text;
   if (!S.hostOn || !canSpeak) return Promise.resolve();
@@ -1039,6 +1058,10 @@ function setLocale(code) {
 function setToggle(btn, on) { btn.setAttribute('aria-pressed', on); }
 
 /* ======================= wiring ======================= */
+// Unlock audio + speech on the very first user interaction, whatever it is.
+document.addEventListener('pointerdown', unlockAudio);
+document.addEventListener('keydown', unlockAudio);
+
 $('#spinBtn').onclick = spin;
 $('#hub').onclick = spin;
 $('#wheel').onclick = spin;
