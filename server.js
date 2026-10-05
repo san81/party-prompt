@@ -65,7 +65,7 @@ const server = http.createServer(async (req, res) => {
       return Array.isArray(out) ? send(res, out[0], out[1]) : send(res, 200, out);
     }
     if (req.method !== 'GET') return send(res, 404, { error: 'Not found' });
-    const rel = url.pathname === '/' ? 'index.html' : url.pathname === '/wheel' ? 'wheel.html' : normPath(url.pathname).replace(/^([/\\])+/, '');
+    const rel = url.pathname === '/' ? 'index.html' : normPath(url.pathname).replace(/^([/\\])+/, '');
     if (rel.includes('..')) return send(res, 400, { error: 'Bad path' });
     const file = await readFile(join(PUBLIC, rel));
     send(res, 200, file.toString(), TYPES[extname(rel)] || 'text/plain');
@@ -77,6 +77,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(config.port, () => {
-  console.log(`Party Guess running at http://localhost:${config.port}  (spin-the-wheel mode: http://localhost:${config.port}/wheel)`);
+  console.log(`Party Guess running at http://localhost:${config.port}`);
   console.log(jevConfigured() ? `Jev matching on (${config.jevModel})` : 'No TYPESAFE_API_KEY found: local matching only');
 });

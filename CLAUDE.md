@@ -6,7 +6,7 @@ Full details for humans are in `README.md`. Read it when you need setup, validat
 
 ## Commands
 
-- `npm start` serves both modes on http://localhost:3000 (`/wheel` = spin-the-wheel, `/` = classic pass-the-phone)
+- `npm start` serves the game on http://localhost:3000. One page; a "Pick the next player by" selector on setup chooses spin-the-wheel or in-sequence turn order
 - `npm run lint-topics` checks the question bank. Run after any edit to `lib/topics/*.js`; it must print "No problems found."
 - `npm run eval` runs 78 labelled guesses through the real matcher. `npm run eval -- te-IN` for one language; `FORCE_JEV=1` makes Jev decide every case
 - `npm run probe` tests whether Jev understands Telugu vs English (needs a key)
@@ -17,8 +17,7 @@ Full details for humans are in `README.md`. Read it when you need setup, validat
 - `server.js` HTTP server and API: `/api/topics`, `/api/match`, `/api/warm`, `/api/status`
 - `lib/matcher.js` two-stage matching; `lib/localMatch.js` stage 1; `lib/jev.js` stage 2 request builder and client
 - `lib/topics.js` languages (`LOCALES`); boards in `lib/topics/en.js` and `lib/topics/te.js`
-- `public/wheel.html` spin-the-wheel mode, single file with inline CSS and JS, sounds synthesised with Web Audio
-- `public/index.html` classic mode, same structure
+- `public/index.html` the whole game, single file with inline CSS and JS, sounds synthesised with Web Audio; turn order is spin-the-wheel or in-sequence (a simple next-up card)
 - `eval/` eval cases and scripts; `logs/matches.jsonl` gets every match the server makes
 
 ## How matching works (keep these invariants)

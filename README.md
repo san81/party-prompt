@@ -13,7 +13,7 @@ cp .env.example .env        # then paste your key into TYPESAFE_API_KEY
 npm start                   # http://localhost:3000
 ```
 
-Open **http://localhost:3000/wheel** for spin-the-wheel mode, or **http://localhost:3000** for classic pass-the-phone mode, in Chrome, Edge or Safari. Allow the microphone when asked. Firefox has no speech recognition, so use the "type a guess" box there.
+Open **http://localhost:3000** in Chrome, Edge or Safari. On the setup screen, "Pick the next player by" chooses how turns are handed out: spinning a wheel or going through the roster in sequence. Allow the microphone when asked. Firefox has no speech recognition, so use the "type a guess" box there.
 
 Without a key the game still runs with local matching only; the badge in the top bar shows which mode you're in.
 
@@ -29,9 +29,14 @@ npx cloudflared tunnel --url http://localhost:3000
 
 Then open the printed `https://…trycloudflare.com` address on the phone. Anyone with that address can play (and spend your Jev credits), so close the tunnel when you're done.
 
-## Spin-the-wheel mode
+## Picking who's next
 
-One player plays at a time, chosen by a prize wheel. Open `/wheel`.
+One player plays at a time. "Pick the next player by" on the setup screen chooses how:
+
+- **Spinning a wheel** — a prize wheel of the names picks at random.
+- **Going in sequence** — a simple "next up" card walks through the roster in order; tap **Start now** when the player is ready, and it advances to the next name after each turn.
+
+### The wheel
 
 - **The wheel** is split evenly between the names on it. Spin with the button, by tapping the wheel, or with the space bar. It clicks past each peg, whooshes while fast, and plays a fanfare with confetti when it stops.
 - **The side panel** adds names (paste a comma- or line-separated list to add a whole class) and removes them with ×. Names are kept on the device between sessions.
@@ -149,8 +154,7 @@ lib/topics.js        languages; boards are in lib/topics/en.js (12) and lib/topi
 lib/localMatch.js    stage 1: normalize, fillers, plurals, aliases, typo distance
 lib/jev.js           stage 2: request builder and client with one retry on 429/529
 lib/matcher.js       combines both stages and applies thresholds
-public/index.html    classic pass-the-phone mode
-public/wheel.html    spin-the-wheel mode, with synthesised music and sound effects
+public/index.html    the whole game, with synthesised music and sound effects; wheel or in-sequence turn order
 eval/cases.json      labelled test guesses
 eval/run.js          scorecard
 eval/probe-language.js  Telugu vs English probe of Jev alone
