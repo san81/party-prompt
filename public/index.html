@@ -810,7 +810,12 @@ function pickVoice() {
   // An English voice reading Telugu is unintelligible, so speak only when a matching voice exists.
   canSpeak = Boolean(voice) || (all.length === 0 && prefix === 'en');
 }
-if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = pickVoice;
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = pickVoice;
+  // Clear any utterance left stuck in the engine from a previous page/session, which on
+  // Chrome can otherwise block all later speech, and un-pause it.
+  try { speechSynthesis.cancel(); speechSynthesis.resume(); } catch {}
+}
 
 // Mobile browsers (iOS Safari especially) only allow the FIRST speechSynthesis.speak()
 // from inside a user gesture, so on touch devices we "unlock" speech by speaking a silent
@@ -846,6 +851,9 @@ function say(text, { interrupt = false } = {}) {
     const finish = () => { if (done) return; done = true; Sound.duckForHost(false); resolve(); };
     u.onend = u.onerror = finish;
     Sound.duckForHost(true);
+    // Chrome (macOS especially) sometimes leaves the speech engine paused; resuming
+    // right before speaking is the documented workaround for "speak does nothing".
+    try { speechSynthesis.resume(); } catch {}
     speechSynthesis.speak(u);
     setTimeout(finish, 1500 + text.length * 80);
   });
