@@ -43,26 +43,22 @@ only proves a key is present, not that it authenticates — test `/api/match-one
 If you add/remove images under `public/rapid/items/<category>/`, regenerate the manifest:
 
 ```bash
-node -e '
-import("node:fs").then(fs=>{
-  const dir="public/rapid/items", EXCLUDE=new Set(["missingPerson"]);
-  const labels={alphabetPrior:{en:"Alphabet",te:"అక్షరమాల"},animals:{en:"Animals",te:"జంతువులు"},
-    kitchenObject:{en:"Kitchen",te:"వంటగది వస్తువులు"},logo:{en:"Brand Logos",te:"బ్రాండ్ లోగోలు"},
-    moviesNameFromPoster:{en:"Movie Posters",te:"సినిమా పోస్టర్లు"},seeds:{en:"Seeds",te:"విత్తనాలు"},
-    usStates:{en:"US States",te:"అమెరికా రాష్ట్రాలు"}};
-  const clean=f=>{let n=f.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").replace(/([a-z0-9])([A-Z])/g,"$1 $2").trim();
-    return n.length<=2?n.toUpperCase():n[0].toUpperCase()+n.slice(1);};
-  const cats=fs.readdirSync(dir).filter(c=>!EXCLUDE.has(c)&&fs.statSync(dir+"/"+c).isDirectory());
-  const items={}; for(const c of cats){const files=fs.readdirSync(dir+"/"+c).filter(f=>/\.(png|jpe?g|gif|webp)$/i.test(f));
-    items[c]=files.map(f=>({file:f,answer:clean(f)}));}
-  const categories=cats.map(c=>({key:c,en:labels[c]?.en||c,te:labels[c]?.te||c,count:items[c].length}));
-  fs.writeFileSync("public/rapid/items.js",
-    "window.RAPID_CATEGORIES = "+JSON.stringify(categories,null,2)+";\nwindow.RAPID_ITEMS = "+JSON.stringify(items,null,2)+";\n");
-  console.log("ok", categories.map(c=>c.key+"("+c.count+")").join(", "));
-});'
+node scripts/gen-rapid-items.mjs      # writes public/rapid/items.js
 ```
 
-Add a `labels` entry for any new category (English + Telugu) so the dropdown is translated.
+Notes:
+- Add a `LABELS` entry in that script for any new category (English + Telugu) so the dropdown
+  is translated; otherwise the folder key is used verbatim.
+- `missingPerson` is excluded (personal photos); empty folders (e.g. `teluguCinema` until you
+  add images) are skipped so nothing broken ships.
+- Two categories share the `letters/` images (single A–X letter pictures):
+  `alphabet` (answer = the letter shown) and `priorAlphabet` (answer = the letter *before* it,
+  with `shown` = the displayed letter, `imgDir: 'letters'`). The "prior" rule is baked into the
+  expected answer, so matching stays a plain local single-letter check — **no Jev** for letters.
+  rapid.html resolves the image path with `category.imgDir || category.key`.
+
+Filenames with spaces (e.g. `Bill Gates.jpg`) are fine — the answer is the cleaned file name,
+and the server decodes the request path.
 
 ## Adding a third game (pattern)
 

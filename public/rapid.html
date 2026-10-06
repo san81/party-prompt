@@ -96,6 +96,19 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .standings li.win { border-color: var(--brass); box-shadow: var(--glow); }
 .standings b { margin-left: auto; font-family: var(--display); color: var(--brass); font-size: 20px; }
 
+/* Match log */
+.log { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.log header { display: flex; align-items: center; gap: 10px; }
+.log h2 { font-size: 16px; margin: 0; margin-right: auto; }
+.log .stats { font: 12px var(--mono); color: var(--muted); margin: 0; }
+.log .scroll { overflow: auto; max-height: 42vh; }
+.log table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.log th, .log td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.log th { color: var(--muted); font-weight: 500; }
+.log td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.log tr.correct td:first-child { color: var(--mint); }
+.log tr.no td:first-child { color: var(--coral); }
+
 /* Category description */
 .catdesc { background: color-mix(in srgb, var(--panel) 70%, var(--stage)); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--muted); }
 .catdesc b { color: var(--ink); }
@@ -134,6 +147,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <button class="ghost" id="helpBtn" aria-label="How to play" title="How to play">?</button>
     <button class="ghost" id="soundBtn" aria-pressed="true">Sounds</button>
     <button class="ghost" id="hostBtn" aria-pressed="true">Host voice</button>
+    <button class="ghost" id="logBtn" aria-pressed="false">Match log</button>
     <select class="ctl" id="langSel" aria-label="Language"></select>
     <select class="ctl" id="themeSel" aria-label="Theme"></select>
   </div>
@@ -205,6 +219,21 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <h1 id="winner"></h1>
     <ol class="standings" id="standings"></ol>
     <div class="row"><button class="primary" id="againBtn">Play again</button><a class="ghost" href="/" id="menuBtn2">← Menu</a></div>
+  </section>
+
+  <!-- ===== Match log ===== -->
+  <section class="log" id="log" hidden>
+    <header>
+      <h2>Match log</h2>
+      <button class="ghost" id="copyLog">Copy as JSON</button>
+    </header>
+    <p class="stats" id="logStats">No guesses yet.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Category</th><th>Expected</th><th>Guess</th><th>Result</th><th>Source</th><th class="num">ms</th></tr></thead>
+        <tbody id="logRows"></tbody>
+      </table>
+    </div>
   </section>
 </div>
 
@@ -304,7 +333,8 @@ const STR = {
 /* Category descriptions (shown on setup) and showcase hints (animals; others fall back to
    a category + first-letter hint). Add a `hint`/CAT_INFO entry for new content as needed. */
 const CAT_INFO = {
-  alphabetPrior: { en: { desc: 'Single letters of the English alphabet — say the letter you see.', eg: 'A, B, C…' }, te: { desc: 'ఇంగ్లీష్ అక్షరాలు — కనిపించే అక్షరాన్ని చెప్పండి.', eg: 'A, B, C…' } },
+  alphabet:      { en: { desc: 'A single letter shows — just say the letter you see.', eg: 'See “D” → say “D”' }, te: { desc: 'ఒక అక్షరం కనిపిస్తుంది — కనిపించే అక్షరాన్ని చెప్పండి.', eg: '“D” → “D”' } },
+  priorAlphabet: { en: { desc: 'A letter shows — say the letter that comes BEFORE it in the alphabet.', eg: 'See “D” → say “C”' }, te: { desc: 'ఒక అక్షరం కనిపిస్తుంది — దానికి ముందు వచ్చే అక్షరాన్ని చెప్పండి.', eg: '“D” → “C”' } },
   animals:       { en: { desc: 'Photos of animals — shout the animal’s name.', eg: 'Tiger, Zebra…' }, te: { desc: 'జంతువుల ఫోటోలు — జంతువు పేరు చెప్పండి.', eg: 'పులి, జీబ్రా…' } },
   hollywood:     { en: { desc: 'Famous Hollywood actors.', eg: 'Tom Cruise…' }, te: { desc: 'ప్రసిద్ధ హాలీవుడ్ నటులు.', eg: 'టామ్ క్రూయిజ్…' } },
   kitchenObject: { en: { desc: 'Everyday kitchen tools and utensils.', eg: 'Spoon, Wok…' }, te: { desc: 'వంటగదిలో వాడే వస్తువులు.', eg: 'స్పూన్, బాణలి…' } },
@@ -351,12 +381,29 @@ const S = {
   deck: [], item: null, turnScore: 0, seq: 0,
   status: 'setup', deadline: 0, clockTimer: null, warned: false, lastSec: null,
   imgShownAt: 0, hintLevel: 0,
-  soundOn: true, hostOn: true,
+  soundOn: true, hostOn: true, log: [],
 };
 const T = () => STR[S.lang] || STR['en-US'];
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+/* ---------- match log (host/debug) ---------- */
+const expectedLabel = () => !S.item ? '' : (S.category?.key === 'priorAlphabet' ? `${S.item.shown}→${S.item.answer}` : S.item.answer);
+function logRow(entry) { S.log.unshift({ at: new Date().toISOString(), category: S.category?.key, ...entry }); if (!$('#log').hidden) renderLog(); }
+function renderLog() {
+  $('#logRows').innerHTML = S.log.slice(0, 150).map(r =>
+    `<tr class="${r.result === 'correct' || r.result === 'got it' ? 'correct' : r.result === 'no' ? 'no' : ''}">
+      <td>${esc(r.category || '')}</td><td>${esc(r.expected ?? '')}</td><td>${esc(r.guess ?? '')}</td>
+      <td>${esc(r.result)}${r.score != null ? ` (${r.score})` : ''}</td><td>${esc(r.source || '')}${r.error ? ' ⚠' : ''}</td>
+      <td class="num">${r.ms ?? ''}</td></tr>`).join('');
+  const rows = S.log.filter(r => r.source);
+  if (!rows.length) { $('#logStats').textContent = 'No guesses yet.'; return; }
+  const local = rows.filter(r => r.source === 'local').length;
+  const jevMs = rows.filter(r => r.jev).map(r => r.jev.ms).sort((a, b) => a - b);
+  const med = jevMs.length ? jevMs[Math.floor(jevMs.length / 2)] : null;
+  $('#logStats').textContent = `${rows.length} guesses · ${Math.round(local / rows.length * 100)}% local · median Jev ${med ?? '–'} ms`;
+}
 
 /* ================= sound (Web Audio, synthesised) ================= */
 const Sound = (() => {
@@ -479,22 +526,26 @@ async function handleUtterance(text) {
   $('#live').textContent = '';
   if (!text || S.status !== 'playing' || !S.item) return;
   const expected = S.item.answer, seq = ++S.seq;
-  if (expected.length === 1) {   // alphabet: decide locally, don't bother the server
-    if (matchesLetter(text, expected)) scoreCorrect();
+  if (expected.length === 1) {   // alphabet / prior: decide locally, don't bother the server
+    const ok = matchesLetter(text, expected);
+    logRow({ expected: expectedLabel(), guess: text, result: ok ? 'correct' : 'no', source: 'local', ms: 0 });
+    if (ok) scoreCorrect();
     else { $('#feedback').textContent = `"${text}" — ${T().notQuite}`; $('#feedback').className = 'feedback bad'; }
     return;
   }
-  // local fast path
+  const exLabel = expectedLabel();
+  // local fast path then Jev (inside matchOne on the server)
   try {
     const r = await fetch('/api/match-one', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ expected, guess: text, category: S.category.en }),
     }).then(x => x.json());
     if (seq !== S.seq || S.status !== 'playing') return;      // a newer guess/turn superseded this
+    logRow({ expected: exLabel, guess: text, result: r.match ? 'correct' : 'no', source: r.source, score: r.score, ms: r.latencyMs, jev: r.jev, error: r.error });
     if (r.match) scoreCorrect();
     else { $('#feedback').textContent = `"${text}" — ${T().notQuite}`; $('#feedback').className = 'feedback bad'; }
   } catch {
-    if (seq === S.seq) { $('#feedback').textContent = T().notQuite; $('#feedback').className = 'feedback bad'; }
+    if (seq === S.seq) { logRow({ expected: exLabel, guess: text, result: 'error', source: 'local', error: 'network' }); $('#feedback').textContent = T().notQuite; $('#feedback').className = 'feedback bad'; }
   }
 }
 
@@ -553,7 +604,7 @@ function startTurn() {
   $('#feedback').textContent = ''; $('#live').textContent = ''; $('#hint').textContent = '';
   const notes = [];
   if (S.hostOn && !canSpeak) notes.push(T().noVoice);
-  if (S.category.key === 'alphabetPrior') notes.push(T().alphabetNote);
+  if (S.category.imgDir === 'letters') notes.push(T().alphabetNote);
   $('#stageNote').textContent = notes.join('  ');
   renderScores(); renderMic();
   setClock(S.turnSecs);
@@ -597,7 +648,7 @@ function nextImage() {
   S.seq++;    // invalidate any in-flight guess for the previous image
   S.imgShownAt = Date.now(); S.hintLevel = 0;
   $('#hint').textContent = ''; $('#ans').textContent = '';
-  $('#img').src = `/rapid/items/${S.category.key}/${S.item.file}`;
+  $('#img').src = `/rapid/items/${S.category.imgDir || S.category.key}/${S.item.file}`;
   $('#img').alt = 'Name this';
 }
 
@@ -605,7 +656,12 @@ function nextImage() {
 // first-letter + length hint. Fires after the player dwells on the same image.
 function hintText(level) {
   if (!S.item) return '';
-  const ans = S.item.answer, te = S.lang === 'te-IN';
+  const te = S.lang === 'te-IN';
+  if (S.category.imgDir === 'letters') {   // single-letter rounds: nudge the rule, never reveal the letter
+    if (S.category.key === 'priorAlphabet') return te ? `"${S.item.shown}" కి ముందు వచ్చే అక్షరం ఏది?` : `Which letter comes just before "${S.item.shown}"?`;
+    return te ? 'కనిపించే అక్షరాన్నే చెప్పండి' : 'Just say the letter you see';
+  }
+  const ans = S.item.answer;
   const authored = (HINTS[S.category.key] || {})[ans];
   if (level === 1) {
     if (authored) return (te ? authored.te : authored.en) || authored.en;
@@ -623,6 +679,7 @@ function maybeHint() {
 
 function skipImage() {
   if (S.status !== 'playing') return;
+  logRow({ expected: expectedLabel(), guess: '—', result: 'skip', source: 'manual' });
   $('#feedback').textContent = T().skipped(S.item.answer); $('#feedback').className = 'feedback bad';
   Sound.wrong();
   nextImage();
@@ -637,11 +694,13 @@ function endTurn() {
   const team = S.teams[S.curTeam];
   say(T().sayTimeUp(team.name, S.turnScore), { interrupt: true });
   // Reveal the answer the team was stuck on and WAIT — don't auto-advance to scores.
-  $('#hint').textContent = ''; $('#feedback').textContent = '';
+  // Leave any hint on screen so a player who saw it can still connect it to the answer.
+  $('#feedback').textContent = '';
+  const revealAns = (S.category.key === 'priorAlphabet' && S.item) ? `${S.item.shown} → ${S.item.answer}` : (S.item ? S.item.answer : '');
   if (S.item) $('#ans').textContent = S.item.answer;
   $('#controls').hidden = true;
   $('#reveal').hidden = false;
-  $('#revealBig').textContent = S.item ? T().answerWas(S.item.answer) : '';
+  $('#revealBig').textContent = revealAns ? T().answerWas(revealAns) : '';
   $('#revealSub').textContent = T().found(S.turnScore);
   $('#revealBtn').textContent = S.turnNo >= S.totalTurns ? T().seeScores : T().nextTeam(S.teams[1 - S.curTeam].name);
 }
@@ -721,9 +780,11 @@ document.addEventListener('pointerdown', unlockAudio);
 $('#startBtn').onclick = startGame;
 $('#category').addEventListener('change', showCatDesc);
 $('#introStart').onclick = () => { unlockAudio(); startTurn(); };
-$('#gotBtn').onclick = () => { if (S.status === 'playing') scoreCorrect(); };
+$('#gotBtn').onclick = () => { if (S.status === 'playing') { logRow({ expected: expectedLabel(), guess: '(host)', result: 'got it', source: 'manual' }); scoreCorrect(); } };
 $('#skipBtn').onclick = skipImage;
 $('#endBtn').onclick = endTurn;
+$('#logBtn').onclick = (e) => { const on = $('#log').hidden; $('#log').hidden = !on; e.currentTarget.setAttribute('aria-pressed', on); if (on) renderLog(); };
+$('#copyLog').onclick = async () => { try { await navigator.clipboard.writeText(JSON.stringify(S.log, null, 2)); $('#copyLog').textContent = 'Copied'; } catch { $('#copyLog').textContent = 'Copy failed'; } setTimeout(() => ($('#copyLog').textContent = 'Copy as JSON'), 1500); };
 $('#revealBtn').onclick = proceedAfterReveal;
 $('#helpBtn').onclick = () => openTour(true);
 $('#tourNext').onclick = () => { const n = T().tour.length; if (tourStep < n - 1) { tourStep++; renderTour(); } else closeTour(); };
