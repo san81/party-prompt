@@ -80,7 +80,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method !== 'GET') return send(res, 404, { error: 'Not found' });
     const pretty = { '/': 'index.html', '/vibe': 'vibe.html', '/rapid': 'rapid.html' };
-    const rel = pretty[url.pathname] || normPath(url.pathname).replace(/^([/\\])+/, '');
+    let pathname;
+    try { pathname = decodeURIComponent(url.pathname); } catch { return send(res, 400, { error: 'Bad path' }); }
+    const rel = pretty[pathname] || normPath(pathname).replace(/^([/\\])+/, '');
     if (rel.includes('..')) return send(res, 400, { error: 'Bad path' });
     const file = await readFile(join(PUBLIC, rel));   // Buffer — sent as-is so images/audio aren't corrupted
     send(res, 200, file, TYPES[extname(rel)] || 'text/plain');

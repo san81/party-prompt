@@ -1,6 +1,4 @@
-// Auto-generated from public/rapid/items/. Each item: { file, answer }.
-// 'answer' is the English name used as the expected answer for matching (Jev handles
-// synonyms and other languages). Regenerate with the script in .agents if images change.
+// Auto-generated from public/rapid/items/. Each item: { file, answer }. Regenerate via .agents/build-guidelines.md.
 window.RAPID_CATEGORIES = [
   {
     "key": "alphabetPrior",
@@ -13,6 +11,12 @@ window.RAPID_CATEGORIES = [
     "en": "Animals",
     "te": "జంతువులు",
     "count": 24
+  },
+  {
+    "key": "hollywood",
+    "en": "Hollywood",
+    "te": "హాలీవుడ్",
+    "count": 14
   },
   {
     "key": "kitchenObject",
@@ -33,10 +37,22 @@ window.RAPID_CATEGORIES = [
     "count": 24
   },
   {
+    "key": "scientists",
+    "en": "Scientists",
+    "te": "శాస్త్రవేత్తలు",
+    "count": 14
+  },
+  {
     "key": "seeds",
     "en": "Seeds",
     "te": "విత్తనాలు",
     "count": 24
+  },
+  {
+    "key": "techIcons",
+    "en": "Tech Icons",
+    "te": "టెక్ ఐకాన్లు",
+    "count": 14
   },
   {
     "key": "usStates",
@@ -240,6 +256,64 @@ window.RAPID_ITEMS = {
     {
       "file": "pig.png",
       "answer": "Pig"
+    }
+  ],
+  "hollywood": [
+    {
+      "file": "Angelina Jolie.jpg",
+      "answer": "Angelina Jolie"
+    },
+    {
+      "file": "Brad Pitt.jpg",
+      "answer": "Brad Pitt"
+    },
+    {
+      "file": "Dwayne Johnson.jpg",
+      "answer": "Dwayne Johnson"
+    },
+    {
+      "file": "Emma Watson.jpg",
+      "answer": "Emma Watson"
+    },
+    {
+      "file": "Jennifer Lawrence.jpg",
+      "answer": "Jennifer Lawrence"
+    },
+    {
+      "file": "Johnny Depp.jpg",
+      "answer": "Johnny Depp"
+    },
+    {
+      "file": "Keanu Reeves.jpg",
+      "answer": "Keanu Reeves"
+    },
+    {
+      "file": "Leonardo DiCaprio.jpg",
+      "answer": "Leonardo Di Caprio"
+    },
+    {
+      "file": "Morgan Freeman.jpg",
+      "answer": "Morgan Freeman"
+    },
+    {
+      "file": "Robert Downey Jr.jpg",
+      "answer": "Robert Downey Jr"
+    },
+    {
+      "file": "Scarlett Johansson.jpg",
+      "answer": "Scarlett Johansson"
+    },
+    {
+      "file": "Tom Cruise.jpg",
+      "answer": "Tom Cruise"
+    },
+    {
+      "file": "Tom Hanks.jpg",
+      "answer": "Tom Hanks"
+    },
+    {
+      "file": "Will Smith.jpg",
+      "answer": "Will Smith"
     }
   ],
   "kitchenObject": [
@@ -548,6 +622,64 @@ window.RAPID_ITEMS = {
       "answer": "Pokiri"
     }
   ],
+  "scientists": [
+    {
+      "file": "A P J Abdul Kalam.jpg",
+      "answer": "A P J Abdul Kalam"
+    },
+    {
+      "file": "Alan Turing.jpg",
+      "answer": "Alan Turing"
+    },
+    {
+      "file": "Albert Einstein.jpg",
+      "answer": "Albert Einstein"
+    },
+    {
+      "file": "C V Raman.jpg",
+      "answer": "C V Raman"
+    },
+    {
+      "file": "Charles Darwin.jpg",
+      "answer": "Charles Darwin"
+    },
+    {
+      "file": "Galileo Galilei.jpg",
+      "answer": "Galileo Galilei"
+    },
+    {
+      "file": "Isaac Newton.jpg",
+      "answer": "Isaac Newton"
+    },
+    {
+      "file": "Marie Curie.jpg",
+      "answer": "Marie Curie"
+    },
+    {
+      "file": "Niels Bohr.jpg",
+      "answer": "Niels Bohr"
+    },
+    {
+      "file": "Nikola Tesla.jpeg",
+      "answer": "Nikola Tesla"
+    },
+    {
+      "file": "Richard Feynman.jpg",
+      "answer": "Richard Feynman"
+    },
+    {
+      "file": "Rosalind Franklin.jpg",
+      "answer": "Rosalind Franklin"
+    },
+    {
+      "file": "Srinivasa Ramanujan.jpg",
+      "answer": "Srinivasa Ramanujan"
+    },
+    {
+      "file": "Stephen Hawking.jpg",
+      "answer": "Stephen Hawking"
+    }
+  ],
   "seeds": [
     {
       "file": "Apple.png",
@@ -644,6 +776,64 @@ window.RAPID_ITEMS = {
     {
       "file": "Watermelon.png",
       "answer": "Watermelon"
+    }
+  ],
+  "techIcons": [
+    {
+      "file": "Bill Gates.jpg",
+      "answer": "Bill Gates"
+    },
+    {
+      "file": "Elon Musk.jpg",
+      "answer": "Elon Musk"
+    },
+    {
+      "file": "Jack Dorsey.jpg",
+      "answer": "Jack Dorsey"
+    },
+    {
+      "file": "Jeff Bezos.jpg",
+      "answer": "Jeff Bezos"
+    },
+    {
+      "file": "Jensen Huang.jpg",
+      "answer": "Jensen Huang"
+    },
+    {
+      "file": "Larry Page.jpg",
+      "answer": "Larry Page"
+    },
+    {
+      "file": "Mark Zuckerberg.jpg",
+      "answer": "Mark Zuckerberg"
+    },
+    {
+      "file": "Sam Altman.jpg",
+      "answer": "Sam Altman"
+    },
+    {
+      "file": "Satya Nadella.jpg",
+      "answer": "Satya Nadella"
+    },
+    {
+      "file": "Sergey Brin.jpg",
+      "answer": "Sergey Brin"
+    },
+    {
+      "file": "Steve Jobs.jpg",
+      "answer": "Steve Jobs"
+    },
+    {
+      "file": "Steve Wozniak.jpg",
+      "answer": "Steve Wozniak"
+    },
+    {
+      "file": "Sundar Pichai.jpg",
+      "answer": "Sundar Pichai"
+    },
+    {
+      "file": "Tim Cook.jpg",
+      "answer": "Tim Cook"
     }
   ],
   "usStates": [
