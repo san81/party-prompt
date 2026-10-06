@@ -1,1252 +1,154 @@
 <!doctype html>
 <html lang="en">
-<title>Party Guess</title>
+<head>
 <meta charset="utf-8">
+<title>Party Games</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('pg-theme')||'celebration'}catch(e){document.documentElement.dataset.theme='celebration'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Telugu:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="/theme.css">
 <style>
-/* Layout: two screens on one game-show stage. The wheel screen puts the wheel centre-left
-   with the roster and leaderboard in a side column; the turn screen is the guessing stage.
-   Single deliberate dark look shared with the pass-the-phone page. */
-:root {
-  color-scheme: dark;
-  --stage: #15132c;
-  --panel: #1f1c40;
-  --line: #36325f;
-  --ink: #f4efe4;
-  --muted: #aaa4cc;
-  --brass: #e8b64a;
-  --brass-ink: #2a1e05;
-  --coral: #ff6b57;
-  --mint: #5ed1a3;
-  /* wheel segments: mid-light hues so the dark name text stays readable */
-  --seg1: #e8b64a; --seg2: #ff8f73; --seg3: #5ed1a3; --seg4: #7cc4f5; --seg5: #b9a2ff; --seg6: #f59fc0;
-  --seg-ink: #1b1633;
-  --display: 'Bungee', 'Noto Sans Telugu', 'Kohinoor Telugu', 'Telugu Sangam MN', 'Nirmala UI', 'Arial Black', Impact, sans-serif;
-  --body: 'Figtree', 'Noto Sans Telugu', 'Kohinoor Telugu', 'Telugu Sangam MN', 'Nirmala UI', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
-}
 * { box-sizing: border-box; }
-[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   margin: 0; background: var(--stage); color: var(--ink);
   font: 16px/1.45 var(--body);
-  background-image: radial-gradient(120% 60% at 50% -10%, #2b2660 0%, transparent 60%);
+  background-image: radial-gradient(120% 60% at 50% -10%, color-mix(in srgb, var(--panel) 85%, var(--brass) 15%) 0%, transparent 60%);
   background-repeat: no-repeat; background-size: 100% 900px;
+  display: flex; flex-direction: column;
 }
-button, input, select { font: inherit; color: inherit; }
-button { cursor: pointer; }
+button, select, a { font: inherit; color: inherit; }
+button, select { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
-.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 100%; }
+.wrap { max-width: 920px; width: 100%; margin: 0 auto; padding: 16px 16px 40px; display: flex; flex-direction: column; gap: 22px; flex: 1; }
 
-/* Top bar */
-.bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-@media (max-width: 520px) { .bar .ghost { padding: 5px 8px; font-size: 12px; } .brand { width: 100%; } }
-.brand { font-family: var(--display); font-size: 18px; letter-spacing: .02em; color: var(--brass); margin-right: auto; }
+.bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-size: 20px; letter-spacing: .02em; color: var(--brass); margin-right: auto; }
 .pill { font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .pill.on { border-color: var(--mint); color: var(--mint); }
 .pill.warn { border-color: var(--coral); color: var(--coral); }
-.ghost { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--muted); text-decoration: none; }
-.ghost[aria-pressed="true"] { color: var(--ink); border-color: var(--muted); }
-.ghost[aria-pressed="false"] { text-decoration: line-through; }
-#logBtn[aria-pressed="false"] { text-decoration: none; }
+.ctl { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-size: 13px; }
 
-.primary { background: var(--brass); color: var(--brass-ink); border: 0; border-radius: 10px; padding: 12px 20px; font-weight: 700; font-size: 16px; }
-.primary:disabled { opacity: .4; cursor: default; }
-.note { font-size: 13px; color: var(--muted); margin: 0; }
-label.field { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 130px; }
-input[type=text], select { background: var(--stage); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 16px; text-transform: none; letter-spacing: 0; }
-.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.hero { text-align: center; margin-top: 10px; }
+.hero h1 { font-family: var(--display); font-weight: 400; font-size: clamp(36px, 9vw, 72px); line-height: 1; margin: 0; color: var(--ink); text-shadow: var(--glow); }
+.hero p { color: var(--muted); margin: 10px 0 0; font-size: clamp(15px, 2.4vw, 19px); }
 
-/* ---------- Wheel screen ---------- */
-.wheel-view { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; align-items: start; }
-@media (max-width: 820px) { .wheel-view { grid-template-columns: minmax(0, 1fr); } }
-.wheel-col { display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 0; }
-.wheel-title { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 5vw, 38px); line-height: 1.05; margin: 0; text-align: center; text-wrap: balance; }
-.wheel-sub { margin: 0; color: var(--muted); text-align: center; }
-.wheel-box { position: relative; width: min(100%, 520px); aspect-ratio: 1; max-width: 100%; margin-top: 10px; }
-#wheel { width: 100%; height: 100%; display: block; touch-action: manipulation; cursor: pointer; }
-.pointer { position: absolute; top: -14px; left: 50%; width: 34px; height: 44px; transform: translateX(-50%); transform-origin: 50% 8px;
-  background: var(--ink); clip-path: polygon(0 0, 100% 0, 50% 100%); filter: drop-shadow(0 3px 3px rgba(0,0,0,.4)); z-index: 2; }
-.hub { position: absolute; left: 50%; top: 50%; width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%;
-  border: 4px solid var(--stage); background: var(--ink); color: var(--stage); font-family: var(--display); font-size: clamp(13px, 3vw, 20px); letter-spacing: .04em; }
-.hub:disabled { cursor: default; }
-.spin-btn { font-size: 20px; padding: 14px 34px; border-radius: 999px; }
-.round { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
-.nextup { display: flex; flex-direction: column; align-items: center; gap: 18px; width: min(100%, 520px); padding: 48px 20px; }
+.games { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 8px; }
+.game { position: relative; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; overflow: hidden;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.game:hover { transform: translateY(-3px); border-color: var(--brass); box-shadow: var(--glow); }
+.game .emoji { font-size: 40px; line-height: 1; }
+.game h2 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; color: var(--brass); }
+.game .desc { color: var(--muted); margin: 0; flex: 1; }
+.game .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.game .tag { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; }
+.game .play { align-self: flex-start; margin-top: 4px; background: var(--brass); color: var(--brass-ink); border: 0; border-radius: 10px; padding: 11px 22px; font-weight: 700; font-size: 16px; }
 
-.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.card h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; align-items: baseline; }
-.card h2 small { font-size: 12px; letter-spacing: 0; text-transform: none; }
-.add { display: flex; gap: 8px; }
-.add input { flex: 1; min-width: 0; }
-.add button { border-radius: 8px; border: 0; background: var(--mint); color: var(--stage); font-weight: 700; padding: 0 16px; }
-.names { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }
-.names li { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 10px; border-radius: 8px; background: var(--stage); }
-.names li.done { opacity: .5; }
-.names .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
-.names .nm { min-width: 0; overflow-wrap: anywhere; flex: 1; font-weight: 500; }
-.names .x { flex: none; width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--line); background: none; color: var(--muted); font-size: 18px; line-height: 1; }
-.names .x:hover { color: var(--coral); border-color: var(--coral); }
-.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--ink); cursor: pointer; }
-.check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--brass); flex: none; }
-.leaders { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.leaders li { display: flex; align-items: baseline; gap: 10px; padding: 7px 10px; border-radius: 8px; background: var(--stage); }
-.leaders li:first-child.lead { background: var(--brass); color: var(--brass-ink); }
-.leaders .rk { font-family: var(--display); width: 1.6em; color: inherit; opacity: .7; }
-.leaders .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
-.leaders .tn { font-size: 12px; opacity: .7; }
-.leaders b { font-variant-numeric: tabular-nums; font-family: var(--display); font-weight: 400; }
-.empty { color: var(--muted); font-size: 14px; margin: 0; }
-
-/* ---------- Pick overlay ---------- */
-.overlay { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(10, 8, 28, .78); backdrop-filter: blur(3px); }
-.pick-card { width: min(100%, 560px); background: var(--panel); border: 2px solid var(--brass); border-radius: 20px; padding: 28px 20px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; animation: pop .45s cubic-bezier(.2, 1.4, .4, 1); }
-.pick-label { margin: 0; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.pick-name { margin: 0; font-family: var(--display); font-size: clamp(40px, 11vw, 88px); line-height: 1.05; color: var(--brass); overflow-wrap: anywhere; text-wrap: balance; }
-.pick-count { margin: 0; font-size: 15px; color: var(--ink); min-height: 1.4em; }
-.pick-count b { font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--mint); }
-@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-/* ---------- Turn screen ---------- */
-.stage { display: flex; flex-direction: column; gap: 14px; flex: 1; max-width: 760px; width: 100%; margin: 0 auto; }
-.turn { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.who { font-weight: 700; font-size: 18px; }
-.score { font-family: var(--display); color: var(--brass); font-size: 22px; }
-.clock { margin-left: auto; font-family: var(--display); font-size: 30px; font-variant-numeric: tabular-nums; min-width: 2.4ch; text-align: right; }
-.clock.hot { color: var(--coral); animation: pulse 1s ease-in-out infinite; }
-@keyframes pulse { 50% { transform: scale(1.12); } }
-.meter { height: 6px; background: var(--line); border-radius: 6px; overflow: hidden; position: relative; }
-.meter i { display: block; height: 100%; background: var(--brass); width: 100%; transition: width .2s linear; }
-.meter.hot i { background: var(--coral); }
-.meter::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--stage); }
-.topic { font-size: clamp(20px, 5vw, 26px); font-weight: 700; margin: 0; text-wrap: balance; }
-.board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; perspective: 800px; }
-@media (min-width: 560px) { .board { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.tile { position: relative; min-height: 50px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel);
-  display: flex; align-items: center; gap: 8px; padding: 8px 10px; transform-style: preserve-3d; }
-.tile .n { font-family: var(--display); color: var(--muted); font-size: 15px; min-width: 2ch; }
-.tile .txt { min-width: 0; font-weight: 700; overflow-wrap: anywhere; line-height: 1.2; }
-.tile .pts { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.tile.hit { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); animation: flip .45s ease-out; }
-.tile.hit .n, .tile.hit .pts { color: var(--brass-ink); }
-.tile.missed { color: var(--muted); border-style: dashed; }
-.tile.missed .txt { font-weight: 500; }
-@keyframes flip { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
-.host { display: flex; gap: 10px; align-items: flex-start; }
-.host .mark { font-family: var(--display); font-size: 12px; color: var(--stage); background: var(--mint); border-radius: 6px; padding: 3px 6px; flex: none; margin-top: 2px; }
-.host p { margin: 0; min-width: 0; }
-.live { min-height: 1.45em; color: var(--muted); font-style: italic; margin: 0; }
-.confirm { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--brass); border-radius: 10px; padding: 10px 12px; }
-.confirm p { margin: 0 auto 0 0; }
-.confirm button { border-radius: 8px; padding: 6px 14px; border: 1px solid var(--line); background: var(--stage); }
-.confirm .yes { background: var(--mint); color: var(--stage); border-color: var(--mint); font-weight: 700; }
-.feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.feed li { display: flex; gap: 8px; align-items: baseline; font-size: 14px; padding: 5px 10px; border-radius: 6px; background: rgba(255,255,255,.03); }
-.feed .g { min-width: 0; overflow-wrap: anywhere; }
-.feed .r { margin-left: auto; flex: none; font-size: 12px; color: var(--muted); }
-.feed .hit .r { color: var(--mint); }
-.feed .ask .r { color: var(--brass); }
-.feed .pending .r::after { content: '…'; }
-.controls { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-bottom: env(safe-area-inset-bottom, 0px); }
-.ptt { width: 132px; height: 132px; border-radius: 50%; border: 0; background: var(--panel); box-shadow: inset 0 0 0 2px var(--line);
-  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; position: relative;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-.ptt-ic { font-size: 40px; line-height: 1; pointer-events: none; }
-.ptt-tx { font-size: 12px; font-weight: 700; letter-spacing: .02em; pointer-events: none; }
-.ptt.live { background: var(--coral); color: var(--stage); box-shadow: none; }
-.ptt.live::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid var(--coral); animation: ring 1.1s ease-out infinite; }
-.ptt:disabled { opacity: .35; cursor: default; }
-@keyframes ring { from { transform: scale(.92); opacity: 1; } to { transform: scale(1.18); opacity: 0; } }
-.typed { display: flex; gap: 8px; width: 100%; max-width: 420px; }
-.typed input { flex: 1; min-width: 0; }
-.typed button { border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0 14px; }
-.result { text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
-.result p { margin: 0; }
-.result .big { font-family: var(--display); font-size: 28px; color: var(--brass); }
-
-/* Match log */
-.log { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-.log header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.log h2 { font-size: 14px; margin: 0 auto 0 0; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
-.log .scroll { overflow-x: auto; max-height: 280px; }
-.log table { border-collapse: collapse; font: 12px/1.4 var(--mono); width: 100%; min-width: 620px; }
-.log th, .log td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
-.log th { color: var(--muted); font-weight: 500; }
-.log td.num { font-variant-numeric: tabular-nums; text-align: right; }
-.stats { font: 12px var(--mono); color: var(--muted); margin: 0; }
-
-#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
-@media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }
+.foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: auto; }
+@media (prefers-reduced-motion: reduce) { .game { transition: none; } }
 </style>
-
-<canvas id="confetti" aria-hidden="true"></canvas>
-
+</head>
+<body>
 <div class="wrap">
   <div class="bar">
-    <span class="brand">Party Guess</span>
-    <span class="pill" id="matchPill">Checking…</span>
-    <button class="ghost" id="musicBtn" aria-pressed="true">Music</button>
-    <button class="ghost" id="sfxBtn" aria-pressed="true">Sounds</button>
-    <button class="ghost" id="hostBtn" aria-pressed="true">Host voice</button>
-    <button class="ghost" id="logBtn" aria-pressed="false">Match log</button>
+    <span class="brand">Party Games</span>
+    <span class="pill" id="jevPill">Checking…</span>
+    <select class="ctl" id="langSel" aria-label="Language"></select>
+    <select class="ctl" id="themeSel" aria-label="Theme"></select>
   </div>
 
-  <!-- ===== Pick screen (wheel or sequence) ===== -->
-  <main class="wheel-view" id="wheelView">
-    <section class="wheel-col">
-      <h1 class="wheel-title" id="wheelTitle">Who's up next?</h1>
-      <p class="wheel-sub" id="wheelSub">Spin the wheel. Whoever it lands on gets the mic.</p>
-      <div class="wheel-box" id="wheelBox">
-        <div class="pointer" id="pointer"></div>
-        <canvas id="wheel" role="img" aria-label="Wheel of player names"></canvas>
-        <button class="hub" id="hub" aria-label="Spin the wheel">SPIN</button>
-      </div>
-      <button class="primary spin-btn" id="spinBtn">Spin the wheel</button>
-      <p class="round" id="roundLabel"></p>
-      <!-- Sequence mode: a simple next-up card in place of the wheel. -->
-      <div class="nextup" id="nextUp" hidden>
-        <p class="pick-label" id="nextUpLabel">Next up</p>
-        <p class="pick-name" id="nextUpName"></p>
-        <button class="primary spin-btn" id="startTurnBtn">Start turn</button>
-      </div>
-    </section>
-
-    <aside class="side">
-      <section class="card">
-        <h2>Game</h2>
-        <div class="row">
-          <label class="field" for="lang">Language
-            <select id="lang"><option value="en-US">English</option></select>
-          </label>
-          <label class="field" for="turnSecs">Turn length
-            <select id="turnSecs">
-              <option value="45">45 seconds</option>
-              <option value="60" selected>60 seconds</option>
-              <option value="90">90 seconds</option>
-            </select>
-          </label>
-          <label class="field" for="topicStyle">Topics
-            <select id="topicStyle">
-              <option value="all">All boards</option>
-              <option value="contextual">Contextual (Jev)</option>
-              <option value="classic">Classic</option>
-            </select>
-          </label>
-        </div>
-        <p class="note" id="langNote"></p>
-      </section>
-
-      <section class="card">
-        <h2>Players <small id="nameCount"></small></h2>
-        <label class="field" for="turnOrder">Pick the next player by
-          <select id="turnOrder">
-            <option value="wheel">Spinning a wheel</option>
-            <option value="sequence">Going in sequence</option>
-          </select>
-        </label>
-        <form class="add" id="addForm">
-          <input type="text" id="nameInput" maxlength="300" autocomplete="off" placeholder="Add a name" aria-label="Player name">
-          <button type="submit">Add</button>
-        </form>
-        <p class="note">Paste a list separated by commas or new lines to add a whole class.</p>
-        <ul class="names" id="names"></ul>
-        <label class="check" for="onceEach" id="onceEachRow"><input type="checkbox" id="onceEach"> Everyone plays once before anyone repeats</label>
-        <div class="row"><button type="button" class="ghost" id="clearNames">Clear all names</button></div>
-      </section>
-
-      <section class="card">
-        <h2>Leaderboard</h2>
-        <ol class="leaders" id="leaders"></ol>
-        <div class="row"><button type="button" class="ghost" id="resetScores">Reset scores</button></div>
-      </section>
-    </aside>
-  </main>
-
-  <!-- ===== Turn screen ===== -->
-  <section class="stage" id="stage" hidden>
-    <div class="turn">
-      <span class="who" id="who"></span>
-      <span class="score" id="turnScore">0</span>
-      <span class="clock" id="clock">60</span>
-    </div>
-    <div class="meter" id="meter"><i></i></div>
-    <p class="topic" id="topic"></p>
-    <div class="host"><span class="mark">HOST</span><p id="caption"></p></div>
-    <div class="board" id="board"></div>
-    <div class="confirm" id="confirm" hidden>
-      <p id="confirmText"></p>
-      <button class="yes" id="confirmYes">Yes</button>
-      <button id="confirmNo">No</button>
-    </div>
-    <p class="live" id="live"></p>
-    <ul class="feed" id="feed"></ul>
-    <div class="controls">
-      <button class="ptt" id="ptt" disabled></button>
-      <form class="typed" id="typed">
-        <input type="text" id="typedGuess" placeholder="Or type a guess" autocomplete="off" aria-label="Type a guess">
-        <button type="submit" id="typedBtn">Guess</button>
-      </form>
-      <div class="result" id="result" hidden>
-        <p class="big" id="resultBig"></p>
-        <p id="resultSmall"></p>
-      </div>
-      <button class="primary" id="backBtn" hidden>Back to the wheel</button>
-      <p class="note" id="stageNote"></p>
-    </div>
-  </section>
-
-  <section class="log" id="log" hidden>
-    <header>
-      <h2>Match log</h2>
-      <button class="ghost" id="copyLog">Copy as JSON</button>
-    </header>
-    <p class="stats" id="stats">No guesses yet.</p>
-    <div class="scroll">
-      <table>
-        <thead><tr><th>Player</th><th>Guess</th><th>Result</th><th>Source</th><th class="num">Total ms</th><th class="num">Jev ms</th><th>Jev top choices</th></tr></thead>
-        <tbody id="logRows"></tbody>
-      </table>
-    </div>
-  </section>
-</div>
-
-<!-- ===== Pick overlay ===== -->
-<div class="overlay" id="pick" hidden>
-  <div class="pick-card" role="dialog" aria-labelledby="pickName">
-    <p class="pick-label" id="pickLabel">Next up</p>
-    <p class="pick-name" id="pickName"></p>
-    <p class="pick-count" id="pickCount"></p>
-    <div class="row" style="justify-content:center">
-      <button class="primary" id="pickGo">Start now</button>
-      <button class="ghost" id="pickAgain">Spin again</button>
-    </div>
+  <div class="hero">
+    <h1 id="heroTitle">Party Games</h1>
+    <p id="heroSub">Pick a game for tonight</p>
   </div>
+
+  <div class="games">
+    <a class="game" href="/vibe" id="cardVibe">
+      <span class="emoji">🎙️</span>
+      <h2 id="vibeName">Vibe Guess</h2>
+      <p class="desc" id="vibeDesc">Describe what's on a hidden board and the AI host scores how close your vibe is. Play solo or pass the phone.</p>
+      <div class="tags"><span class="tag" id="vibeTag1">Voice</span><span class="tag" id="vibeTag2">AI matching</span><span class="tag" id="vibeTag3">Teams</span></div>
+      <span class="play" id="vibePlay">Play ▶</span>
+    </a>
+    <a class="game" href="/rapid" id="cardRapid">
+      <span class="emoji">⚡</span>
+      <h2 id="rapidName">Rapid Fire</h2>
+      <p class="desc" id="rapidDesc">An image flashes up — shout what it is before the clock blows up. Two teams, fast rounds, AI judges your call.</p>
+      <div class="tags"><span class="tag" id="rapidTag1">Voice</span><span class="tag" id="rapidTag2">Images</span><span class="tag" id="rapidTag3">2 teams</span></div>
+      <span class="play" id="rapidPlay">Play ▶</span>
+    </a>
+  </div>
+
+  <p class="foot" id="foot">English &amp; తెలుగు · host voice · pick your theme</p>
 </div>
 
+<script src="/theme.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ======================= strings ======================= */
-const plural = (n, one, many) => (n === 1 ? one : many);
-const pick1 = (arr) => arr[randInt(arr.length)];
 const STR = {
   'en-US': {
-    play: 'Tap to talk', playStart: 'Tap to start', pause: 'Listening',
-    typePh: 'Or type a guess', guessBtn: 'Guess', checking: 'checking', notOnBoard: 'not on the board',
-    already: (x) => `already have ${x}`, tooLate: 'too late', ask: (x) => `did you mean ${x}?`,
-    confirmQ: (x) => `Did you mean “${x}”?`, yes: 'Yes', no: 'No', confirmed: 'confirmed',
-    nextUp: 'Next up', startingIn: (n) => `Starting in <b>${n}</b>`, startNow: 'Start now', spinAgain: 'Spin again',
-    back: 'Back to the wheel', nextPlayerBtn: 'Next player', and: ' and ',
-    sayUp: (p) => pick1([`${p}, you're up!`, `It's ${p}! Get ready!`, `${p}, the mic is yours!`]),
-    sayIntro: (topic, n) => `Your topic: ${topic}. There are ${n} answers on the board. Tap the button and shout them out. Go!`,
-    cheers: ['Nice!', 'Boom!', 'Yes!', 'Superb!', 'Too good!', 'Nailed it!'],
-    sayHit: (names, pts) => `${pick1(STR['en-US'].cheers)} ${names}, ${pts} ${plural(pts, 'point', 'points')}.`,
-    sayAsk: (x) => `Did you mean ${x}?`,
-    sayHalf: 'Halfway there! Speed up!', sayTen: 'Ten seconds!',
-    sayTime: (p, found, total, pts, missed) => `Time's up! ${p}, you found ${found} of ${total} for ${pts} ${plural(pts, 'point', 'points')}. ${missed.length ? `You missed ${missed.join(' and ')}.` : 'You cleared the whole board!'}`,
-    resultBig: (pts) => `${pts} ${plural(pts, 'point', 'points')}`,
-    resultSmall: (found, total) => `Found ${found} of ${total}`,
-    micBlocked: 'Microphone blocked. Allow it in the browser address bar, or type guesses below.',
-    noVoice: 'No English voice on this device, so the host shows captions only.',
-    yesWords: ['yes', 'yeah', 'yep', 'yup', 'correct', 'right', 'sure', 'uh huh', 'yes please', 'thats it', 'that one', 'haan', 'ha'],
-    noWords: ['no', 'nope', 'nah', 'wrong', 'not that', 'no thanks'],
+    heroTitle: 'Party Games', heroSub: 'Pick a game for tonight',
+    vibeName: 'Vibe Guess',
+    vibeDesc: "Describe what's on a hidden board and the AI host scores how close your vibe is. Play solo or pass the phone.",
+    vibeTags: ['Voice', 'AI matching', 'Teams'],
+    rapidName: 'Rapid Fire',
+    rapidDesc: 'An image flashes up — shout what it is before the clock blows up. Two teams, fast rounds, AI judges your call.',
+    rapidTags: ['Voice', 'Images', '2 teams'],
+    play: 'Play ▶',
+    foot: 'English & తెలుగు · host voice · pick your theme',
   },
   'te-IN': {
-    play: 'నొక్కి మాట్లాడండి', playStart: 'నొక్కితే మొదలు', pause: 'వింటున్నాను',
-    typePh: 'లేదా ఇక్కడ టైప్ చేయండి', guessBtn: 'చెప్పు', checking: 'చూస్తున్నాను', notOnBoard: 'బోర్డులో లేదు',
-    already: (x) => `${x} ఇప్పటికే వచ్చింది`, tooLate: 'సమయం అయిపోయింది', ask: (x) => `${x} అంటున్నారా?`,
-    confirmQ: (x) => `“${x}” అంటున్నారా?`, yes: 'అవును', no: 'కాదు', confirmed: 'ఖాయం',
-    nextUp: 'తదుపరి ఆటగాడు', startingIn: (n) => `<b>${n}</b> సెకన్లలో మొదలు`, startNow: 'ఇప్పుడే మొదలుపెట్టు', spinAgain: 'మళ్ళీ తిప్పు',
-    back: 'మళ్ళీ చక్రం దగ్గరికి', nextPlayerBtn: 'తదుపరి ఆటగాడు', and: ', ',
-    sayUp: (p) => pick1([`${p}, మీ వంతు వచ్చింది!`, `${p}! రెడీనా?`, `${p}, మైక్ మీదే!`]),
-    sayIntro: (topic, n) => `మీ అంశం: ${topic}. బోర్డులో ${n} సమాధానాలు ఉన్నాయి. బటన్ నొక్కి గట్టిగా చెప్పండి. మొదలుపెట్టండి!`,
-    cheers: ['సూపర్!', 'భలే!', 'అదరగొట్టావ్!', 'కేక!', 'వావ్!', 'అదిరింది!'],
-    sayHit: (names, pts) => `${pick1(STR['te-IN'].cheers)} ${names}, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}.`,
-    sayAsk: (x) => `${x} అంటున్నారా?`,
-    sayHalf: 'సగం టైమ్ అయిపోయింది, స్పీడ్ పెంచండి!', sayTen: 'ఇంకా పది సెకన్లే!',
-    sayTime: (p, found, total, pts, missed) => `టైమ్ అప్! ${p}, ${total} లో ${found} కనిపెట్టారు, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}. ${missed.length ? `మిస్ అయినవి: ${missed.join(', ')}.` : 'బోర్డు మొత్తం పూర్తి చేశారు!'}`,
-    resultBig: (pts) => `${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}`,
-    resultSmall: (found, total) => `${total} లో ${found} కనిపెట్టారు`,
-    micBlocked: 'మైక్రోఫోన్ అనుమతి లేదు. బ్రౌజర్‌లో అనుమతి ఇవ్వండి, లేదా కింద టైప్ చేయండి.',
-    noVoice: 'ఈ పరికరంలో తెలుగు వాయిస్ లేదు, కాబట్టి హోస్ట్ మాటలు తెరపై మాత్రమే కనిపిస్తాయి.',
-    yesWords: ['అవును', 'అవునండి', 'ఆ', 'హా', 'అదే', 'కరెక్ట్', 'ఔను', 'yes', 'yeah', 's', 'correct'],
-    noWords: ['కాదు', 'కాదండి', 'లేదు', 'వద్దు', 'no', 'nope'],
+    heroTitle: 'పార్టీ గేమ్స్', heroSub: 'ఈ రోజు ఆడటానికి ఒక గేమ్ ఎంచుకోండి',
+    vibeName: 'వైబ్ గెస్',
+    vibeDesc: 'దాచిన బోర్డులో ఉన్నవాటిని వర్ణించండి, AI హోస్ట్ మీ వైబ్ ఎంత దగ్గరగా ఉందో స్కోర్ చేస్తుంది. ఒంటరిగా లేదా ఫోన్ పంచుకుంటూ ఆడండి.',
+    vibeTags: ['వాయిస్', 'AI మ్యాచింగ్', 'జట్లు'],
+    rapidName: 'రాపిడ్ ఫైర్',
+    rapidDesc: 'ఒక చిత్రం కనిపిస్తుంది — గడియారం పేలకముందే అది ఏమిటో గట్టిగా చెప్పండి. రెండు జట్లు, వేగమైన రౌండ్లు, AI తీర్పు చెబుతుంది.',
+    rapidTags: ['వాయిస్', 'చిత్రాలు', '2 జట్లు'],
+    play: 'ఆడండి ▶',
+    foot: 'English & తెలుగు · హోస్ట్ వాయిస్ · మీ థీమ్ ఎంచుకోండి',
   },
 };
 
-/* ======================= randomness + storage ======================= */
-function randInt(n) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
-function rand() { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 2 ** 32; }
-function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = randInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function load(key, fallback) { try { const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); } catch { return fallback; } }
-function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
-function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-
-/* ======================= sound ======================= */
-// Everything is synthesised with Web Audio, so there are no sound files to load.
-const Sound = (() => {
-  let ctx = null, master, sfxBus, musicBus, musicDuck, noiseBuf, whoosh = null;
-  const prefs = { music: load('sg-music', true), sfx: load('sg-sfx', true) };
-
-  function init() {
-    if (ctx) return ctx;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    ctx = new AC();
-    master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
-    sfxBus = ctx.createGain(); sfxBus.gain.value = prefs.sfx ? 0.55 : 0; sfxBus.connect(master);
-    musicDuck = ctx.createGain(); musicDuck.gain.value = 1; musicDuck.connect(master);
-    musicBus = ctx.createGain(); musicBus.gain.value = prefs.music ? 0.26 : 0; musicBus.connect(musicDuck);
-    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    return ctx;
-  }
-  function resume() { if (init() && ctx.state === 'suspended') ctx.resume(); }
-  const now = () => ctx.currentTime;
-
-  function env(g, t, peak, attack, decay) {
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
-  }
-  function tone(freq, t, dur, peak, { type = 'sine', bus = sfxBus, attack = 0.005, glide } = {}) {
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, t);
-    if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + attack + dur);
-    env(g, t, peak, attack, dur);
-    o.connect(g).connect(bus); o.start(t); o.stop(t + attack + dur + 0.05);
-  }
-  function noise(t, dur, peak, { bus = sfxBus, type = 'bandpass', freq = 1200, q = 1 } = {}) {
-    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-    s.buffer = noiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
-    env(g, t, peak, 0.002, dur);
-    s.connect(f).connect(g).connect(bus); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
-  }
-  const ready = () => ctx && prefs.sfx;
-
-  let lastTick = 0;
-  const sfx = {
-    // Peg click as the wheel passes the pointer.
-    tick() {
-      if (!ready()) return; const t = now(); if (t - lastTick < 0.03) return; lastTick = t;
-      noise(t, 0.025, 0.5, { freq: 2600 + Math.random() * 900, q: 3 });
-      tone(1500 + Math.random() * 300, t, 0.02, 0.12, { type: 'triangle' });
-    },
-    whooshStart() {
-      if (!ready() || whoosh) return;
-      const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-      s.buffer = noiseBuf; s.loop = true; f.type = 'bandpass'; f.Q.value = 0.8; f.frequency.value = 900; g.gain.value = 0.0001;
-      s.connect(f).connect(g).connect(sfxBus); s.start();
-      whoosh = { s, f, g };
-    },
-    whooshSet(speed) { // speed 0..1
-      if (!whoosh) return; const t = now();
-      whoosh.g.gain.setTargetAtTime(0.18 * speed, t, 0.05);
-      whoosh.f.frequency.setTargetAtTime(400 + 1400 * speed, t, 0.05);
-    },
-    whooshStop() { if (!whoosh) return; const w = whoosh; whoosh = null; w.g.gain.setTargetAtTime(0.0001, now(), 0.08); setTimeout(() => w.s.stop(), 400); },
-    fanfare() {
-      if (!ready()) return; const t = now() + 0.02;
-      [523.25, 659.25, 783.99].forEach((f, i) => tone(f, t + i * 0.11, 0.14, 0.22, { type: 'square' }));
-      [523.25, 659.25, 783.99, 1046.5].forEach((f) => tone(f, t + 0.36, 0.7, 0.13, { type: 'triangle' }));
-      noise(t + 0.36, 0.35, 0.15, { type: 'highpass', freq: 6000 });
-    },
-    count() { if (ready()) tone(880, now(), 0.12, 0.25, { type: 'triangle' }); },
-    go() { if (!ready()) return; const t = now(); tone(1046.5, t, 0.35, 0.22, { type: 'triangle' }); tone(1568, t, 0.35, 0.12, { type: 'triangle' }); },
-    chime() { if (!ready()) return; const t = now(); tone(987.77, t, 0.6, 0.22); tone(783.99, t + 0.32, 0.9, 0.22); },
-    clockTick(urgent) {
-      if (!ready()) return; const t = now();
-      if (urgent) { tone(1318.5, t, 0.12, 0.28, { type: 'square' }); }
-      else { tone(1100, t, 0.04, 0.22, { type: 'sine' }); noise(t, 0.03, 0.2, { freq: 3000, q: 4 }); }
-    },
-    buzzer() {
-      if (!ready()) return; const t = now();
-      tone(110, t, 0.9, 0.3, { type: 'sawtooth' }); tone(116.5, t, 0.9, 0.3, { type: 'sawtooth' });
-    },
-    correct(pts = 1) {
-      if (!ready()) return; const t = now();
-      const notes = pts >= 3 ? [783.99, 987.77, 1174.66, 1567.98] : pts === 2 ? [783.99, 987.77, 1318.5] : [880, 1318.5];
-      notes.forEach((f, i) => tone(f, t + i * 0.07, 0.18, 0.2, { type: 'triangle' }));
-    },
-    miss() { if (ready()) tone(220, now(), 0.22, 0.14, { type: 'triangle', glide: 150 }); },
-    repeat() { if (ready()) { const t = now(); tone(660, t, 0.06, 0.12); tone(660, t + 0.1, 0.06, 0.12); } },
-    ask() { if (ready()) tone(523.25, now(), 0.25, 0.18, { type: 'triangle', glide: 784 }); },
-    micOn()  { if (ready()) tone(880,  now(), 0.07, 0.18, { type: 'sine' }); },
-    micOff() { if (ready()) tone(660,  now(), 0.07, 0.12, { type: 'sine' }); },
-    micEnd() { if (ready()) { const t = now(); tone(440, t, 0.06, 0.12, { type: 'sine' }); tone(330, t + 0.08, 0.1, 0.12, { type: 'sine' }); } },
-    cheer() {
-      if (!ready()) return; const t = now();
-      for (let i = 0; i < 8; i++) tone(1046.5 * (1 + (i % 4) * 0.25), t + i * 0.06, 0.12, 0.12, { type: 'triangle' });
-      noise(t, 1.2, 0.12, { type: 'highpass', freq: 4000 });
-    },
-  };
-
-  // Background music: a light four-chord loop that speeds up for the last ten seconds.
-  const music = (() => {
-    let timer = null, next = 0, step = 0, bpm = 112, intense = false, mel = [];
-    const roots = [110, 87.31, 130.81, 98];                    // A2, F2, C3, G2
-    const scale = [440, 523.25, 587.33, 659.25, 783.99, 880];  // A minor pentatonic
-    const melodySteps = [0, 3, 6, 8, 11, 14];
-    function compose() {
-      mel = [0, 1, 2, 3].map(() => {
-        const bar = {}; let i = randInt(scale.length);
-        for (const s of melodySteps) { if (rand() < 0.75) { i = Math.max(0, Math.min(scale.length - 1, i + randInt(3) - 1)); bar[s] = scale[i]; } }
-        return bar;
-      });
-    }
-    function kick(t) { tone(130, t, 0.14, 0.55, { type: 'sine', bus: musicBus, glide: 45 }); }
-    function snare(t) { noise(t, 0.09, 0.32, { bus: musicBus, freq: 1800, q: 0.8 }); }
-    function hat(t, v) { noise(t, 0.03, v, { bus: musicBus, type: 'highpass', freq: 7000 }); }
-    function bass(t, f) { tone(f, t, 0.16, 0.32, { type: 'triangle', bus: musicBus }); }
-    function bell(t, f) { tone(f, t, 0.22, 0.12, { type: 'sine', bus: musicBus }); tone(f * 2, t, 0.1, 0.03, { type: 'sine', bus: musicBus }); }
-    function play(s, t) {
-      const st = s % 16, bar = Math.floor(s / 16) % 4, root = roots[bar];
-      if (st === 0 || st === 8 || (intense && (st === 4 || st === 12))) kick(t);
-      if (st === 4 || st === 12) snare(t);
-      if (intense || st % 4 === 2) hat(t, st % 4 === 2 ? 0.12 : 0.05);
-      if ([0, 3, 6, 8, 11, 14].includes(st)) bass(t, st === 6 || st === 14 ? root * 2 : root);
-      if (mel[bar][st]) bell(t, mel[bar][st]);
-      if (intense && st % 2 === 1) tone(scale[(st + bar) % scale.length] * 2, t, 0.06, 0.04, { type: 'square', bus: musicBus });
-    }
-    function sched() { while (next < ctx.currentTime + 0.12) { play(step, next); next += 60 / bpm / 4; step++; } }
-    return {
-      start() { if (!init() || timer) return; compose(); intense = false; bpm = 112; step = 0; next = ctx.currentTime + 0.06; timer = setInterval(sched, 25); },
-      stop() { clearInterval(timer); timer = null; },
-      setIntense(v) { intense = v; bpm = v ? 136 : 112; },
-      get playing() { return Boolean(timer); },
-    };
-  })();
-
-  // Lower the music while someone talks (the mic would hear it) and while the host speaks.
-  let duckMic = false, duckHost = false;
-  function applyDuck() { if (ctx) musicDuck.gain.setTargetAtTime(duckMic ? 0.25 : duckHost ? 0.3 : 1, now(), 0.05); }
-
-  return {
-    resume, sfx, music, prefs,
-    duckForMic(v) { duckMic = v; applyDuck(); },
-    duckForHost(v) { duckHost = v; applyDuck(); },
-    setMusic(on) { prefs.music = on; save('sg-music', on); if (ctx) musicBus.gain.setTargetAtTime(on ? 0.26 : 0, now(), 0.05); },
-    setSfx(on) { prefs.sfx = on; save('sg-sfx', on); if (ctx) sfxBus.gain.setTargetAtTime(on ? 0.55 : 0, now(), 0.05); },
-  };
-})();
-
-/* ======================= confetti ======================= */
-function confetti(bursts = 1) {
-  if (reducedMotion) return;
-  const c = $('#confetti'), g = c.getContext('2d'), dpr = devicePixelRatio || 1;
-  c.width = innerWidth * dpr; c.height = innerHeight * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const css = getComputedStyle(document.documentElement);
-  const colors = [1, 2, 3, 4, 5, 6].map(i => css.getPropertyValue(`--seg${i}`).trim());
-  const parts = [];
-  for (let b = 0; b < bursts; b++) {
-    const x = innerWidth * (bursts === 1 ? 0.5 : 0.25 + 0.5 * b / Math.max(1, bursts - 1));
-    for (let i = 0; i < 90; i++) {
-      const a = -Math.PI / 2 + (rand() - 0.5) * 1.6, v = 7 + rand() * 9;
-      parts.push({ x, y: innerHeight * 0.55, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: rand() * 6.28, vr: (rand() - 0.5) * 0.4, w: 6 + rand() * 6, h: 4 + rand() * 4, c: colors[randInt(colors.length)] });
-    }
-  }
-  const t0 = performance.now();
-  (function frame(t) {
-    g.clearRect(0, 0, innerWidth, innerHeight);
-    for (const p of parts) {
-      p.vy += 0.28; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
-      g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.c; g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); g.restore();
-    }
-    if (t - t0 < 2600) requestAnimationFrame(frame); else g.clearRect(0, 0, innerWidth, innerHeight);
-  })(t0);
-}
-
-/* ======================= state ======================= */
-const S = {
-  points: {}, allTopics: [], locales: {},
-  locale: load('sg-locale', 'en-US'), style: load('sg-style', 'all'), turnSecs: load('sg-secs', 60),
-  names: load('sg-names', ['Ravi', 'Lakshmi', 'Arjun', 'Divya', 'Kiran', 'Sneha']),
-  scores: load('sg-scores', {}),       // name -> { points, turns }
-  played: load('sg-played', []),        // names already played this round (when "once each" is on)
-  onceEach: load('sg-once', false), round: load('sg-round', 1),
-  turnOrder: load('sg-order', 'wheel'), seqIndex: load('sg-seq', 0),  // 'wheel' | 'sequence'
-  player: null, topic: null, matched: new Set(), turnScore: 0, status: 'wheel', turnId: 0,
-  deadline: 0, clockTimer: null, halfDone: false, warned: false, lastSec: null, seq: 0, confirm: null,
-  hostOn: load('sg-host', true), log: [], lastTopic: null,
-};
-const T = () => STR[S.locale] || STR['en-US'];
-function topicsFor(loc) {
-  const all = S.allTopics.filter(t => t.locale === loc);
-  if (S.style === 'all') return all;
-  const styled = all.filter(t => t.style === S.style);
-  return styled.length ? styled : all;
-}
-
-/* ======================= wheel ======================= */
-const W = { angle: 0, spinning: false };
-const segVar = (i, n) => {
-  let k = i % 6;
-  if (n > 1 && i === n - 1 && k === 0) k = 2;   // never put two identical colours side by side
-  return `--seg${k + 1}`;
-};
-function wheelNames() {
-  return S.onceEach ? S.names.filter(n => !S.played.includes(n)) : [...S.names];
-}
-
-function drawWheel() {
-  const c = $('#wheel'), size = c.clientWidth;
-  if (!size) return;
-  const dpr = devicePixelRatio || 1;
-  if (c.width !== Math.round(size * dpr)) { c.width = c.height = Math.round(size * dpr); }
-  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, size, size);
-  const css = getComputedStyle(document.documentElement);
-  const v = (name) => css.getPropertyValue(name).trim();
-  const names = wheelNames(), n = names.length, cx = size / 2, cy = size / 2, r = size / 2 - 8;
-
-  g.beginPath(); g.arc(cx, cy, r + 6, 0, Math.PI * 2); g.fillStyle = v('--line'); g.fill();
-  if (!n) {
-    g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fillStyle = v('--panel'); g.fill();
-    return;
-  }
-  const a = (Math.PI * 2) / n;
-  for (let i = 0; i < n; i++) {
-    const start = W.angle + i * a - Math.PI / 2;
-    g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r, start, start + a); g.closePath();
-    g.fillStyle = v(segVar(i, n)); g.fill();
-    g.strokeStyle = v('--stage'); g.lineWidth = 2; g.stroke();
-
-    // Names read outward from the hub; on the left half they're flipped so nothing is upside down.
-    const mid = start + a / 2, flip = Math.cos(mid) < 0;
-    g.save(); g.translate(cx, cy); g.rotate(flip ? mid + Math.PI : mid);
-    const arcRoom = n === 1 ? r : 2 * Math.sin(Math.min(a, Math.PI) / 2) * r * 0.62;
-    const fs = Math.max(11, Math.min(26, r * 0.12, arcRoom * 0.55));
-    g.font = `700 ${fs}px ${v('--body')}`; g.fillStyle = v('--seg-ink'); g.textBaseline = 'middle';
-    g.textAlign = flip ? 'left' : 'right';
-    g.fillText(fitText(g, names[i], r * 0.66), flip ? -(r - 16) : r - 16, 0);
-    g.restore();
-  }
-  // pegs
-  const pegs = pegCount(n);
-  g.fillStyle = v('--ink');
-  for (let k = 0; k < pegs; k++) {
-    const ang = W.angle + k * (Math.PI * 2 / pegs) - Math.PI / 2;
-    g.beginPath(); g.arc(cx + Math.cos(ang) * (r - 4), cy + Math.sin(ang) * (r - 4), 3, 0, Math.PI * 2); g.fill();
-  }
-}
-const pegCount = (n) => Math.max(1, n) * Math.max(1, Math.ceil(18 / Math.max(1, n)));
-function fitText(g, text, maxW) {
-  if (g.measureText(text).width <= maxW) return text;
-  // Trim whole letters (a Telugu letter can be several code points) so nothing breaks mid-letter.
-  const chars = window.Intl?.Segmenter ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)].map(x => x.segment) : Array.from(text);
-  while (chars.length > 1 && g.measureText(chars.join('') + '…').width > maxW) chars.pop();
-  return chars.join('') + '…';
-}
-const mod = (x, m) => ((x % m) + m) % m;
-function indexAtPointer(n) { const a = (Math.PI * 2) / n; return Math.min(n - 1, Math.floor(mod(-W.angle, Math.PI * 2) / a)); }
-
-function kickPointer() {
-  if (reducedMotion) return;
-  $('#pointer').animate([{ transform: 'translateX(-50%) rotate(-22deg)' }, { transform: 'translateX(-50%) rotate(0deg)' }], { duration: 140, easing: 'ease-out' });
-}
-
-function spin() {
-  if (W.spinning || S.status !== 'wheel') return;
-  let names = wheelNames();
-  if (!names.length && S.onceEach && S.names.length) { newRound(); names = wheelNames(); }
-  if (!names.length) { $('#nameInput').focus(); $('#wheelSub').textContent = 'Add at least one name to spin.'; return; }
-  Sound.resume();
-  const n = names.length, a = (Math.PI * 2) / n;
-  const winner = randInt(n);
-  const targetPhi = (winner + 0.12 + rand() * 0.76) * a;         // land well inside the segment
-  const start = W.angle;
-  const delta = mod(mod(-targetPhi, Math.PI * 2) - mod(start, Math.PI * 2), Math.PI * 2);
-  const end = start + (5 + randInt(3)) * Math.PI * 2 + delta;
-  const dur = reducedMotion ? 900 : 4800 + rand() * 1400;
-  const pegStep = (Math.PI * 2) / pegCount(n);
-  let lastPeg = Math.floor(start / pegStep);
-  W.spinning = true; setSpinUi();
-  Sound.sfx.whooshStart();
-  const t0 = performance.now();
-  requestAnimationFrame(function frame(now) {
-    const p = Math.min(1, (now - t0) / dur);
-    W.angle = start + (end - start) * (1 - Math.pow(1 - p, 4));     // ease-out quart
-    Sound.sfx.whooshSet(Math.pow(1 - p, 3));
-    const peg = Math.floor(W.angle / pegStep);
-    if (peg !== lastPeg) { lastPeg = peg; Sound.sfx.tick(); kickPointer(); }
-    drawWheel();
-    if (p < 1) return requestAnimationFrame(frame);
-    Sound.sfx.whooshStop();
-    W.spinning = false; setSpinUi();
-    landed(names[indexAtPointer(n)]);
-  });
-}
-function setSpinUi() {
-  const busy = W.spinning;
-  $('#spinBtn').disabled = busy; $('#hub').disabled = busy;
-  $('#spinBtn').textContent = busy ? 'Spinning…' : 'Spin the wheel';
-}
-
-/* ======================= pick overlay ======================= */
-let countTimer = null;
-function landed(name) {
-  S.player = name;
-  Sound.sfx.fanfare(); confetti();
-  $('#pickLabel').textContent = T().nextUp;
-  $('#pickName').textContent = name;
-  $('#pickGo').textContent = T().startNow;
-  $('#pickAgain').textContent = T().spinAgain;
-  $('#pick').hidden = false;
-  say(T().sayUp(name), { interrupt: true });
-  let n = 5;
-  const show = () => { $('#pickCount').innerHTML = T().startingIn(n); };
-  show();
-  clearInterval(countTimer);
-  countTimer = setInterval(() => {
-    n--;
-    if (n <= 0) { closePick(); startTurn(); return; }
-    if (n <= 3) Sound.sfx.count();
-    show();
-  }, 1000);
-}
-function closePick() { clearInterval(countTimer); $('#pick').hidden = true; }
-
-/* ======================= sequence mode ======================= */
-// Show/hide the wheel vs the simple next-up card based on S.turnOrder.
-function applyTurnOrderUI() {
-  const seq = S.turnOrder === 'sequence';
-  $('#wheelBox').hidden = seq;
-  $('#spinBtn').hidden = seq;
-  $('#roundLabel').hidden = seq;
-  $('#nextUp').hidden = !seq;
-  $('#onceEachRow').style.display = seq ? 'none' : '';
-  if (seq) showNextUp();
-  else {
-    $('#wheelTitle').textContent = "Who's up next?";
-    $('#wheelSub').textContent = 'Spin the wheel. Whoever it lands on gets the mic.';
-  }
-}
-// Fill the next-up card with whoever is next in roster order.
-function showNextUp() {
-  $('#wheelTitle').textContent = 'Pass the phone';
-  $('#nextUpLabel').textContent = T().nextUp;
-  $('#startTurnBtn').textContent = T().startNow;
-  if (!S.names.length) {
-    $('#wheelSub').textContent = 'Add at least one name to start.';
-    $('#nextUpName').textContent = '—';
-    $('#startTurnBtn').disabled = true;
-    return;
-  }
-  $('#wheelSub').textContent = 'Tap start when the next player is ready.';
-  $('#nextUpName').textContent = S.names[S.seqIndex % S.names.length];
-  $('#startTurnBtn').disabled = false;
-}
-function startSequenceTurn() {
-  if (!S.names.length) { $('#nameInput').focus(); showNextUp(); return; }
-  Sound.resume();
-  S.player = S.names[S.seqIndex % S.names.length];
-  startTurn();
-}
-
-/* ======================= names + leaderboard ======================= */
-function renderNames() {
-  const list = $('#names');
-  if (S.turnOrder === 'sequence') {
-    const cur = S.names.length ? S.seqIndex % S.names.length : -1;
-    list.innerHTML = S.names.map((n, i) =>
-      `<li><span class="dot" style="background:${i === cur ? 'var(--brass)' : 'var(--line)'}"></span><span class="nm">${esc(n)}</span><button type="button" class="x" data-i="${i}" aria-label="Remove ${esc(n)}">×</button></li>`).join('');
-    $('#nameCount').textContent = `${S.names.length}`;
-    showNextUp();
-    return;
-  }
-  const onWheel = wheelNames();
-  list.innerHTML = S.names.map((n, i) => {
-    const idx = onWheel.indexOf(n);
-    const color = idx >= 0 ? `var(${segVar(idx, onWheel.length)})` : 'var(--line)';
-    return `<li class="${idx < 0 ? 'done' : ''}"><span class="dot" style="background:${color}"></span><span class="nm">${esc(n)}</span><button type="button" class="x" data-i="${i}" aria-label="Remove ${esc(n)}">×</button></li>`;
-  }).join('');
-  $('#nameCount').textContent = S.onceEach ? `${onWheel.length} of ${S.names.length} left this round` : `${S.names.length}`;
-  $('#roundLabel').textContent = S.onceEach ? `Round ${S.round}` : '';
-  drawWheel();
-}
-function addNames(raw) {
-  const parts = raw.split(/[,\n;]+/).map(s => s.trim().slice(0, 24)).filter(Boolean);
-  let added = 0;
-  for (const p of parts) {
-    if (S.names.length >= 40) break;
-    if (S.names.some(n => n.toLowerCase() === p.toLowerCase())) continue;
-    S.names.push(p); added++;
-  }
-  save('sg-names', S.names); renderNames(); renderLeaders();
-  return added;
-}
-function removeName(i) {
-  const [gone] = S.names.splice(i, 1);
-  S.played = S.played.filter(n => n !== gone);
-  save('sg-names', S.names); save('sg-played', S.played);
-  renderNames(); renderLeaders();
-}
-function newRound() { S.played = []; S.round++; save('sg-played', S.played); save('sg-round', S.round); }
-
-function renderLeaders() {
-  const rows = S.names.map(n => ({ n, ...(S.scores[n] || { points: 0, turns: 0 }) }))
-    .sort((a, b) => b.points - a.points || a.n.localeCompare(b.n));
-  if (!rows.some(r => r.turns)) { $('#leaders').innerHTML = '<li><span class="empty">Scores show up here after the first turn.</span></li>'; return; }
-  $('#leaders').innerHTML = rows.map((r, i) => `<li class="${i === 0 && r.points > 0 ? 'lead' : ''}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.n)} <span class="tn">${r.turns ? `${r.turns} ${plural(r.turns, 'turn', 'turns')}` : ''}</span></span><b>${r.points}</b></li>`).join('');
-}
-
-/* ======================= host voice ======================= */
-let voice = null, canSpeak = true;
-function pickVoice() {
-  if (!('speechSynthesis' in window)) { canSpeak = false; return; }
-  const prefix = S.locale.split('-')[0];
-  const all = speechSynthesis.getVoices();
-  const vs = all.filter(v => v.lang && v.lang.replace('_', '-').toLowerCase().startsWith(prefix));
-  const lang = (v) => v.lang.replace('_', '-');
-  voice = (prefix === 'en' && vs.find(v => lang(v) === 'en-IN'))   // Indian English suits the players
-    || vs.find(v => lang(v) === S.locale && /Google|Samantha|Aria|Jenny|Natural/i.test(v.name))
-    || vs.find(v => lang(v) === S.locale) || vs[0] || null;
-  // An English voice reading Telugu is unintelligible, so speak only when a matching voice exists.
-  canSpeak = Boolean(voice) || (all.length === 0 && prefix === 'en');
-}
-if ('speechSynthesis' in window) {
-  speechSynthesis.onvoiceschanged = pickVoice;
-  // Clear any utterance left stuck in the engine from a previous page/session, which on
-  // Chrome can otherwise block all later speech, and un-pause it.
-  try { speechSynthesis.cancel(); speechSynthesis.resume(); } catch {}
-}
-
-// Resume the (gesture-gated) audio context on the first interaction. We deliberately do
-// NOT speak a silent "primer" utterance here: a volume-0/empty utterance hangs the speech
-// engine (never fires onend) on both desktop Chrome and mobile Safari/Chrome, which then
-// blocks every real host line. Instead, speech unlocks naturally — in sequence mode the
-// first host line (the turn intro) runs inside the "Start" tap, which is the user gesture
-// iOS/Android require. pickVoice() is re-run because voices often load after first interaction.
-let audioUnlocked = false;
-function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  Sound.resume();
-  pickVoice();
-}
-
-function say(text, { interrupt = false } = {}) {
-  $('#caption').textContent = text;
-  if (!S.hostOn || !canSpeak) return Promise.resolve();
-  if (holding && !interrupt) return Promise.resolve();
-  if (interrupt) speechSynthesis.cancel();
-  return new Promise((resolve) => {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = S.locale; if (voice) u.voice = voice;
-    u.rate = S.locale === 'en-US' ? 1.08 : 1;
-    let done = false;
-    const finish = () => { if (done) return; done = true; Sound.duckForHost(false); resolve(); };
-    u.onend = u.onerror = finish;
-    Sound.duckForHost(true);
-    // Chrome (macOS especially) sometimes leaves the speech engine paused; resuming
-    // right before speaking is the documented workaround for "speak does nothing".
-    try { speechSynthesis.resume(); } catch {}
-    speechSynthesis.speak(u);
-    setTimeout(finish, 1500 + text.length * 80);
-  });
-}
-
-/* ======================= listening ======================= */
-let rec = null, holding = false, listening = false, micReady = false, micResolved = false;
-
-// Ask for microphone permission during the (untimed) intro, so the browser's permission
-// prompt doesn't eat into the player's turn. Once granted, SpeechRecognition starts with
-// no second prompt. Called from a user gesture (the Start tap) so the prompt is allowed.
-// micResolved flips once the prompt is answered either way, so the clock can wait for it.
-function warmMic() {
-  if (micResolved) return;
-  if (!navigator.mediaDevices?.getUserMedia) { micResolved = true; return; }
-  navigator.mediaDevices.getUserMedia({ audio: true })
-    .then((stream) => { stream.getTracks().forEach((t) => t.stop()); micReady = true; micResolved = true; })
-    .catch(() => { micResolved = true; /* denied/unavailable; startListening surfaces it */ });
-}
-
-function startListening() {
-  if (S.status === 'intro') { startClock(); return; }  // startClock begins listening itself
-  if (!SR || S.status !== 'playing') return;
-  if (holding && listening) return renderMic();         // already listening
-  holding = true;
-  Sound.duckForMic(true);
-  Sound.sfx.micOn();
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
-  if (listening) return renderMic();
-  rec = new SR();
-  rec.lang = S.locales[S.locale]?.speech || S.locale;
-  rec.continuous = true; rec.interimResults = true;
-  rec.onresult = (e) => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const r = e.results[i];
-      if (r.isFinal) handleUtterance(r[0].transcript); else interim += r[0].transcript;
-    }
-    $('#live').textContent = interim;
-  };
-  rec.onerror = (e) => {
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') $('#stageNote').textContent = T().micBlocked;
-    else if (e.error === 'language-not-supported') $('#stageNote').textContent = `This browser can't recognise ${S.locales[S.locale].name} speech. Try Chrome, or type guesses below.`;
-  };
-  rec.onend = () => { listening = false; renderMic(); if (holding && S.status === 'playing') startListening(); };
-  try { rec.start(); listening = true; } catch {}
-  renderMic();
-}
-function stopListening() {
-  holding = false; Sound.duckForMic(false);
-  Sound.sfx.micOff();
-  try { rec && rec.stop(); } catch {}
-  renderMic();
-}
-function renderMic() {
-  const b = $('#ptt');
-  b.classList.toggle('live', holding);
-  b.disabled = !(S.status === 'playing' || S.status === 'intro');
-  const label = S.status === 'intro' ? T().playStart : holding ? T().pause : T().play;
-  b.setAttribute('aria-label', label);
-  b.innerHTML = `<span class="ptt-ic">${holding ? '⏸' : '▶'}</span><span class="ptt-tx">${esc(label)}</span>`;
-}
-const norm = (s) => s.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim();
-function handleUtterance(text) {
-  text = text.trim(); $('#live').textContent = '';
-  if (!text) return;
-  if (S.confirm) {
-    const n = norm(text);
-    if (T().yesWords.includes(n)) return resolveConfirm(true);
-    if (T().noWords.includes(n)) return resolveConfirm(false);
-  }
-  submitGuess(text);
-}
-
-/* ======================= matching ======================= */
-async function submitGuess(text) {
-  if (S.status !== 'playing') return;
-  const turnId = S.turnId, li = addFeed(text), t0 = performance.now();
-  let r;
-  try {
-    const res = await fetch('/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topicId: S.topic.id, guess: text, player: S.player }) });
-    r = await res.json();
-    if (!res.ok) throw new Error(r.error || res.status);
-  } catch (e) { setFeed(li, 'miss', 'error'); logRow({ guess: text, outcome: 'error', error: String(e.message) }); return; }
-  const roundTrip = Math.round(performance.now() - t0);
-  if (turnId !== S.turnId || S.status !== 'playing') { setFeed(li, 'miss', T().tooLate); logRow({ ...r, roundTrip, outcome: 'late' }); return; }
-  const fresh = r.hits.filter(k => !S.matched.has(k));
-  const repeats = r.hits.filter(k => S.matched.has(k));
-  let outcome;
-  if (fresh.length) {
-    const pts = fresh.reduce((sum, k) => sum + award(k), 0);
-    setFeed(li, 'hit', `+${pts} ${fresh.map(label).join(', ')}`);
-    Sound.sfx.correct(Math.max(...fresh.map(k => S.points[answer(k).difficulty] || 1)));
-    say(T().sayHit(fresh.map(label).join(T().and), pts));
-    outcome = 'hit';
-  } else if (repeats.length) {
-    setFeed(li, 'miss', T().already(repeats.map(label).join(', '))); Sound.sfx.repeat(); outcome = 'repeat';
-  } else if (r.confirm && !S.matched.has(r.confirm)) {
-    setFeed(li, 'ask', T().ask(label(r.confirm)));
-    return askConfirm(r.confirm, li, logRow({ ...r, roundTrip, outcome: 'ask' }));
-  } else {
-    setFeed(li, 'miss', T().notOnBoard); Sound.sfx.miss(); outcome = 'miss';
-  }
-  logRow({ ...r, roundTrip, outcome });
-}
-const answer = (key) => S.topic.answers.find(a => a.key === key) || { text: key, difficulty: 'common' };
-const label = (key) => answer(key).text;
-function award(key) {
-  const a = S.topic.answers.find(x => x.key === key);
-  if (!a || S.matched.has(key)) return 0;
-  S.matched.add(key);
-  const pts = S.points[a.difficulty] || 1;
-  S.turnScore += pts; $('#turnScore').textContent = S.turnScore;
-  const tile = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
-  if (tile) { tile.classList.add('hit'); tile.querySelector('.txt').textContent = a.text; }
-  if (S.matched.size === S.topic.answers.length) setTimeout(endTurn, 600);
-  return pts;
-}
-function askConfirm(key, li, entry) {
-  resolveConfirm(false);
-  S.confirm = { key, li, entry, timer: setTimeout(() => resolveConfirm(false), 7000) };
-  $('#confirmText').textContent = T().confirmQ(label(key));
-  $('#confirm').hidden = false;
-  Sound.sfx.ask(); say(T().sayAsk(label(key)));
-}
-function resolveConfirm(yes) {
-  const c = S.confirm; if (!c) return;
-  clearConfirm();
-  if (yes && S.status === 'playing') {
-    const pts = award(c.key);
-    if (pts) { setFeed(c.li, 'hit', `+${pts} ${label(c.key)} (${T().confirmed})`); Sound.sfx.correct(pts); say(T().sayHit(label(c.key), pts)); }
-  } else setFeed(c.li, 'miss', T().notOnBoard);
-  if (c.entry) { c.entry.outcome = yes ? 'ask→yes' : 'ask→no'; renderLog(); }
-}
-function clearConfirm() { if (S.confirm) clearTimeout(S.confirm.timer); S.confirm = null; $('#confirm').hidden = true; }
-
-/* ======================= turn flow ======================= */
-// Random topic without repeats: each language keeps a shuffled deck that refills when empty.
-function nextTopic() {
-  const pool = topicsFor(S.locale).map(t => t.id);
-  const key = `sg-deck-${S.locale}-${S.style}`;
-  let deck = load(key, []).filter(id => pool.includes(id));
-  if (!deck.length) { deck = shuffle(pool.filter(id => id !== S.lastTopic)); if (!deck.length) deck = shuffle([...pool]); }
-  const id = deck.pop(); save(key, deck); S.lastTopic = id;
-  return S.allTopics.find(t => t.id === id);
-}
-
-async function startTurn() {
-  if (!topicsFor(S.locale).length) { $('#wheelSub').textContent = 'No topics for this language yet.'; return; }
-  warmMic();   // request mic permission now, during the untimed intro, not when the clock starts
-  pickVoice();
-  S.turnId++; S.status = 'intro'; S.matched = new Set(); S.turnScore = 0;
-  S.halfDone = false; S.warned = false; S.lastSec = null;
-  S.topic = nextTopic();
-  clearConfirm();
-  $('#wheelView').hidden = true; $('#stage').hidden = false;
-  $('#feed').innerHTML = ''; $('#live').textContent = '';
-  $('#stageNote').textContent = S.hostOn && !canSpeak ? T().noVoice : '';
-  $('#backBtn').hidden = true; $('#result').hidden = true; $('#typed').hidden = false; $('#ptt').hidden = false;
-  $('#who').textContent = S.player; $('#turnScore').textContent = '0';
-  $('#topic').textContent = S.topic.prompt;
-  setClock(S.turnSecs);
-  // Shuffle the board so the easy answers aren't always in the first squares.
-  const order = shuffle(S.topic.answers.map((_, i) => i));
-  $('#board').innerHTML = order.map((ai, pos) => {
-    const a = S.topic.answers[ai];
-    return `<div class="tile" data-key="${esc(a.key)}"><span class="n">${pos + 1}</span><span class="txt"></span><span class="pts">+${S.points[a.difficulty]}</span></div>`;
-  }).join('');
-  renderMic();
-  scrollTo({ top: 0 });
-  fetch('/api/warm', { method: 'POST' }).catch(() => {});
-  const turnId = S.turnId;
-  await say(T().sayIntro(S.topic.prompt, S.topic.answers.length), { interrupt: true });
-  // Auto-start the clock after the intro, but not while the mic permission prompt is still
-  // open — otherwise the timer would run while the player answers it. Wait for it to resolve.
-  const tryStart = () => {
-    if (S.turnId !== turnId || S.status !== 'intro') return;   // turn changed or already started
-    if (micResolved) startClock();
-    else setTimeout(tryStart, 150);
-  };
-  tryStart();
-}
-
-function startClock() {
-  if (S.status !== 'intro') return;
-  S.status = 'playing';
-  S.deadline = Date.now() + S.turnSecs * 1000;
-  Sound.sfx.go(); Sound.music.start();
-  startListening();   // open the mic the instant the clock starts; button flips to pause
-  renderMic();
-  clearInterval(S.clockTimer);
-  S.clockTimer = setInterval(() => {
-    const left = Math.max(0, (S.deadline - Date.now()) / 1000);
-    setClock(left);
-    if (!S.halfDone && left <= S.turnSecs / 2) { S.halfDone = true; Sound.sfx.chime(); say(T().sayHalf); }
-    const sec = Math.ceil(left);
-    if (sec !== S.lastSec) {
-      S.lastSec = sec;
-      if (sec <= 10 && sec > 0) Sound.sfx.clockTick(sec <= 3);
-      if (sec === 10 && !S.warned) { S.warned = true; Sound.music.setIntense(true); say(T().sayTen); }
-    }
-    if (left <= 0) endTurn();
-  }, 100);
-}
-function setClock(left) {
-  const hot = S.status === 'playing' && left <= 10;
-  $('#clock').textContent = Math.ceil(left);
-  $('#clock').classList.toggle('hot', hot);
-  $('#meter').classList.toggle('hot', hot);
-  $('#meter i').style.width = `${(left / S.turnSecs) * 100}%`;
-}
-
-function endTurn() {
-  if (S.status !== 'playing') return;
-  S.status = 'reveal';
-  clearInterval(S.clockTimer); setClock(0);
-  stopListening(); clearConfirm(); renderMic();
-  Sound.music.stop(); Sound.sfx.micEnd();
-  const total = S.topic.answers.length, found = S.matched.size;
-  if (found === total) { Sound.sfx.cheer(); confetti(3); } else Sound.sfx.buzzer();
-  $('#typed').hidden = true; $('#ptt').hidden = true;
-  const missed = S.topic.answers.filter(a => !S.matched.has(a.key));
-  for (const a of missed) {
-    const tile = document.querySelector(`[data-key="${CSS.escape(a.key)}"]`);
-    tile.classList.add('missed'); tile.querySelector('.txt').textContent = a.text;
-  }
-  const s = S.scores[S.player] || { points: 0, turns: 0 };
-  S.scores[S.player] = { points: s.points + S.turnScore, turns: s.turns + 1 };
-  save('sg-scores', S.scores);
-  if (S.onceEach && !S.played.includes(S.player)) { S.played.push(S.player); save('sg-played', S.played); }
-  $('#resultBig').textContent = T().resultBig(S.turnScore);
-  $('#resultSmall').textContent = T().resultSmall(found, total);
-  $('#result').hidden = false;
-  $('#backBtn').textContent = S.turnOrder === 'sequence' ? T().nextPlayerBtn : T().back; $('#backBtn').hidden = false;
-  setTimeout(() => say(T().sayTime(S.player, found, total, S.turnScore, shuffle(missed.map(a => a.text)).slice(0, 2)), { interrupt: true }), 700);
-}
-
-function backToWheel() {
-  S.status = 'wheel';
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
-  $('#stage').hidden = true; $('#wheelView').hidden = false;
-  if (S.turnOrder === 'sequence') {
-    if (S.names.length) { S.seqIndex = (S.seqIndex + 1) % S.names.length; save('sg-seq', S.seqIndex); }
-    applyTurnOrderUI();
-    renderNames(); renderLeaders();
-    scrollTo({ top: 0 });
-    return;
-  }
-  if (S.onceEach && S.names.length && !wheelNames().length) newRound();
-  $('#wheelTitle').textContent = "Who's up next?";
-  $('#wheelSub').textContent = S.onceEach && S.played.length === 0 && S.round > 1 ? `Everyone has played. Round ${S.round} starts now!` : 'Spin the wheel. Whoever it lands on gets the mic.';
-  renderNames(); renderLeaders();
-  scrollTo({ top: 0 });
-}
-
-/* ======================= feed + log ======================= */
-function addFeed(text) {
-  const li = document.createElement('li');
-  li.className = 'pending';
-  li.innerHTML = `<span class="g">${esc(text)}</span><span class="r">${esc(T().checking)}</span>`;
-  const feed = $('#feed'); feed.prepend(li);
-  while (feed.children.length > 5) feed.lastChild.remove();
-  return li;
-}
-function setFeed(li, cls, text) { li.className = cls; li.querySelector('.r').textContent = text; }
-function logRow(entry) {
-  const row = { at: new Date().toISOString(), locale: S.locale, player: S.player, topic: S.topic?.id, ...entry };
-  S.log.unshift(row); renderLog(); return row;
-}
-function renderLog() {
-  const fmt = (pairs) => (pairs || []).map(([k, p]) => `${k} ${p.toFixed(2)}`).join(', ');
-  $('#logRows').innerHTML = S.log.map(r => `<tr><td>${esc(r.player || '')}</td>
-    <td>${esc(r.guess || '')}</td><td>${esc(r.outcome)}${r.confirm ? ' · ' + esc(r.confirm) : ''}</td>
-    <td>${esc(r.source || '')}${r.error ? ' ⚠' : ''}</td>
-    <td class="num">${r.roundTrip ?? ''}</td><td class="num">${r.jev ? r.jev.ms : ''}</td>
-    <td>${esc(fmt(r.jev && r.jev.topChoices))}</td></tr>`).join('');
-  const rows = S.log.filter(r => r.source);
-  if (!rows.length) return;
-  const local = rows.filter(r => r.source === 'local').length;
-  const jevMs = rows.filter(r => r.jev).map(r => r.jev.ms).sort((a, b) => a - b);
-  const med = jevMs.length ? jevMs[Math.floor(jevMs.length / 2)] : null;
-  const tokens = rows.reduce((s, r) => s + (r.jev?.usage?.input_tokens || 0), 0);
-  $('#stats').textContent = `${rows.length} guesses · ${Math.round(local / rows.length * 100)}% local · median Jev ${med ?? '–'} ms · ${tokens} input tokens (~$${(tokens * 0.042 / 1e6).toFixed(5)})`;
-}
-
-/* ======================= settings ======================= */
-function setLocale(code) {
-  S.locale = code; save('sg-locale', code);
+function applyLang(code) {
+  const T = STR[code] || STR['en-US'];
   document.documentElement.lang = code.split('-')[0];
-  pickVoice();
-  const n = topicsFor(code).length;
-  const notes = [`${n} ${plural(n, 'topic', 'topics')} in ${S.locales[code]?.name ?? code}, picked at random without repeats.`];
-  if (!SR) notes.push('Voice input needs Chrome, Edge or Safari. You can still type guesses.');
-  else if (code === 'te-IN') notes.push('Telugu voice input works best in Chrome on Android.');
-  $('#langNote').textContent = notes.join(' ');
-  $('#typedGuess').placeholder = T().typePh; $('#typedBtn').textContent = T().guessBtn;
-  $('#confirmYes').textContent = T().yes; $('#confirmNo').textContent = T().no;
-  if (S.turnOrder === 'sequence') showNextUp();
+  $('#heroTitle').textContent = T.heroTitle;
+  $('#heroSub').textContent = T.heroSub;
+  $('#vibeName').textContent = T.vibeName;
+  $('#vibeDesc').textContent = T.vibeDesc;
+  $('#rapidName').textContent = T.rapidName;
+  $('#rapidDesc').textContent = T.rapidDesc;
+  [1, 2, 3].forEach((i) => { $('#vibeTag' + i).textContent = T.vibeTags[i - 1]; $('#rapidTag' + i).textContent = T.rapidTags[i - 1]; });
+  $('#vibePlay').textContent = T.play; $('#rapidPlay').textContent = T.play;
+  $('#foot').textContent = T.foot;
 }
-function setToggle(btn, on) { btn.setAttribute('aria-pressed', on); }
-
-/* ======================= wiring ======================= */
-// Unlock audio + speech on the very first user interaction, whatever it is.
-document.addEventListener('pointerdown', unlockAudio);
-document.addEventListener('keydown', unlockAudio);
-
-$('#spinBtn').onclick = spin;
-$('#hub').onclick = spin;
-$('#wheel').onclick = spin;
-$('#startTurnBtn').onclick = startSequenceTurn;
-$('#pickGo').onclick = () => { closePick(); startTurn(); };
-$('#pickAgain').onclick = () => { closePick(); if ('speechSynthesis' in window) speechSynthesis.cancel(); spin(); };
-$('#backBtn').onclick = backToWheel;
-
-$('#addForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const v = $('#nameInput').value;
-  if (addNames(v)) $('#nameInput').value = '';
-  $('#nameInput').focus();
-});
-$('#nameInput').addEventListener('paste', (e) => {
-  const text = e.clipboardData?.getData('text') || '';
-  if (/[,\n;]/.test(text)) { e.preventDefault(); addNames(text); }
-});
-$('#names').addEventListener('click', (e) => { const b = e.target.closest('.x'); if (b) removeName(Number(b.dataset.i)); });
-let clearArmed = null;
-$('#clearNames').onclick = (e) => {
-  const b = e.currentTarget;
-  if (!clearArmed) { b.textContent = 'Tap again to clear every name'; clearArmed = setTimeout(() => { clearArmed = null; b.textContent = 'Clear all names'; }, 3000); return; }
-  clearTimeout(clearArmed); clearArmed = null; b.textContent = 'Clear all names';
-  S.names = []; S.played = []; save('sg-names', S.names); save('sg-played', S.played); renderNames(); renderLeaders();
-};
-let resetArmed = null;
-$('#resetScores').onclick = (e) => {
-  const b = e.currentTarget;
-  if (!resetArmed) { b.textContent = 'Tap again to reset'; resetArmed = setTimeout(() => { resetArmed = null; b.textContent = 'Reset scores'; }, 3000); return; }
-  clearTimeout(resetArmed); resetArmed = null; b.textContent = 'Reset scores';
-  S.scores = {}; S.played = []; S.round = 1; save('sg-scores', S.scores); save('sg-played', S.played); save('sg-round', 1);
-  renderNames(); renderLeaders();
-};
-$('#onceEach').addEventListener('change', (e) => { S.onceEach = e.target.checked; save('sg-once', S.onceEach); renderNames(); });
-$('#lang').addEventListener('change', (e) => setLocale(e.target.value));
-$('#turnSecs').addEventListener('change', (e) => { S.turnSecs = Number(e.target.value); save('sg-secs', S.turnSecs); });
-$('#turnOrder').addEventListener('change', (e) => { S.turnOrder = e.target.value; save('sg-order', S.turnOrder); applyTurnOrderUI(); renderNames(); });
-$('#topicStyle').addEventListener('change', (e) => { S.style = e.target.value; save('sg-style', S.style); setLocale(S.locale); });
-
-$('#musicBtn').onclick = (e) => { const on = !Sound.prefs.music; Sound.setMusic(on); setToggle(e.currentTarget, on); };
-$('#sfxBtn').onclick = (e) => { const on = !Sound.prefs.sfx; Sound.setSfx(on); setToggle(e.currentTarget, on); };
-$('#hostBtn').onclick = (e) => { S.hostOn = !S.hostOn; save('sg-host', S.hostOn); setToggle(e.currentTarget, S.hostOn); if (!S.hostOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
-$('#logBtn').onclick = (e) => { const on = $('#log').hidden; $('#log').hidden = !on; setToggle(e.currentTarget, on); };
-$('#copyLog').onclick = async () => {
-  try { await navigator.clipboard.writeText(JSON.stringify(S.log, null, 2)); $('#copyLog').textContent = 'Copied'; }
-  catch { $('#copyLog').textContent = 'Copy failed'; }
-  setTimeout(() => ($('#copyLog').textContent = 'Copy as JSON'), 1500);
-};
-
-const ptt = $('#ptt');
-ptt.addEventListener('click', () => { Sound.resume(); holding ? stopListening() : startListening(); });
-document.addEventListener('keydown', (e) => {
-  if (e.code !== 'Space' || e.repeat || ['INPUT', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName)) return;
-  if (!$('#stage').hidden) { e.preventDefault(); holding ? stopListening() : startListening(); }
-  else if (!$('#pick').hidden) { /* ignore */ }
-  else { e.preventDefault(); S.turnOrder === 'sequence' ? startSequenceTurn() : spin(); }
-});
-$('#typed').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const v = $('#typedGuess').value; $('#typedGuess').value = '';
-  if (S.status === 'intro') startClock();
-  handleUtterance(v);
-});
-$('#confirmYes').onclick = () => resolveConfirm(true);
-$('#confirmNo').onclick = () => resolveConfirm(false);
-addEventListener('resize', drawWheel);
 
 async function boot() {
-  setToggle($('#musicBtn'), Sound.prefs.music); setToggle($('#sfxBtn'), Sound.prefs.sfx); setToggle($('#hostBtn'), S.hostOn);
-  $('#onceEach').checked = S.onceEach;
-  $('#turnSecs').value = String(S.turnSecs);
-  $('#topicStyle').value = S.style;
-  $('#turnOrder').value = S.turnOrder;
-  applyTurnOrderUI();
-  renderNames(); renderLeaders();
+  Shell.fillThemeSelect($('#themeSel'));
+  // Prefer the server's locale list so both games and the landing agree on labels.
+  let locales = window.LOCALES_UI;
   try {
-    const [status, data] = await Promise.all([fetch('/api/status').then(r => r.json()), fetch('/api/topics').then(r => r.json())]);
-    S.allTopics = data.topics; S.points = data.points; S.locales = data.locales;
-    $('#lang').innerHTML = Object.entries(S.locales).map(([code, l]) => `<option value="${code}">${esc(l.name)}</option>`).join('');
-    if (!S.locales[S.locale]) S.locale = 'en-US';
-    $('#lang').value = S.locale; setLocale(S.locale);
-    const pill = $('#matchPill');
-    pill.textContent = status.jev ? `Jev · ${status.model}` : 'Local match only';
-    pill.className = 'pill ' + (status.jev ? 'on' : 'warn');
+    const data = await fetch('/api/topics').then((r) => r.json());
+    if (data.locales) locales = Object.fromEntries(Object.entries(data.locales).map(([k, v]) => [k, v.name]));
+  } catch {}
+  Shell.fillLangSelect($('#langSel'), locales);
+  applyLang(Shell.getLang());
+  window.addEventListener('langchange', (e) => applyLang(e.detail));
+
+  try {
+    const st = await fetch('/api/status').then((r) => r.json());
+    const pill = $('#jevPill');
+    pill.textContent = st.jev ? `Jev · ${st.model}` : 'Local match only';
+    pill.className = 'pill ' + (st.jev ? 'on' : 'warn');
   } catch {
-    $('#matchPill').textContent = 'Server offline'; $('#matchPill').className = 'pill warn';
-    $('#wheelSub').textContent = 'Open this page through the server: run "npm start" and go to http://localhost:3000.';
-    $('#spinBtn').disabled = true; $('#startTurnBtn').disabled = true;
+    $('#jevPill').textContent = 'Server offline'; $('#jevPill').className = 'pill warn';
   }
-  if (document.fonts?.ready) document.fonts.ready.then(drawWheel);
-  drawWheel();
 }
 boot();
 </script>
+</body>
 </html>

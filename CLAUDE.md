@@ -1,12 +1,21 @@
-# Party Guess
+# Party Games
 
-Voice-hosted party guessing game. A player holds a button and shouts answers for a topic; the game matches what they said against a hidden board and an AI host announces results out loud. Plays in English and Telugu, aimed at Andhra Pradesh and Telangana students. This repo is the web prototype; a React Native/Expo app is the planned next step (see `docs/original-spec.md`).
+A zero-dependency web app hosting **two** voice party games that share one server, one Jev
+matcher, a global theme system, and a global language (English + Telugu). Aimed at Andhra
+Pradesh and Telangana students.
 
-Full details for humans are in `README.md`. Read it when you need setup, validation steps or design rationale beyond what's below.
+- **Vibe Guess** (`/vibe`) — the original: describe answers on a hidden board, the AI host
+  matches the *vibe* contextually and scores it. Spin-the-wheel or in-sequence turns.
+- **Rapid Fire** (`/rapid`) — an image flashes; two teams race a countdown to shout what it is;
+  Jev judges voice answers (synonyms + cross-language).
+- **Landing** (`/`) — two game cards + global theme/language pickers.
+
+**New to this repo? Read `.agents/` first** — architecture, build guidelines, browser-testing
+and sound-validation rules, and the audio/voice gotchas. Human setup is in `README.md`.
 
 ## Commands
 
-- `npm start` serves the game on http://localhost:3000. One page; a "Pick the next player by" selector on setup chooses spin-the-wheel or in-sequence turn order
+- `npm start` serves everything on http://localhost:3000 (`/` landing, `/vibe`, `/rapid`)
 - `npm run lint-topics` checks the question bank. Run after any edit to `lib/topics/*.js`; it must print "No problems found."
 - `npm run eval` runs 78 labelled guesses through the real matcher. `npm run eval -- te-IN` for one language; `FORCE_JEV=1` makes Jev decide every case
 - `npm run probe` tests whether Jev understands Telugu vs English (needs a key)
@@ -14,10 +23,12 @@ Full details for humans are in `README.md`. Read it when you need setup, validat
 
 ## Layout
 
-- `server.js` HTTP server and API: `/api/topics`, `/api/match`, `/api/warm`, `/api/status`
-- `lib/matcher.js` two-stage matching; `lib/localMatch.js` stage 1; `lib/jev.js` stage 2 request builder and client
-- `lib/topics.js` languages (`LOCALES`); boards in `lib/topics/en.js` and `lib/topics/te.js`
-- `public/index.html` the whole game, single file with inline CSS and JS, sounds synthesised with Web Audio; turn order is spin-the-wheel or in-sequence (a simple next-up card)
+- `server.js` HTTP server + API: `/api/{status,topics,match,match-one,warm}`; routes `/ /vibe /rapid`
+- `lib/matcher.js` `matchGuess()` (Vibe, board) and `matchOne()` (Rapid Fire, one answer); `lib/localMatch.js` stage 1; `lib/jev.js` stage 2
+- `lib/topics.js` languages (`LOCALES`); Vibe boards in `lib/topics/en.js` and `lib/topics/te.js`
+- `public/index.html` landing · `public/vibe.html` Vibe Guess · `public/rapid.html` Rapid Fire — each a single self-contained page, sounds synthesised with Web Audio
+- `public/theme.css` + `public/theme.js` shared design tokens (4 themes) and `window.Shell` (global theme + language); `public/rapid/items*` generated image manifest + assets
+- `.agents/` architecture + build/test/sound rules for the next agent
 - `eval/` eval cases and scripts; `logs/matches.jsonl` gets every match the server makes
 
 ## How matching works (keep these invariants)

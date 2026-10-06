@@ -4,16 +4,20 @@ import { readFile, appendFile } from 'node:fs/promises';
 import { join, extname, normalize as normPath } from 'node:path';
 import { config, jevConfigured } from './lib/config.js';
 import { TOPICS, POINTS, LOCALES, topicById } from './lib/topics.js';
-import { matchGuess } from './lib/matcher.js';
+import { matchGuess, matchOne } from './lib/matcher.js';
 import { askJev } from './lib/jev.js';
 
 const PUBLIC = join(config.root, 'public');
 const LOG = join(config.root, 'logs', 'matches.jsonl');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
+const TYPES = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+  '.mp3': 'audio/mpeg', '.ico': 'image/x-icon',
+};
 
 const send = (res, status, body, type = 'application/json') => {
   res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
-  res.end(typeof body === 'string' ? body : JSON.stringify(body));
+  res.end(Buffer.isBuffer(body) ? body : typeof body === 'string' ? body : JSON.stringify(body));
 };
 
 async function readJson(req) {
@@ -44,6 +48,16 @@ const routes = {
     return result;
   },
 
+  // Rapid Fire: match one spoken guess against one image's expected name.
+  'POST /api/match-one': async (req) => {
+    const { expected, guess, category } = await readJson(req);
+    if (typeof expected !== 'string' || !expected.trim()) return [400, { error: 'expected required' }];
+    if (typeof guess !== 'string' || !guess.trim()) return [400, { error: 'Send a non-empty guess.' }];
+    const result = await matchOne(expected.slice(0, 120), guess.slice(0, 200), { category: (category || '').slice(0, 60) });
+    appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), game: 'rapid', expected, category, guess, ...result }) + '\n').catch(() => {});
+    return result;
+  },
+
   // Opens the HTTPS connection before a turn starts; a cold connection adds ~1s to the first guess.
   'POST /api/warm': async () => {
     if (!jevConfigured()) return { warmed: false };
@@ -65,10 +79,11 @@ const server = http.createServer(async (req, res) => {
       return Array.isArray(out) ? send(res, out[0], out[1]) : send(res, 200, out);
     }
     if (req.method !== 'GET') return send(res, 404, { error: 'Not found' });
-    const rel = url.pathname === '/' ? 'index.html' : normPath(url.pathname).replace(/^([/\\])+/, '');
+    const pretty = { '/': 'index.html', '/vibe': 'vibe.html', '/rapid': 'rapid.html' };
+    const rel = pretty[url.pathname] || normPath(url.pathname).replace(/^([/\\])+/, '');
     if (rel.includes('..')) return send(res, 400, { error: 'Bad path' });
-    const file = await readFile(join(PUBLIC, rel));
-    send(res, 200, file.toString(), TYPES[extname(rel)] || 'text/plain');
+    const file = await readFile(join(PUBLIC, rel));   // Buffer — sent as-is so images/audio aren't corrupted
+    send(res, 200, file, TYPES[extname(rel)] || 'text/plain');
   } catch (e) {
     if (e.code === 'ENOENT') return send(res, 404, { error: 'Not found' });
     console.error(e);

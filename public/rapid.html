@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rapid Fire · Party Games</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('pg-theme')||'celebration'}catch(e){document.documentElement.dataset.theme='celebration'}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Telugu:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="/theme.css">
+<style>
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--stage); color: var(--ink);
+  font: 16px/1.45 var(--body);
+  background-image: radial-gradient(120% 60% at 50% -10%, color-mix(in srgb, var(--panel) 85%, var(--brass) 15%) 0%, transparent 60%);
+  background-repeat: no-repeat; background-size: 100% 900px;
+}
+button, input, select, a { font: inherit; color: inherit; }
+button, select { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 12px 16px 28px; display: flex; flex-direction: column; gap: 14px; min-height: 100%; }
+
+/* Bar */
+.bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-size: 18px; letter-spacing: .02em; color: var(--brass); }
+.spacer { margin-left: auto; }
+.pill { font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.pill.on { border-color: var(--mint); color: var(--mint); }
+.pill.warn { border-color: var(--coral); color: var(--coral); }
+.ghost { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--muted); text-decoration: none; }
+.ghost[aria-pressed="true"] { color: var(--ink); border-color: var(--muted); }
+.ghost[aria-pressed="false"] { text-decoration: line-through; }
+.ctl { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 13px; }
+
+/* Setup */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 7vw, 42px); line-height: 1.05; margin: 0; }
+.lede { color: var(--muted); margin: 0; max-width: 60ch; }
+label.field { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+input[type=text], select { background: var(--stage); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--ink); }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+.row > .field { flex: 1; min-width: 130px; }
+.primary { background: var(--brass); color: var(--brass-ink); border: 0; border-radius: 10px; padding: 12px 22px; font-weight: 700; font-size: 16px; }
+.primary:disabled { opacity: .4; cursor: default; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.teamrow { display: flex; gap: 12px; }
+.teamrow .field { flex: 1; }
+.swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 6px; }
+
+/* Scoreboard */
+.scores { display: flex; gap: 10px; align-items: stretch; }
+.team { flex: 1; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; background: var(--panel); }
+.team.active { border-color: var(--brass); box-shadow: var(--glow); }
+.team .nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team .sc { margin-left: auto; font-family: var(--display); font-size: 22px; color: var(--brass); }
+.turnline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.turnline .who { font-weight: 700; }
+.turnline .rnd { color: var(--muted); font-size: 13px; }
+.clock { margin-left: auto; font-family: var(--display); font-size: 30px; font-variant-numeric: tabular-nums; min-width: 2.4ch; text-align: right; }
+.clock.hot { color: var(--coral); }
+.meter { height: 6px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--brass); width: 100%; transition: width .2s linear; }
+.meter.hot i { background: var(--coral); }
+
+/* Image stage */
+.imgwrap { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; min-height: 240px;
+  display: flex; align-items: center; justify-content: center; padding: 16px; overflow: hidden; }
+.imgwrap img { max-width: 100%; max-height: 46vh; border-radius: 8px; object-fit: contain; }
+.imgwrap .ans { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 22px; color: var(--ink); text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.host { display: flex; gap: 8px; align-items: baseline; min-height: 1.4em; }
+.host .mark { font-size: 11px; letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+.host p { margin: 0; font-weight: 500; }
+.live { min-height: 1.3em; color: var(--muted); font-style: italic; margin: 0; text-align: center; }
+.feedback { min-height: 1.4em; text-align: center; font-weight: 700; margin: 0; }
+.feedback.good { color: var(--mint); }
+.feedback.bad { color: var(--coral); }
+
+/* Controls */
+.controls { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.ptt { width: 118px; height: 118px; border-radius: 50%; border: 0; background: var(--panel); box-shadow: inset 0 0 0 2px var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; touch-action: none; user-select: none; }
+.ptt.live { box-shadow: inset 0 0 0 3px var(--coral), var(--glow); }
+.ptt-ic { font-size: 38px; line-height: 1; }
+.ptt-tx { font-size: 12px; font-weight: 700; }
+.btnrow { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 10px 16px; font-weight: 600; font-size: 15px; color: var(--ink); }
+.btn.good { border-color: var(--mint); color: var(--mint); }
+.btn.skip { border-color: var(--coral); color: var(--coral); }
+
+/* Final */
+.standings { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.standings li { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.standings li.win { border-color: var(--brass); box-shadow: var(--glow); }
+.standings b { margin-left: auto; font-family: var(--display); color: var(--brass); font-size: 20px; }
+
+@media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <a class="ghost" href="/" id="menuBtn">← Menu</a>
+    <span class="brand">Rapid Fire</span>
+    <span class="pill" id="jevPill">…</span>
+    <span class="spacer"></span>
+    <button class="ghost" id="soundBtn" aria-pressed="true">Sounds</button>
+    <button class="ghost" id="hostBtn" aria-pressed="true">Host voice</button>
+    <select class="ctl" id="langSel" aria-label="Language"></select>
+    <select class="ctl" id="themeSel" aria-label="Theme"></select>
+  </div>
+
+  <!-- ===== Setup ===== -->
+  <section class="card" id="setup">
+    <h1 id="title">Spot it. Shout it.</h1>
+    <p class="lede" id="lede">An image flashes up. Your team shouts what it is before the clock runs out. Name as many as you can in your window — the AI host judges each call.</p>
+    <label class="field" for="category" id="lblCategory">Category
+      <select id="category"></select>
+    </label>
+    <div class="teamrow">
+      <label class="field" id="lblTeam1">Team 1<input type="text" id="team1" maxlength="18" value="Pink"></label>
+      <label class="field" id="lblTeam2">Team 2<input type="text" id="team2" maxlength="18" value="Blue"></label>
+    </div>
+    <div class="row">
+      <label class="field" for="secs" id="lblSecs">Seconds per turn
+        <select id="secs"><option value="15">15</option><option value="20" selected>20</option><option value="30">30</option><option value="45">45</option></select>
+      </label>
+      <label class="field" for="turns" id="lblTurns">Turns per team
+        <select id="turns"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
+      </label>
+      <button class="primary" id="startBtn">Start game</button>
+    </div>
+    <p class="note" id="setupNote"></p>
+  </section>
+
+  <!-- ===== Turn intro ===== -->
+  <section class="card" id="intro" hidden style="align-items:center;text-align:center;gap:18px">
+    <p class="note" id="introRound"></p>
+    <h1 id="introTeam"></h1>
+    <p class="lede" id="introHint" style="text-align:center"></p>
+    <button class="primary" id="introStart">Start turn</button>
+  </section>
+
+  <!-- ===== Play stage ===== -->
+  <section id="stage" hidden style="display:flex;flex-direction:column;gap:12px;flex:1">
+    <div class="scores" id="scores"></div>
+    <div class="turnline">
+      <span class="who" id="who"></span>
+      <span class="rnd" id="rnd"></span>
+      <span class="clock" id="clock">20</span>
+    </div>
+    <div class="meter" id="meter"><i></i></div>
+    <div class="imgwrap" id="imgwrap"><img id="img" alt="Name this"></div>
+    <div class="host"><span class="mark">HOST</span><p id="caption"></p></div>
+    <p class="live" id="live"></p>
+    <p class="feedback" id="feedback"></p>
+    <div class="controls">
+      <button class="ptt" id="ptt" aria-label="Talk"><span class="ptt-ic">▶</span><span class="ptt-tx"></span></button>
+      <div class="btnrow">
+        <button class="btn good" id="gotBtn">Got it ✓</button>
+        <button class="btn skip" id="skipBtn">Skip →</button>
+        <button class="btn" id="endBtn">End turn</button>
+      </div>
+      <p class="note" id="stageNote"></p>
+    </div>
+  </section>
+
+  <!-- ===== Final ===== -->
+  <section class="card" id="final" hidden>
+    <h1 id="winner"></h1>
+    <ol class="standings" id="standings"></ol>
+    <div class="row"><button class="primary" id="againBtn">Play again</button><a class="ghost" href="/" id="menuBtn2">← Menu</a></div>
+  </section>
+</div>
+
+<script src="/theme.js"></script>
+<script src="/rapid/items.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const plural = (n, one, many) => (n === 1 ? one : many);
+
+/* ---------- strings ---------- */
+const STR = {
+  'en-US': {
+    speech: 'en-US',
+    title: 'Spot it. Shout it.',
+    lede: 'An image flashes up. Your team shouts what it is before the clock runs out. Name as many as you can in your window — the AI host judges each call.',
+    category: 'Category', team1: 'Team 1', team2: 'Team 2', secsPerTurn: 'Seconds per turn', turnsPerTeam: 'Turns per team',
+    start: 'Start game', startTurn: 'Start turn', playAgain: 'Play again',
+    got: 'Got it ✓', skip: 'Skip →', endTurn: 'End turn', talk: 'Tap to talk', listening: 'Listening', tapStart: 'Tap to start',
+    round: (r, t) => `Round ${r} of ${t}`, teamReady: (n) => `${n}, get ready!`,
+    introHint: 'Tap start, then shout the name of each picture. Go fast!',
+    scored: (n) => `Nice! +1 for ${n}`, correct: 'Correct!', notQuite: 'Not quite…', skipped: (ans) => `It was ${ans}`,
+    turnWho: (n) => n, found: (c) => `${c} ${plural(c, 'point', 'points')} this turn`,
+    sayReady: (n) => `${n}, get ready! Name as many as you can.`,
+    sayGo: 'Go!', sayCorrect: (ans) => `${ans}! Yes!`, sayTimeUp: (n, c) => `Time! ${n} got ${c} ${plural(c, 'point', 'points')}.`,
+    sayWin: (n, s) => `${n} wins with ${s} ${plural(s, 'point', 'points')}!`, sayTie: "It's a tie!",
+    winTitle: (n) => `${n} wins!`, tieTitle: "It's a tie!",
+    micBlocked: 'Microphone blocked. Allow it in the address bar, or use the Got it / Skip buttons.',
+    noVoice: 'No voice for this language on this device — the host shows captions only.',
+    serverOff: 'Open through the server: run "npm start" and go to http://localhost:3000/rapid.',
+  },
+  'te-IN': {
+    speech: 'te-IN',
+    title: 'చూడండి. చెప్పండి.',
+    lede: 'ఒక చిత్రం కనిపిస్తుంది. గడియారం అయిపోకముందే మీ జట్టు అది ఏమిటో గట్టిగా చెప్పాలి. మీ సమయంలో వీలైనన్ని చెప్పండి — AI హోస్ట్ ప్రతి సమాధానాన్ని తీర్పు చేస్తుంది.',
+    category: 'విభాగం', team1: 'జట్టు 1', team2: 'జట్టు 2', secsPerTurn: 'ఒక్కో వంతుకు సెకన్లు', turnsPerTeam: 'ఒక్కో జట్టుకు వంతులు',
+    start: 'గేమ్ మొదలు', startTurn: 'వంతు మొదలు', playAgain: 'మళ్ళీ ఆడండి',
+    got: 'సరైనది ✓', skip: 'వదిలేయ్ →', endTurn: 'వంతు ముగించు', talk: 'నొక్కి మాట్లాడండి', listening: 'వింటున్నాను', tapStart: 'నొక్కితే మొదలు',
+    round: (r, t) => `${t} లో ${r}వ రౌండ్`, teamReady: (n) => `${n}, సిద్ధంగా ఉండండి!`,
+    introHint: 'నొక్కి, ప్రతి చిత్రం పేరు గట్టిగా చెప్పండి. వేగంగా!',
+    scored: (n) => `భలే! ${n} కి +1`, correct: 'కరెక్ట్!', notQuite: 'కాదు…', skipped: (ans) => `అది ${ans}`,
+    turnWho: (n) => n, found: (c) => `ఈ వంతులో ${c} ${plural(c, 'పాయింట్', 'పాయింట్లు')}`,
+    sayReady: (n) => `${n}, సిద్ధంగా ఉండండి! వీలైనన్ని చెప్పండి.`,
+    sayGo: 'మొదలు!', sayCorrect: (ans) => `${ans}! అవును!`, sayTimeUp: (n, c) => `సమయం! ${n} కి ${c} ${plural(c, 'పాయింట్', 'పాయింట్లు')}.`,
+    sayWin: (n, s) => `${s} ${plural(s, 'పాయింట్', 'పాయింట్లు')}తో ${n} గెలిచారు!`, sayTie: 'టై అయింది!',
+    winTitle: (n) => `${n} గెలిచారు!`, tieTitle: 'టై అయింది!',
+    micBlocked: 'మైక్రోఫోన్ అనుమతి లేదు. అడ్రస్ బార్‌లో అనుమతి ఇవ్వండి, లేదా సరైనది / వదిలేయ్ బటన్లు వాడండి.',
+    noVoice: 'ఈ పరికరంలో తెలుగు వాయిస్ లేదు — హోస్ట్ మాటలు తెరపై మాత్రమే కనిపిస్తాయి.',
+    serverOff: 'సర్వర్ ద్వారా తెరవండి: "npm start" అమలు చేసి http://localhost:3000/rapid కి వెళ్ళండి.',
+  },
+};
+
+const S = {
+  lang: 'en-US', jev: false, category: null,
+  teams: [], curTeam: 0, turnsPerTeam: 3, turnNo: 0, totalTurns: 6, turnSecs: 20,
+  deck: [], item: null, turnScore: 0, seq: 0,
+  status: 'setup', deadline: 0, clockTimer: null, warned: false, lastSec: null,
+  soundOn: true, hostOn: true,
+};
+const T = () => STR[S.lang] || STR['en-US'];
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+/* ================= sound (Web Audio, synthesised) ================= */
+const Sound = (() => {
+  let ctx = null, master;
+  function init() { if (ctx) return ctx; const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ctx = new AC(); master = ctx.createGain(); master.gain.value = 0.5; master.connect(ctx.destination); return ctx; }
+  function resume() { if (init() && ctx.state === 'suspended') ctx.resume(); }
+  const ready = () => ctx && S.soundOn;
+  const now = () => ctx.currentTime;
+  function tone(freq, t, dur, peak, { type = 'sine', glide } = {}) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.03);
+  }
+  return {
+    resume,
+    tick(urgent) { if (ready()) tone(urgent ? 1320 : 1100, now(), urgent ? 0.1 : 0.04, 0.3, { type: urgent ? 'square' : 'sine' }); },
+    go() { if (!ready()) return; const t = now(); tone(880, t, 0.12, 0.3, { type: 'triangle' }); tone(1320, t + 0.1, 0.2, 0.25, { type: 'triangle' }); },
+    correct() { if (!ready()) return; const t = now(); [784, 988, 1319].forEach((f, i) => tone(f, t + i * 0.06, 0.16, 0.3, { type: 'triangle' })); },
+    wrong() { if (ready()) tone(220, now(), 0.22, 0.25, { type: 'sawtooth', glide: 150 }); },
+    buzzer() { if (!ready()) return; const t = now(); tone(130, t, 0.6, 0.3, { type: 'sawtooth' }); tone(120, t, 0.6, 0.3, { type: 'sawtooth' }); },
+    micOn() { if (ready()) tone(880, now(), 0.07, 0.25, { type: 'sine' }); },
+    micOff() { if (ready()) tone(660, now(), 0.07, 0.2, { type: 'sine' }); },
+    fanfare() { if (!ready()) return; const t = now() + 0.02; [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * 0.1, 0.3, 0.3, { type: 'square' })); },
+  };
+})();
+
+/* ================= host voice ================= */
+let voice = null, canSpeak = true;
+function pickVoice() {
+  if (!('speechSynthesis' in window)) { canSpeak = false; return; }
+  const prefix = S.lang.split('-')[0];
+  const all = speechSynthesis.getVoices();
+  const vs = all.filter(v => v.lang && v.lang.replace('_', '-').toLowerCase().startsWith(prefix));
+  const lang = (v) => v.lang.replace('_', '-');
+  voice = (prefix === 'en' && vs.find(v => lang(v) === 'en-IN'))
+    || vs.find(v => lang(v) === S.lang && /Google|Samantha|Aria|Rishi|Natural/i.test(v.name))
+    || vs.find(v => lang(v) === S.lang) || vs[0] || null;
+  canSpeak = Boolean(voice) || (all.length === 0 && prefix === 'en');
+}
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = pickVoice;
+  try { speechSynthesis.cancel(); speechSynthesis.resume(); } catch {}
+}
+let audioUnlocked = false;
+function unlockAudio() { if (audioUnlocked) return; audioUnlocked = true; Sound.resume(); pickVoice(); }
+
+function say(text, { interrupt = false } = {}) {
+  $('#caption').textContent = text;
+  if (!S.hostOn || !canSpeak) return Promise.resolve();
+  if (holding && !interrupt) return Promise.resolve();
+  if (interrupt) speechSynthesis.cancel();
+  return new Promise((resolve) => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = S.lang; if (voice) u.voice = voice;
+    u.rate = S.lang === 'en-US' ? 1.08 : 1;
+    let done = false; const finish = () => { if (done) return; done = true; resolve(); };
+    u.onend = u.onerror = finish;
+    try { speechSynthesis.resume(); } catch {}
+    speechSynthesis.speak(u);
+    setTimeout(finish, 1200 + text.length * 70);
+  });
+}
+
+/* ================= listening ================= */
+let rec = null, holding = false, listening = false, micReady = false, micResolved = false;
+function warmMic() {
+  if (micResolved) return;
+  if (!navigator.mediaDevices?.getUserMedia) { micResolved = true; return; }
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then((s) => { s.getTracks().forEach(t => t.stop()); micReady = true; micResolved = true; })
+    .catch(() => { micResolved = true; });
+}
+function startListening() {
+  if (!SR || S.status !== 'playing') return;
+  if (holding && listening) return renderMic();
+  holding = true; Sound.micOn();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if (listening) return renderMic();
+  rec = new SR();
+  rec.lang = STR[S.lang].speech || S.lang;
+  rec.continuous = true; rec.interimResults = true;
+  rec.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) handleUtterance(r[0].transcript); else interim += r[0].transcript;
+    }
+    $('#live').textContent = interim;
+  };
+  rec.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') $('#stageNote').textContent = T().micBlocked; };
+  rec.onend = () => { listening = false; renderMic(); if (holding && S.status === 'playing') startListening(); };
+  try { rec.start(); listening = true; } catch {}
+  renderMic();
+}
+function stopListening() { holding = false; Sound.micOff(); try { rec && rec.stop(); } catch {} renderMic(); }
+function renderMic() {
+  const b = $('#ptt');
+  b.classList.toggle('live', holding);
+  b.querySelector('.ptt-ic').textContent = holding ? '⏸' : '▶';
+  b.querySelector('.ptt-tx').textContent = holding ? T().listening : T().talk;
+}
+
+/* ================= matching ================= */
+async function handleUtterance(text) {
+  text = (text || '').trim();
+  $('#live').textContent = '';
+  if (!text || S.status !== 'playing' || !S.item) return;
+  const expected = S.item.answer, seq = ++S.seq;
+  // local fast path
+  try {
+    const r = await fetch('/api/match-one', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expected, guess: text, category: S.category.en }),
+    }).then(x => x.json());
+    if (seq !== S.seq || S.status !== 'playing') return;      // a newer guess/turn superseded this
+    if (r.match) scoreCorrect();
+    else { $('#feedback').textContent = `"${text}" — ${T().notQuite}`; $('#feedback').className = 'feedback bad'; }
+  } catch {
+    if (seq === S.seq) { $('#feedback').textContent = T().notQuite; $('#feedback').className = 'feedback bad'; }
+  }
+}
+
+function scoreCorrect() {
+  if (S.status !== 'playing') return;
+  S.teams[S.curTeam].score++; S.turnScore++;
+  Sound.correct();
+  $('#feedback').textContent = T().scored(S.teams[S.curTeam].name); $('#feedback').className = 'feedback good';
+  say(T().sayCorrect(S.item.answer));
+  renderScores();
+  nextImage();
+}
+
+/* ================= game flow ================= */
+function buildCategorySelect() {
+  const sel = $('#category');
+  sel.innerHTML = (window.RAPID_CATEGORIES || []).map(c => `<option value="${c.key}">${esc(c[S.lang === 'te-IN' ? 'te' : 'en'])} (${c.count})</option>`).join('');
+}
+function startGame() {
+  unlockAudio();
+  const catKey = $('#category').value;
+  S.category = (window.RAPID_CATEGORIES || []).find(c => c.key === catKey);
+  if (!S.category) { $('#setupNote').textContent = 'Pick a category.'; return; }
+  S.teams = [
+    { name: $('#team1').value.trim() || 'Team 1', score: 0 },
+    { name: $('#team2').value.trim() || 'Team 2', score: 0 },
+  ];
+  S.turnSecs = Number($('#secs').value);
+  S.turnsPerTeam = Number($('#turns').value);
+  S.totalTurns = S.turnsPerTeam * 2;
+  S.deck = shuffle([...(window.RAPID_ITEMS[catKey] || [])]);
+  S.curTeam = 0; S.turnNo = 0;
+  $('#setup').hidden = true; $('#final').hidden = true;
+  beginTurn();
+}
+
+function beginTurn() {
+  S.turnNo++;
+  S.status = 'intro'; S.turnScore = 0; S.warned = false; S.lastSec = null;
+  const team = S.teams[S.curTeam];
+  $('#stage').hidden = true; $('#final').hidden = true; $('#intro').hidden = false;
+  const roundNo = Math.ceil(S.turnNo / 2);
+  $('#introRound').textContent = T().round(roundNo, S.turnsPerTeam);
+  $('#introTeam').textContent = T().teamReady(team.name);
+  $('#introHint').textContent = T().introHint;
+  $('#introStart').textContent = T().startTurn;
+  say(T().sayReady(team.name), { interrupt: true });
+}
+
+function startTurn() {
+  warmMic();
+  $('#intro').hidden = true; $('#stage').hidden = false;
+  $('#who').textContent = S.teams[S.curTeam].name;
+  $('#rnd').textContent = T().round(Math.ceil(S.turnNo / 2), S.turnsPerTeam);
+  $('#feedback').textContent = ''; $('#live').textContent = '';
+  $('#stageNote').textContent = S.hostOn && !canSpeak ? T().noVoice : '';
+  renderScores(); renderMic();
+  setClock(S.turnSecs);
+  nextImage();
+  fetch('/api/warm', { method: 'POST' }).catch(() => {});
+  const startWhenReady = () => {
+    if (S.status !== 'intro' && S.status !== 'ready') return;
+    if (micResolved) startClock(); else setTimeout(startWhenReady, 150);
+  };
+  S.status = 'ready';
+  startWhenReady();
+}
+
+function startClock() {
+  if (S.status !== 'ready') return;
+  S.status = 'playing';
+  S.deadline = Date.now() + S.turnSecs * 1000;
+  Sound.go(); say(T().sayGo);
+  startListening();
+  clearInterval(S.clockTimer);
+  S.clockTimer = setInterval(() => {
+    const left = Math.max(0, (S.deadline - Date.now()) / 1000);
+    setClock(left);
+    const sec = Math.ceil(left);
+    if (sec !== S.lastSec) { S.lastSec = sec; if (sec <= 5 && sec > 0) Sound.tick(sec <= 3); }
+    if (left <= 0) endTurn();
+  }, 100);
+}
+function setClock(left) {
+  const hot = S.status === 'playing' && left <= 5;
+  $('#clock').textContent = Math.ceil(left);
+  $('#clock').classList.toggle('hot', hot);
+  $('#meter').classList.toggle('hot', hot);
+  $('#meter i').style.width = `${(left / S.turnSecs) * 100}%`;
+}
+
+function nextImage() {
+  if (!S.deck.length) S.deck = shuffle([...(window.RAPID_ITEMS[S.category.key] || [])]);
+  S.item = S.deck.pop();
+  S.seq++;    // invalidate any in-flight guess for the previous image
+  $('#img').src = `/rapid/items/${S.category.key}/${S.item.file}`;
+  $('#img').alt = 'Name this';
+}
+
+function skipImage() {
+  if (S.status !== 'playing') return;
+  $('#feedback').textContent = T().skipped(S.item.answer); $('#feedback').className = 'feedback bad';
+  Sound.wrong();
+  nextImage();
+}
+
+function endTurn() {
+  if (S.status !== 'playing' && S.status !== 'ready') return;
+  S.status = 'reveal';
+  clearInterval(S.clockTimer); setClock(0);
+  stopListening(); renderMic();
+  Sound.buzzer();
+  const team = S.teams[S.curTeam];
+  say(T().sayTimeUp(team.name, S.turnScore), { interrupt: true });
+  $('#feedback').textContent = T().found(S.turnScore); $('#feedback').className = 'feedback';
+  // advance
+  setTimeout(() => {
+    if (S.turnNo >= S.totalTurns) return finish();
+    S.curTeam = 1 - S.curTeam;
+    beginTurn();
+  }, 1400);
+}
+
+function finish() {
+  S.status = 'final';
+  $('#stage').hidden = true; $('#intro').hidden = true; $('#final').hidden = false;
+  const ranked = [...S.teams].sort((a, b) => b.score - a.score);
+  const tie = ranked[0].score === ranked[1].score;
+  $('#winner').textContent = tie ? T().tieTitle : T().winTitle(ranked[0].name);
+  $('#standings').innerHTML = ranked.map((t, i) => `<li class="${i === 0 && !tie ? 'win' : ''}"><span class="nm">${esc(t.name)}</span><b>${t.score}</b></li>`).join('');
+  $('#againBtn').textContent = T().playAgain;
+  Sound.fanfare();
+  say(tie ? T().sayTie : T().sayWin(ranked[0].name, ranked[0].score), { interrupt: true });
+}
+
+function renderScores() {
+  $('#scores').innerHTML = S.teams.map((t, i) =>
+    `<div class="team ${i === S.curTeam && (S.status === 'playing' || S.status === 'ready') ? 'active' : ''}"><span class="nm">${esc(t.name)}</span><span class="sc">${t.score}</span></div>`).join('');
+}
+
+/* ================= i18n apply ================= */
+function applyLang(code) {
+  S.lang = STR[code] ? code : 'en-US';
+  document.documentElement.lang = S.lang.split('-')[0];
+  pickVoice();
+  const t = T();
+  $('#title').textContent = t.title; $('#lede').textContent = t.lede;
+  $('#lblCategory').childNodes[0].textContent = t.category;
+  $('#lblTeam1').childNodes[0].textContent = t.team1;
+  $('#lblTeam2').childNodes[0].textContent = t.team2;
+  $('#lblSecs').childNodes[0].textContent = t.secsPerTurn;
+  $('#lblTurns').childNodes[0].textContent = t.turnsPerTeam;
+  $('#startBtn').textContent = t.start;
+  $('#gotBtn').textContent = t.got; $('#skipBtn').textContent = t.skip; $('#endBtn').textContent = t.endTurn;
+  buildCategorySelect();
+  renderMic();
+  if (!$('#stage').hidden) { renderScores(); }
+}
+
+/* ================= wiring ================= */
+document.addEventListener('pointerdown', unlockAudio);
+$('#startBtn').onclick = startGame;
+$('#introStart').onclick = () => { unlockAudio(); startTurn(); };
+$('#gotBtn').onclick = () => { if (S.status === 'playing') scoreCorrect(); };
+$('#skipBtn').onclick = skipImage;
+$('#endBtn').onclick = endTurn;
+$('#againBtn').onclick = () => { $('#final').hidden = true; $('#setup').hidden = false; S.status = 'setup'; };
+$('#ptt').addEventListener('click', () => { unlockAudio(); holding ? stopListening() : startListening(); });
+$('#soundBtn').onclick = (e) => { S.soundOn = !S.soundOn; e.currentTarget.setAttribute('aria-pressed', S.soundOn); };
+$('#hostBtn').onclick = (e) => { S.hostOn = !S.hostOn; e.currentTarget.setAttribute('aria-pressed', S.hostOn); if (!S.hostOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
+document.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' || e.repeat || ['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (!$('#stage').hidden) { e.preventDefault(); holding ? stopListening() : startListening(); }
+});
+
+async function boot() {
+  Shell.fillThemeSelect($('#themeSel'));
+  let locales = window.LOCALES_UI;
+  try {
+    const data = await fetch('/api/topics').then(r => r.json());
+    if (data.locales) locales = Object.fromEntries(Object.entries(data.locales).map(([k, v]) => [k, v.name]));
+  } catch {}
+  Shell.fillLangSelect($('#langSel'), locales);
+  applyLang(Shell.getLang());
+  window.addEventListener('langchange', (e) => applyLang(e.detail));
+  try {
+    const st = await fetch('/api/status').then(r => r.json());
+    S.jev = st.jev;
+    const pill = $('#jevPill');
+    pill.textContent = st.jev ? `Jev · ${st.model}` : 'Local only';
+    pill.className = 'pill ' + (st.jev ? 'on' : 'warn');
+  } catch {
+    $('#jevPill').textContent = 'Server offline'; $('#jevPill').className = 'pill warn';
+    $('#setupNote').textContent = T().serverOff; $('#startBtn').disabled = true;
+  }
+  setToggle();
+}
+function setToggle() { $('#soundBtn').setAttribute('aria-pressed', S.soundOn); $('#hostBtn').setAttribute('aria-pressed', S.hostOn); }
+boot();
+</script>
+</body>
+</html>

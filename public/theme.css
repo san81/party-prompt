@@ -1,0 +1,78 @@
+/* Shared design tokens for the whole site (landing + both games).
+   Colours are swapped per theme via a data-theme attribute on <html>, set site-wide
+   and persisted by theme.js. Fonts and structural tokens are the same across themes.
+   "celebration" is the default and also the fallback when no data-theme is set yet. */
+
+:root {
+  --display: 'Bungee', 'Noto Sans Telugu', 'Kohinoor Telugu', 'Telugu Sangam MN', 'Nirmala UI', 'Arial Black', Impact, sans-serif;
+  --body: 'Figtree', 'Noto Sans Telugu', 'Kohinoor Telugu', 'Telugu Sangam MN', 'Nirmala UI', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* ---- Celebration (default, high-energy festive) ---- */
+html, html[data-theme="celebration"] {
+  color-scheme: dark;
+  --stage: #1a0b2e;
+  --panel: #2b1450;
+  --line: #4a2b7a;
+  --ink: #fff4e6;
+  --muted: #c9a8e0;
+  --brass: #ffd23f;
+  --brass-ink: #3a2500;
+  --coral: #ff4d8d;
+  --mint: #2ee6a6;
+  --glow: 0 0 24px rgba(255, 210, 63, .25);
+  --seg1: #ffd23f; --seg2: #ff4d8d; --seg3: #2ee6a6; --seg4: #4db8ff; --seg5: #b088ff; --seg6: #ff8a3d;
+  --seg-ink: #2a0a3a;
+}
+
+/* ---- Midnight (calm dark game-show) ---- */
+html[data-theme="midnight"] {
+  color-scheme: dark;
+  --stage: #15132c;
+  --panel: #1f1c40;
+  --line: #36325f;
+  --ink: #f4efe4;
+  --muted: #aaa4cc;
+  --brass: #e8b64a;
+  --brass-ink: #2a1e05;
+  --coral: #ff6b57;
+  --mint: #5ed1a3;
+  --glow: 0 0 20px rgba(232, 182, 74, .18);
+  --seg1: #e8b64a; --seg2: #ff8f73; --seg3: #5ed1a3; --seg4: #7cc4f5; --seg5: #b9a2ff; --seg6: #f59fc0;
+  --seg-ink: #1b1633;
+}
+
+/* ---- Neon (black + electric) ---- */
+html[data-theme="neon"] {
+  color-scheme: dark;
+  --stage: #05010d;
+  --panel: #0d0620;
+  --line: #2a1a4a;
+  --ink: #e8fff9;
+  --muted: #8a7fb0;
+  --brass: #f5d90a;
+  --brass-ink: #0a0a00;
+  --coral: #ff2e97;
+  --mint: #00ffc8;
+  --glow: 0 0 26px rgba(0, 255, 200, .3);
+  --seg1: #f5d90a; --seg2: #ff2e97; --seg3: #00ffc8; --seg4: #00b3ff; --seg5: #b14dff; --seg6: #ff6b00;
+  --seg-ink: #05010d;
+}
+
+/* ---- Daylight (light) ---- */
+html[data-theme="daylight"] {
+  color-scheme: light;
+  --stage: #f4f1fb;
+  --panel: #ffffff;
+  --line: #ded6f0;
+  --ink: #1e1b33;
+  --muted: #6b6390;
+  --brass: #c87f00;
+  --brass-ink: #fff6e0;
+  --coral: #d93365;
+  --mint: #06996a;
+  --glow: 0 6px 18px rgba(30, 27, 51, .12);
+  --seg1: #f0b429; --seg2: #ff8f73; --seg3: #4fc99a; --seg4: #5bb3ef; --seg5: #a98cf0; --seg6: #ef8fb6;
+  --seg-ink: #1e1b33;
+}
