@@ -96,6 +96,31 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .standings li.win { border-color: var(--brass); box-shadow: var(--glow); }
 .standings b { margin-left: auto; font-family: var(--display); color: var(--brass); font-size: 20px; }
 
+/* Category description */
+.catdesc { background: color-mix(in srgb, var(--panel) 70%, var(--stage)); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--muted); }
+.catdesc b { color: var(--ink); }
+.catdesc:empty { display: none; }
+/* Hint */
+.hint { min-height: 1.3em; text-align: center; margin: 0; font-weight: 600; color: var(--brass); }
+.hint:empty { display: none; }
+/* Reveal (turn end) — shows the answer and waits for the user */
+.reveal { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0 2px; }
+.reveal .big { font-family: var(--display); font-size: clamp(22px, 5vw, 34px); margin: 0; color: var(--ink); text-align: center; }
+.reveal .sub { color: var(--muted); margin: 0; }
+/* ? help button */
+#helpBtn { width: 30px; text-align: center; font-weight: 700; }
+/* Tour overlay */
+.overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(5,2,14,.72); backdrop-filter: blur(3px); }
+.tour { width: min(100%, 460px); background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--glow); }
+.tour .emoji { font-size: 44px; line-height: 1; }
+.tour h2 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0; color: var(--brass); }
+.tour p { margin: 0; color: var(--ink); }
+.tour .dots { display: flex; gap: 6px; justify-content: center; margin-top: 2px; }
+.tour .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.tour .dots span.on { background: var(--brass); }
+.tour .nav { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
+.tour .nav .spacer { margin-left: auto; }
+
 @media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -106,6 +131,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <span class="brand">Rapid Fire</span>
     <span class="pill" id="jevPill">…</span>
     <span class="spacer"></span>
+    <button class="ghost" id="helpBtn" aria-label="How to play" title="How to play">?</button>
     <button class="ghost" id="soundBtn" aria-pressed="true">Sounds</button>
     <button class="ghost" id="hostBtn" aria-pressed="true">Host voice</button>
     <select class="ctl" id="langSel" aria-label="Language"></select>
@@ -119,6 +145,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <label class="field" for="category" id="lblCategory">Category
       <select id="category"></select>
     </label>
+    <div class="catdesc" id="catDesc"></div>
     <div class="teamrow">
       <label class="field" id="lblTeam1">Team 1<input type="text" id="team1" maxlength="18" value="Pink"></label>
       <label class="field" id="lblTeam2">Team 2<input type="text" id="team2" maxlength="18" value="Blue"></label>
@@ -152,11 +179,12 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
       <span class="clock" id="clock">20</span>
     </div>
     <div class="meter" id="meter"><i></i></div>
-    <div class="imgwrap" id="imgwrap"><img id="img" alt="Name this"></div>
+    <div class="imgwrap" id="imgwrap"><img id="img" alt="Name this"><div class="ans" id="ans"></div></div>
     <div class="host"><span class="mark">HOST</span><p id="caption"></p></div>
+    <p class="hint" id="hint"></p>
     <p class="live" id="live"></p>
     <p class="feedback" id="feedback"></p>
-    <div class="controls">
+    <div class="controls" id="controls">
       <button class="ptt" id="ptt" aria-label="Talk"><span class="ptt-ic">▶</span><span class="ptt-tx"></span></button>
       <div class="btnrow">
         <button class="btn good" id="gotBtn">Got it ✓</button>
@@ -164,6 +192,11 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
         <button class="btn" id="endBtn">End turn</button>
       </div>
       <p class="note" id="stageNote"></p>
+    </div>
+    <div class="reveal" id="reveal" hidden>
+      <p class="big" id="revealBig"></p>
+      <p class="sub" id="revealSub"></p>
+      <button class="primary" id="revealBtn">Next →</button>
     </div>
   </section>
 
@@ -173,6 +206,22 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <ol class="standings" id="standings"></ol>
     <div class="row"><button class="primary" id="againBtn">Play again</button><a class="ghost" href="/" id="menuBtn2">← Menu</a></div>
   </section>
+</div>
+
+<!-- ===== First-time walkthrough ===== -->
+<div class="overlay" id="tour" hidden>
+  <div class="tour">
+    <span class="emoji" id="tourEmoji">⚡</span>
+    <h2 id="tourTitle"></h2>
+    <p id="tourBody"></p>
+    <div class="dots" id="tourDots"></div>
+    <div class="nav">
+      <button class="ghost" id="tourSkip">Skip</button>
+      <span class="spacer"></span>
+      <button class="btn" id="tourBack">Back</button>
+      <button class="primary" id="tourNext">Next</button>
+    </div>
+  </div>
 </div>
 
 <script src="/theme.js"></script>
@@ -202,6 +251,20 @@ const STR = {
     micBlocked: 'Microphone blocked. Allow it in the address bar, or use the Got it / Skip buttons.',
     noVoice: 'No voice for this language on this device — the host shows captions only.',
     serverOff: 'Open through the server: run "npm start" and go to http://localhost:3000/rapid.',
+    egLabel: 'e.g.',
+    hintCat: (cat) => `Hint: it's a "${cat}" answer.`,
+    hintLetter: (l, n) => `Starts with "${l}" · ${n} letters`,
+    answerWas: (a) => `The answer was: ${a}`,
+    seeScores: 'See scores →', nextTeam: (n) => `Next team: ${n} →`,
+    alphabetNote: 'Single letters are tricky for voice — say "ay, bee, see…", or just tap Got it.',
+    tourNext: 'Next', tourDone: "Let's play!", tourBack: 'Back', tourSkip: 'Skip',
+    tour: [
+      { emoji: '⚡', title: 'Welcome to Rapid Fire', body: 'A picture pops up and your team shouts what it is before the clock runs out. The team with the most correct calls wins.' },
+      { emoji: '🏷️', title: 'Set it up', body: 'Pick a category, name the two teams, and choose how long each turn lasts. Each team gets a few turns.' },
+      { emoji: '🎙️', title: 'Shout it out', body: 'When your turn starts the mic opens on its own — just say what you see. The AI host accepts synonyms and even the Telugu word.' },
+      { emoji: '🎛️', title: 'The buttons', body: 'Got it ✓ scores it yourself · Skip → jumps to the next picture · ⏸ pauses the mic · End turn stops the turn early.' },
+      { emoji: '💡', title: 'Stuck? No rush.', body: 'Take too long and a hint appears. When the clock ends, the answer is shown and waits — tap Next when everyone is ready.' },
+    ],
   },
   'te-IN': {
     speech: 'te-IN',
@@ -221,6 +284,64 @@ const STR = {
     micBlocked: 'మైక్రోఫోన్ అనుమతి లేదు. అడ్రస్ బార్‌లో అనుమతి ఇవ్వండి, లేదా సరైనది / వదిలేయ్ బటన్లు వాడండి.',
     noVoice: 'ఈ పరికరంలో తెలుగు వాయిస్ లేదు — హోస్ట్ మాటలు తెరపై మాత్రమే కనిపిస్తాయి.',
     serverOff: 'సర్వర్ ద్వారా తెరవండి: "npm start" అమలు చేసి http://localhost:3000/rapid కి వెళ్ళండి.',
+    egLabel: 'ఉదా',
+    hintCat: (cat) => `క్లూ: ఇది "${cat}" విభాగం.`,
+    hintLetter: (l, n) => `"${l}" తో మొదలవుతుంది · ${n} అక్షరాలు`,
+    answerWas: (a) => `సమాధానం: ${a}`,
+    seeScores: 'స్కోర్లు చూడండి →', nextTeam: (n) => `తర్వాత జట్టు: ${n} →`,
+    alphabetNote: 'ఒక్క అక్షరం వాయిస్‌కి కష్టం — "ఏ, బీ, సీ…" అని చెప్పండి, లేదా సరైనది నొక్కండి.',
+    tourNext: 'తర్వాత', tourDone: 'ఆడదాం!', tourBack: 'వెనక్కి', tourSkip: 'వదిలేయ్',
+    tour: [
+      { emoji: '⚡', title: 'రాపిడ్ ఫైర్‌కి స్వాగతం', body: 'ఒక చిత్రం కనిపిస్తుంది, గడియారం అయిపోకముందే మీ జట్టు అది ఏమిటో గట్టిగా చెప్పాలి. ఎక్కువ సరైన సమాధానాలు చెప్పిన జట్టు గెలుస్తుంది.' },
+      { emoji: '🏷️', title: 'సిద్ధం చేసుకోండి', body: 'ఒక విభాగం ఎంచుకోండి, రెండు జట్లకు పేర్లు పెట్టండి, ఒక్కో వంతు ఎంతసేపు ఉండాలో ఎంచుకోండి. ప్రతి జట్టుకు కొన్ని వంతులు.' },
+      { emoji: '🎙️', title: 'గట్టిగా చెప్పండి', body: 'మీ వంతు మొదలైనప్పుడు మైక్ దానంతట అదే తెరుచుకుంటుంది — కనిపించేది చెప్పండి. AI హోస్ట్ పర్యాయపదాలు, తెలుగు పదాలను కూడా అంగీకరిస్తుంది.' },
+      { emoji: '🎛️', title: 'బటన్లు', body: 'సరైనది ✓ మీరే స్కోర్ ఇవ్వడం · వదిలేయ్ → తర్వాత చిత్రం · ⏸ మైక్ ఆపడం · వంతు ముగించు ముందే ఆపడం.' },
+      { emoji: '💡', title: 'ఆగిపోయారా? తొందరేం లేదు.', body: 'ఎక్కువ సమయం తీసుకుంటే క్లూ కనిపిస్తుంది. గడియారం అయిపోయాక సమాధానం చూపించి ఆగుతుంది — అందరూ సిద్ధమైనప్పుడు తర్వాత నొక్కండి.' },
+    ],
+  },
+};
+
+/* Category descriptions (shown on setup) and showcase hints (animals; others fall back to
+   a category + first-letter hint). Add a `hint`/CAT_INFO entry for new content as needed. */
+const CAT_INFO = {
+  alphabetPrior: { en: { desc: 'Single letters of the English alphabet — say the letter you see.', eg: 'A, B, C…' }, te: { desc: 'ఇంగ్లీష్ అక్షరాలు — కనిపించే అక్షరాన్ని చెప్పండి.', eg: 'A, B, C…' } },
+  animals:       { en: { desc: 'Photos of animals — shout the animal’s name.', eg: 'Tiger, Zebra…' }, te: { desc: 'జంతువుల ఫోటోలు — జంతువు పేరు చెప్పండి.', eg: 'పులి, జీబ్రా…' } },
+  hollywood:     { en: { desc: 'Famous Hollywood actors.', eg: 'Tom Cruise…' }, te: { desc: 'ప్రసిద్ధ హాలీవుడ్ నటులు.', eg: 'టామ్ క్రూయిజ్…' } },
+  kitchenObject: { en: { desc: 'Everyday kitchen tools and utensils.', eg: 'Spoon, Wok…' }, te: { desc: 'వంటగదిలో వాడే వస్తువులు.', eg: 'స్పూన్, బాణలి…' } },
+  logo:          { en: { desc: 'Well-known brand logos.', eg: 'Apple, Amazon…' }, te: { desc: 'ప్రసిద్ధ బ్రాండ్ లోగోలు.', eg: 'యాపిల్, అమెజాన్…' } },
+  moviesNameFromPoster: { en: { desc: 'Guess the movie from its poster.', eg: 'Baasha…' }, te: { desc: 'పోస్టర్ చూసి సినిమా పేరు చెప్పండి.', eg: 'బాషా…' } },
+  scientists:    { en: { desc: 'Famous scientists and inventors.', eg: 'Einstein, Kalam…' }, te: { desc: 'ప్రసిద్ధ శాస్త్రవేత్తలు, ఆవిష్కర్తలు.', eg: 'ఐన్‌స్టీన్, కలామ్…' } },
+  seeds:         { en: { desc: 'Seeds, spices and grains up close.', eg: 'Cardamom…' }, te: { desc: 'విత్తనాలు, మసాలా దినుసులు దగ్గరగా.', eg: 'ఏలకులు…' } },
+  techIcons:     { en: { desc: 'Tech founders and leaders.', eg: 'Bill Gates…' }, te: { desc: 'టెక్ వ్యవస్థాపకులు, నాయకులు.', eg: 'బిల్ గేట్స్…' } },
+  usStates:      { en: { desc: 'Outline maps of US states.', eg: 'California…' }, te: { desc: 'అమెరికా రాష్ట్రాల మ్యాప్‌లు.', eg: 'కాలిఫోర్నియా…' } },
+  teluguCinema:  { en: { desc: 'Telugu cinema stars.', eg: '' }, te: { desc: 'తెలుగు సినిమా తారలు.', eg: '' } },
+};
+const HINTS = {
+  animals: {
+    'Cat': { en: 'A common pet that says meow', te: 'మియావ్ అనే పెంపుడు జంతువు' },
+    'Cheetah': { en: 'The fastest running land animal', te: 'అత్యంత వేగంగా పరిగెత్తే జంతువు' },
+    'Chimpanzee': { en: 'A clever ape, closest to humans', te: 'మనిషికి దగ్గరి తెలివైన కోతి జాతి' },
+    'Donkey': { en: 'A stubborn farm animal that brays', te: 'ఓండ్ర పెట్టే మొండి పెంపుడు జంతువు' },
+    'Emu': { en: 'A large flightless bird from Australia', te: 'ఎగరలేని పెద్ద ఆస్ట్రేలియా పక్షి' },
+    'Fox': { en: 'A cunning animal with a bushy tail', te: 'పొద తోక గల జిత్తులమారి జంతువు' },
+    'Hippopotamus': { en: 'A huge river animal with a big mouth', te: 'పెద్ద నోటి భారీ నది జంతువు' },
+    'Koala': { en: 'A sleepy tree animal that eats eucalyptus', te: 'యూకలిప్టస్ తినే నిద్రపోయే చెట్టు జంతువు' },
+    'Lama': { en: 'A woolly South American pack animal', te: 'ఉన్ని గల దక్షిణ అమెరికా జంతువు' },
+    'Lemur': { en: 'A big-eyed primate from Madagascar', te: 'పెద్ద కళ్ళ మడగాస్కర్ జంతువు' },
+    'Leopard': { en: 'A spotted big cat that climbs trees', te: 'చెట్లెక్కే మచ్చల పెద్ద పిల్లి' },
+    'Mammoth': { en: 'An extinct elephant with long tusks', te: 'పొడవైన దంతాల అంతరించిన ఏనుగు' },
+    'Marmot': { en: 'A large ground squirrel', te: 'పెద్ద నేల ఉడుత' },
+    'Penguin': { en: "A black-and-white bird that swims, can't fly", te: 'ఎగరలేని ఈత పక్షి, నలుపు-తెలుపు' },
+    'Polar Bear': { en: 'A white bear from the Arctic', te: 'ఆర్కిటిక్ తెల్ల ఎలుగుబంటి' },
+    'Rabbit': { en: 'A hopping animal with long ears', te: 'పొడవు చెవుల గెంతే జంతువు' },
+    'Raccoon': { en: 'A masked night animal that raids bins', te: 'ముసుగు ముఖం గల రాత్రి జంతువు' },
+    'Rhinoceros': { en: 'A huge animal with a horn on its nose', te: 'ముక్కు మీద కొమ్ము గల భారీ జంతువు' },
+    'Sheep': { en: 'A woolly farm animal that says baa', te: 'బా అనే ఉన్ని పెంపుడు జంతువు' },
+    'Sloth': { en: 'The slowest animal, hangs in trees', te: 'అత్యంత నెమ్మది జంతువు, చెట్లకు వేలాడుతుంది' },
+    'Swan': { en: 'An elegant white water bird with a long neck', te: 'పొడవు మెడ గల తెల్ల నీటి పక్షి' },
+    'Tiger': { en: "A striped big cat, India's national animal", te: 'చారల పెద్ద పులి, భారత జాతీయ జంతువు' },
+    'Zebra': { en: 'A horse with black-and-white stripes', te: 'నలుపు-తెలుపు చారల గుర్రం' },
+    'Pig': { en: 'A pink farm animal that oinks', te: 'కుర్ కుర్ అనే గులాబీ పెంపుడు జంతువు' },
   },
 };
 
@@ -229,6 +350,7 @@ const S = {
   teams: [], curTeam: 0, turnsPerTeam: 3, turnNo: 0, totalTurns: 6, turnSecs: 20,
   deck: [], item: null, turnScore: 0, seq: 0,
   status: 'setup', deadline: 0, clockTimer: null, warned: false, lastSec: null,
+  imgShownAt: 0, hintLevel: 0,
   soundOn: true, hostOn: true,
 };
 const T = () => STR[S.lang] || STR['en-US'];
@@ -340,11 +462,28 @@ function renderMic() {
 }
 
 /* ================= matching ================= */
+// Single letters barely survive speech recognition, so match them locally against the
+// spoken letter name (ay/bee/see…) or the first letter of whatever was heard.
+const LETTER_NAMES = { a:['a','ay','eh','hey'], b:['b','be','bee'], c:['c','see','sea'], d:['d','dee'], e:['e','ee'], f:['f','ef','eff'], g:['g','gee','jee'], h:['h','aitch','aich','hech'], i:['i','eye','ai'], j:['j','jay'], k:['k','kay','okay'], l:['l','el','ell'], m:['m','em'], n:['n','en'], o:['o','oh','owe'], p:['p','pee','pea'], q:['q','cue','queue','kyu'], r:['r','ar','are'], s:['s','es','ess'], t:['t','tee','tea'], u:['u','you','yu','ewe'], v:['v','vee'], w:['w','double u','doubleyou'], x:['x','ex','eks'], y:['y','why','wy'], z:['z','zee','zed'] };
+function matchesLetter(text, letter) {
+  const n = text.toLowerCase().replace(/[^a-z ]/g, '').trim();
+  const l = letter.toLowerCase();
+  if (n === l) return true;
+  if ((LETTER_NAMES[l] || []).includes(n)) return true;
+  const first = (n.split(/\s+/)[0] || '')[0];   // "apple" -> 'a' (lenient; party game)
+  return first === l;
+}
+
 async function handleUtterance(text) {
   text = (text || '').trim();
   $('#live').textContent = '';
   if (!text || S.status !== 'playing' || !S.item) return;
   const expected = S.item.answer, seq = ++S.seq;
+  if (expected.length === 1) {   // alphabet: decide locally, don't bother the server
+    if (matchesLetter(text, expected)) scoreCorrect();
+    else { $('#feedback').textContent = `"${text}" — ${T().notQuite}`; $('#feedback').className = 'feedback bad'; }
+    return;
+  }
   // local fast path
   try {
     const r = await fetch('/api/match-one', {
@@ -408,10 +547,14 @@ function beginTurn() {
 function startTurn() {
   warmMic();
   $('#intro').hidden = true; $('#stage').hidden = false;
+  $('#reveal').hidden = true; $('#controls').hidden = false;
   $('#who').textContent = S.teams[S.curTeam].name;
   $('#rnd').textContent = T().round(Math.ceil(S.turnNo / 2), S.turnsPerTeam);
-  $('#feedback').textContent = ''; $('#live').textContent = '';
-  $('#stageNote').textContent = S.hostOn && !canSpeak ? T().noVoice : '';
+  $('#feedback').textContent = ''; $('#live').textContent = ''; $('#hint').textContent = '';
+  const notes = [];
+  if (S.hostOn && !canSpeak) notes.push(T().noVoice);
+  if (S.category.key === 'alphabetPrior') notes.push(T().alphabetNote);
+  $('#stageNote').textContent = notes.join('  ');
   renderScores(); renderMic();
   setClock(S.turnSecs);
   nextImage();
@@ -436,6 +579,7 @@ function startClock() {
     setClock(left);
     const sec = Math.ceil(left);
     if (sec !== S.lastSec) { S.lastSec = sec; if (sec <= 5 && sec > 0) Sound.tick(sec <= 3); }
+    maybeHint();
     if (left <= 0) endTurn();
   }, 100);
 }
@@ -451,8 +595,30 @@ function nextImage() {
   if (!S.deck.length) S.deck = shuffle([...(window.RAPID_ITEMS[S.category.key] || [])]);
   S.item = S.deck.pop();
   S.seq++;    // invalidate any in-flight guess for the previous image
+  S.imgShownAt = Date.now(); S.hintLevel = 0;
+  $('#hint').textContent = ''; $('#ans').textContent = '';
   $('#img').src = `/rapid/items/${S.category.key}/${S.item.file}`;
   $('#img').alt = 'Name this';
+}
+
+// Hint ladder: a semantic hint (authored for animals) or a category hint first, then a
+// first-letter + length hint. Fires after the player dwells on the same image.
+function hintText(level) {
+  if (!S.item) return '';
+  const ans = S.item.answer, te = S.lang === 'te-IN';
+  const authored = (HINTS[S.category.key] || {})[ans];
+  if (level === 1) {
+    if (authored) return (te ? authored.te : authored.en) || authored.en;
+    return T().hintCat(S.category[te ? 'te' : 'en']);
+  }
+  const letters = ans.replace(/[^A-Za-z]/g, '').length;
+  return T().hintLetter(ans[0].toUpperCase(), letters);
+}
+function maybeHint() {
+  if (S.status !== 'playing' || !S.item) return;
+  const on = (Date.now() - S.imgShownAt) / 1000;
+  if (S.hintLevel < 1 && on >= 4) { S.hintLevel = 1; $('#hint').textContent = '💡 ' + hintText(1); }
+  else if (S.hintLevel < 2 && on >= 8) { S.hintLevel = 2; $('#hint').textContent = '💡 ' + hintText(2); }
 }
 
 function skipImage() {
@@ -470,13 +636,20 @@ function endTurn() {
   Sound.buzzer();
   const team = S.teams[S.curTeam];
   say(T().sayTimeUp(team.name, S.turnScore), { interrupt: true });
-  $('#feedback').textContent = T().found(S.turnScore); $('#feedback').className = 'feedback';
-  // advance
-  setTimeout(() => {
-    if (S.turnNo >= S.totalTurns) return finish();
-    S.curTeam = 1 - S.curTeam;
-    beginTurn();
-  }, 1400);
+  // Reveal the answer the team was stuck on and WAIT — don't auto-advance to scores.
+  $('#hint').textContent = ''; $('#feedback').textContent = '';
+  if (S.item) $('#ans').textContent = S.item.answer;
+  $('#controls').hidden = true;
+  $('#reveal').hidden = false;
+  $('#revealBig').textContent = S.item ? T().answerWas(S.item.answer) : '';
+  $('#revealSub').textContent = T().found(S.turnScore);
+  $('#revealBtn').textContent = S.turnNo >= S.totalTurns ? T().seeScores : T().nextTeam(S.teams[1 - S.curTeam].name);
+}
+function proceedAfterReveal() {
+  $('#reveal').hidden = true; $('#controls').hidden = false;
+  if (S.turnNo >= S.totalTurns) return finish();
+  S.curTeam = 1 - S.curTeam;
+  beginTurn();
 }
 
 function finish() {
@@ -510,18 +683,52 @@ function applyLang(code) {
   $('#lblTurns').childNodes[0].textContent = t.turnsPerTeam;
   $('#startBtn').textContent = t.start;
   $('#gotBtn').textContent = t.got; $('#skipBtn').textContent = t.skip; $('#endBtn').textContent = t.endTurn;
+  const curCat = $('#category').value;
   buildCategorySelect();
+  if (curCat) $('#category').value = curCat;      // keep the chosen category across a language switch
+  showCatDesc();
   renderMic();
   if (!$('#stage').hidden) { renderScores(); }
+  if (!$('#tour').hidden) renderTour();
 }
+
+/* ================= category description + tour ================= */
+function showCatDesc() {
+  const info = CAT_INFO[$('#category').value];
+  const d = $('#catDesc');
+  if (!info) { d.innerHTML = ''; return; }
+  const x = info[S.lang === 'te-IN' ? 'te' : 'en'] || info.en;
+  d.innerHTML = esc(x.desc) + (x.eg ? ` <b>${esc(T().egLabel)}:</b> ${esc(x.eg)}` : '');
+}
+
+let tourStep = 0;
+function renderTour() {
+  const steps = T().tour, s = steps[tourStep];
+  $('#tourEmoji').textContent = s.emoji; $('#tourTitle').textContent = s.title; $('#tourBody').textContent = s.body;
+  $('#tourDots').innerHTML = steps.map((_, i) => `<span class="${i === tourStep ? 'on' : ''}"></span>`).join('');
+  $('#tourBack').style.visibility = tourStep === 0 ? 'hidden' : 'visible';
+  $('#tourBack').textContent = T().tourBack; $('#tourSkip').textContent = T().tourSkip;
+  $('#tourNext').textContent = tourStep === steps.length - 1 ? T().tourDone : T().tourNext;
+}
+function openTour(force) {
+  if (!force) { try { if (localStorage.getItem('rapid-tour-done')) return; } catch {} }
+  tourStep = 0; $('#tour').hidden = false; renderTour();
+}
+function closeTour() { $('#tour').hidden = true; try { localStorage.setItem('rapid-tour-done', '1'); } catch {} }
 
 /* ================= wiring ================= */
 document.addEventListener('pointerdown', unlockAudio);
 $('#startBtn').onclick = startGame;
+$('#category').addEventListener('change', showCatDesc);
 $('#introStart').onclick = () => { unlockAudio(); startTurn(); };
 $('#gotBtn').onclick = () => { if (S.status === 'playing') scoreCorrect(); };
 $('#skipBtn').onclick = skipImage;
 $('#endBtn').onclick = endTurn;
+$('#revealBtn').onclick = proceedAfterReveal;
+$('#helpBtn').onclick = () => openTour(true);
+$('#tourNext').onclick = () => { const n = T().tour.length; if (tourStep < n - 1) { tourStep++; renderTour(); } else closeTour(); };
+$('#tourBack').onclick = () => { if (tourStep > 0) { tourStep--; renderTour(); } };
+$('#tourSkip').onclick = closeTour;
 $('#againBtn').onclick = () => { $('#final').hidden = true; $('#setup').hidden = false; S.status = 'setup'; };
 $('#ptt').addEventListener('click', () => { unlockAudio(); holding ? stopListening() : startListening(); });
 $('#soundBtn').onclick = (e) => { S.soundOn = !S.soundOn; e.currentTarget.setAttribute('aria-pressed', S.soundOn); };
@@ -552,6 +759,8 @@ async function boot() {
     $('#setupNote').textContent = T().serverOff; $('#startBtn').disabled = true;
   }
   setToggle();
+  showCatDesc();
+  openTour(false);   // first-time walkthrough
 }
 function setToggle() { $('#soundBtn').setAttribute('aria-pressed', S.soundOn); $('#hostBtn').setAttribute('aria-pressed', S.hostOn); }
 boot();
