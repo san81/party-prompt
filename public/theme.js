@@ -4,6 +4,7 @@
 
 window.THEMES = {
   celebration: { label: '🎉 Celebration' },
+  fall:        { label: '🍂 Fall' },
   midnight:    { label: '🌙 Midnight' },
   neon:        { label: '⚡ Neon' },
   daylight:    { label: '☀️ Daylight' },

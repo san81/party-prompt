@@ -7,6 +7,7 @@
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('pg-theme')||'celebration'}catch(e){document.documentElement.dataset.theme='celebration'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Telugu:wght@400;500;700&display=swap">
+<link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="/theme.css">
 <style>
 * { box-sizing: border-box; }
@@ -111,6 +112,9 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .log tr.correct td:first-child { color: var(--mint); }
 .log tr.no td:first-child { color: var(--coral); }
 
+/* "Did you mean?" (letters) */
+.confirm { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; border: 1px solid var(--brass); border-radius: 12px; background: var(--panel); box-shadow: var(--glow); }
+.confirm p { margin: 0; font-weight: 700; font-size: 18px; }
 /* Category description */
 .catdesc { background: color-mix(in srgb, var(--panel) 70%, var(--stage)); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--muted); }
 .catdesc b { color: var(--ink); }
@@ -201,6 +205,13 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <p class="hint" id="hint"></p>
     <p class="live" id="live"></p>
     <p class="feedback" id="feedback"></p>
+    <div class="confirm" id="confirm" hidden>
+      <p id="confirmText"></p>
+      <div class="btnrow">
+        <button class="btn good" id="confirmYes">Yes</button>
+        <button class="btn skip" id="confirmNo">No</button>
+      </div>
+    </div>
     <div class="controls" id="controls">
       <button class="ptt" id="ptt" aria-label="Talk"><span class="ptt-ic">▶</span><span class="ptt-tx"></span></button>
       <div class="btnrow">
@@ -233,7 +244,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <p class="stats" id="logStats">No guesses yet.</p>
     <div class="scroll">
       <table>
-        <thead><tr><th>Category</th><th>Expected</th><th>Guess</th><th>Result</th><th>Source</th><th class="num">ms</th></tr></thead>
+        <thead><tr><th>Player</th><th>Expected</th><th>Guess</th><th>Result</th><th>Source</th><th class="num">Total ms</th><th class="num">Jev ms</th><th>Jev yes-probability</th></tr></thead>
         <tbody id="logRows"></tbody>
       </table>
     </div>
@@ -289,6 +300,8 @@ const STR = {
     answerWas: (a) => `The answer was: ${a}`,
     seeScores: 'See scores →', nextTeam: (n) => `Next team: ${n} →`,
     alphabetNote: 'Single letters are tricky for voice — say "ay, bee, see…", or just tap Got it.',
+    confirmQ: (x) => `Did you mean “${x}”?`, yes: 'Yes', no: 'No',
+    yesWords: ['yes', 'yeah', 'yep', 'yup', 'correct', 'right', 'ya', 'yah', 'yup yup'], noWords: ['no', 'nope', 'nah', 'wrong', 'not that'],
     tourNext: 'Next', tourDone: "Let's play!", tourBack: 'Back', tourSkip: 'Skip',
     tour: [
       { emoji: '⚡', title: 'Welcome to Rapid Fire', body: 'A picture pops up and your team shouts what it is before the clock runs out. The team with the most correct calls wins.' },
@@ -322,6 +335,8 @@ const STR = {
     answerWas: (a) => `సమాధానం: ${a}`,
     seeScores: 'స్కోర్లు చూడండి →', nextTeam: (n) => `తర్వాత జట్టు: ${n} →`,
     alphabetNote: 'ఒక్క అక్షరం వాయిస్‌కి కష్టం — "ఏ, బీ, సీ…" అని చెప్పండి, లేదా సరైనది నొక్కండి.',
+    confirmQ: (x) => `“${x}” అన్నారా?`, yes: 'అవును', no: 'కాదు',
+    yesWords: ['అవును', 'ఆ', 'అవునండి', 'కరెక్ట్', 'ఔను', 'yes', 'yeah', 'ya'], noWords: ['కాదు', 'లేదు', 'వద్దు', 'no', 'nope'],
     tourNext: 'తర్వాత', tourDone: 'ఆడదాం!', tourBack: 'వెనక్కి', tourSkip: 'వదిలేయ్',
     tour: [
       { emoji: '⚡', title: 'రాపిడ్ ఫైర్‌కి స్వాగతం', body: 'ఒక చిత్రం కనిపిస్తుంది, గడియారం అయిపోకముందే మీ జట్టు అది ఏమిటో గట్టిగా చెప్పాలి. ఎక్కువ సరైన సమాధానాలు చెప్పిన జట్టు గెలుస్తుంది.' },
@@ -385,6 +400,7 @@ const S = {
   status: 'setup', deadline: 0, clockTimer: null, warned: false, lastSec: null,
   imgShownAt: 0, hintLevel: 0,
   soundOn: true, hostOn: true, log: [],
+  accept: 0.75, confirmAt: 0.45, pendingConfirm: null,   // thresholds refreshed from /api/status
 };
 const T = () => STR[S.lang] || STR['en-US'];
 
@@ -393,19 +409,25 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<'
 
 /* ---------- match log (host/debug) ---------- */
 const expectedLabel = () => !S.item ? '' : (S.category?.key === 'priorAlphabet' ? `${S.item.shown}→${S.item.answer}` : S.item.answer);
-function logRow(entry) { S.log.unshift({ at: new Date().toISOString(), category: S.category?.key, ...entry }); if (!$('#log').hidden) renderLog(); }
+// Same shape and stats line as Vibe Guess's match log.
+function logRow(entry) {
+  S.log.unshift({ at: new Date().toISOString(), player: S.teams[S.curTeam]?.name, category: S.category?.key, ...entry });
+  if (!$('#log').hidden) renderLog();
+}
 function renderLog() {
-  $('#logRows').innerHTML = S.log.slice(0, 150).map(r =>
+  $('#logRows').innerHTML = S.log.slice(0, 200).map(r =>
     `<tr class="${r.result === 'correct' || r.result === 'got it' ? 'correct' : r.result === 'no' ? 'no' : ''}">
-      <td>${esc(r.category || '')}</td><td>${esc(r.expected ?? '')}</td><td>${esc(r.guess ?? '')}</td>
-      <td>${esc(r.result)}${r.score != null ? ` (${r.score})` : ''}</td><td>${esc(r.source || '')}${r.error ? ' ⚠' : ''}</td>
-      <td class="num">${r.ms ?? ''}</td></tr>`).join('');
-  const rows = S.log.filter(r => r.source);
+      <td>${esc(r.player || '')}</td><td>${esc(r.expected ?? '')}</td><td>${esc(r.guess ?? '')}</td>
+      <td>${esc(r.result)}</td><td>${esc(r.source || '')}${r.error ? ' ⚠' : ''}</td>
+      <td class="num">${r.ms ?? ''}</td><td class="num">${r.jev ? r.jev.ms : ''}</td>
+      <td>${r.jev ? r.jev.noul.toFixed(2) : ''}</td></tr>`).join('');
+  const rows = S.log.filter(r => r.source && r.source !== 'manual');
   if (!rows.length) { $('#logStats').textContent = 'No guesses yet.'; return; }
   const local = rows.filter(r => r.source === 'local').length;
   const jevMs = rows.filter(r => r.jev).map(r => r.jev.ms).sort((a, b) => a - b);
   const med = jevMs.length ? jevMs[Math.floor(jevMs.length / 2)] : null;
-  $('#logStats').textContent = `${rows.length} guesses · ${Math.round(local / rows.length * 100)}% local · median Jev ${med ?? '–'} ms`;
+  const tokens = rows.reduce((s, r) => s + (r.jev?.usage?.input_tokens || 0), 0);
+  $('#logStats').textContent = `${rows.length} guesses · ${Math.round(local / rows.length * 100)}% local · median Jev ${med ?? '–'} ms · ${tokens} input tokens (~$${(tokens * 0.042 / 1e6).toFixed(5)})`;
 }
 
 /* ================= sound (Web Audio, synthesised) ================= */
@@ -431,6 +453,7 @@ const Sound = (() => {
     buzzer() { if (!ready()) return; const t = now(); tone(130, t, 0.6, 0.3, { type: 'sawtooth' }); tone(120, t, 0.6, 0.3, { type: 'sawtooth' }); },
     micOn() { if (ready()) tone(880, now(), 0.07, 0.25, { type: 'sine' }); },
     micOff() { if (ready()) tone(660, now(), 0.07, 0.2, { type: 'sine' }); },
+    ask() { if (ready()) tone(523, now(), 0.25, 0.25, { type: 'triangle', glide: 784 }); },
     fanfare() { if (!ready()) return; const t = now() + 0.02; [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * 0.1, 0.3, 0.3, { type: 'square' })); },
   };
 })();
@@ -512,31 +535,88 @@ function renderMic() {
 }
 
 /* ================= matching ================= */
-// Single letters barely survive speech recognition, so match them locally against the
-// spoken letter name (ay/bee/see…) or the first letter of whatever was heard.
-const LETTER_NAMES = { a:['a','ay','eh','hey'], b:['b','be','bee'], c:['c','see','sea'], d:['d','dee'], e:['e','ee'], f:['f','ef','eff'], g:['g','gee','jee'], h:['h','aitch','aich','hech'], i:['i','eye','ai'], j:['j','jay'], k:['k','kay','okay'], l:['l','el','ell'], m:['m','em'], n:['n','en'], o:['o','oh','owe'], p:['p','pee','pea'], q:['q','cue','queue','kyu'], r:['r','ar','are'], s:['s','es','ess'], t:['t','tee','tea'], u:['u','you','yu','ewe'], v:['v','vee'], w:['w','double u','doubleyou'], x:['x','ex','eks'], y:['y','why','wy'], z:['z','zee','zed'] };
-function matchesLetter(text, letter) {
-  const n = text.toLowerCase().replace(/[^a-z ]/g, '').trim();
-  const l = letter.toLowerCase();
-  if (n === l) return true;
-  if ((LETTER_NAMES[l] || []).includes(n)) return true;
-  const first = (n.split(/\s+/)[0] || '')[0];   // "apple" -> 'a' (lenient; party game)
-  return first === l;
+// Single letters barely survive speech recognition. Locally we strip filler ("letter",
+// "it's"…) and accept only that exact letter or its spoken name; a clearly different letter
+// is rejected at once. Anything else ("Ditto" for D) goes to Jev, which may ask "Did you mean?".
+const LETTER_NAMES = { a:['a','ay','eh'], b:['b','be','bee'], c:['c','see','sea','si'], d:['d','dee'], e:['e','ee'], f:['f','ef','eff'], g:['g','gee','jee'], h:['h','aitch','aich','etch','hech'], i:['i','eye','ai'], j:['j','jay','jey'], k:['k','kay','kai'], l:['l','el','ell'], m:['m','em'], n:['n','en'], o:['o','oh','owe'], p:['p','pee','pea'], q:['q','cue','queue','kyu'], r:['r','ar','are'], s:['s','es','ess'], t:['t','tee','tea'], u:['u','you','yu','ewe'], v:['v','vee','wee'], w:['w','double u','doubleyou','double you'], x:['x','ex','eks'], y:['y','why','wy','wai'], z:['z','zee','zed'] };
+const LETTER_OF = {};   // spoken form -> letter, for spotting a *different* letter
+for (const [l, names] of Object.entries(LETTER_NAMES)) for (const n of names) if (!(n in LETTER_OF)) LETTER_OF[n] = l;
+const LETTER_FILLER = /\b(the|letter|alphabet|capital|small|its|it s|it is|is it|i think|i guess|maybe|say|answer|um+|uh+|hmm+|okay|ok)\b/g;
+function cleanLetter(text) {
+  return text.toLowerCase().replace(/[^a-z ]/g, ' ').replace(LETTER_FILLER, ' ').replace(/\s+/g, ' ').trim();
 }
+// 'yes' = that letter; 'ask' = a word starting with it ("Ditto"/"Jaguar") → "Did you mean D?";
+// 'no' = clearly a different letter; null = unclear → ask Jev. Judged on the first real word
+// after filler is removed, so "letter J" is J (not L).
+function letterLocal(text, letter) {
+  const n = cleanLetter(text), l = letter.toLowerCase();
+  if (!n) return null;
+  if (n === l || (LETTER_NAMES[l] || []).includes(n)) return 'yes';
+  if (n.split(' ')[0][0] === l) return 'ask';
+  if (LETTER_OF[n] || /^[a-z]$/.test(n)) return 'no';
+  return null;
+}
+function yesNo(text) {
+  const n = text.toLowerCase().replace(/[^\p{L}\p{M} ]/gu, '').trim();
+  if (T().yesWords.includes(n)) return true;
+  if (T().noWords.includes(n)) return false;
+  return null;
+}
+function askConfirm(answer) {
+  S.pendingConfirm = { answer, item: S.item };
+  $('#confirmText').textContent = T().confirmQ(answer);
+  $('#confirmYes').textContent = T().yes; $('#confirmNo').textContent = T().no;
+  $('#confirm').hidden = false;
+  Sound.ask && Sound.ask();
+  say(T().confirmQ(answer), { interrupt: true });
+}
+function clearConfirm() { S.pendingConfirm = null; $('#confirm').hidden = true; }
+function resolveConfirm(yes) {
+  const p = S.pendingConfirm; clearConfirm();
+  if (!p || S.status !== 'playing' || S.item !== p.item) return;
+  logRow({ expected: expectedLabel(), guess: yes ? '(yes)' : '(no)', result: yes ? 'correct' : 'no', source: 'confirm' });
+  if (yes) scoreCorrect();
+  else { $('#feedback').textContent = T().notQuite; $('#feedback').className = 'feedback bad'; }
+}
+const notQuite = (text) => { $('#feedback').textContent = `"${text}" — ${T().notQuite}`; $('#feedback').className = 'feedback bad'; };
 
 async function handleUtterance(text) {
   text = (text || '').trim();
   $('#live').textContent = '';
   if (!text || S.status !== 'playing' || !S.item) return;
+  if (S.pendingConfirm) {                       // answering "Did you mean…?" by voice
+    const yn = yesNo(text);
+    if (yn !== null) return resolveConfirm(yn);
+    clearConfirm();                             // a fresh guess replaces the question
+  }
   const expected = S.item.answer, seq = ++S.seq;
-  if (expected.length === 1) {   // alphabet / prior: decide locally, don't bother the server
-    const ok = matchesLetter(text, expected);
-    logRow({ expected: expectedLabel(), guess: text, result: ok ? 'correct' : 'no', source: 'local', ms: 0 });
-    if (ok) scoreCorrect();
-    else { $('#feedback').textContent = `"${text}" — ${T().notQuite}`; $('#feedback').className = 'feedback bad'; }
+  if (expected.length === 1) {   // Alphabet / Prior Alphabet
+    const t0 = performance.now();
+    if (!cleanLetter(text)) return;            // only filler ("the", "um") — ignore, keep listening
+    const local = letterLocal(text, expected);
+    if (local) {
+      logRow({ expected: expectedLabel(), guess: text, result: local === 'yes' ? 'correct' : local, source: 'local', ms: 0 });
+      if (local === 'yes') return scoreCorrect();
+      if (local === 'ask') return askConfirm(expected);
+      return notQuite(text);
+    }
+    try {
+      const r = await fetch('/api/match-one', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expected, guess: text, kind: 'letter' }),
+      }).then(x => x.json());
+      if (seq !== S.seq || S.status !== 'playing') return;
+      const ms = Math.round(performance.now() - t0);
+      logRow({ expected: expectedLabel(), guess: text, result: r.match ? 'correct' : r.confirm ? 'ask' : 'no', source: r.source, ms, jev: r.jev, error: r.error });
+      if (r.match) return scoreCorrect();
+      if (r.confirm) return askConfirm(expected);
+      notQuite(text);
+    } catch {
+      if (seq === S.seq) { logRow({ expected: expectedLabel(), guess: text, result: 'error', source: 'local', error: 'network' }); notQuite(text); }
+    }
     return;
   }
-  const exLabel = expectedLabel();
+  const exLabel = expectedLabel(), t0 = performance.now();
   // local fast path then Jev (inside matchOne on the server)
   try {
     const r = await fetch('/api/match-one', {
@@ -544,7 +624,7 @@ async function handleUtterance(text) {
       body: JSON.stringify({ expected, guess: text, category: S.category.en }),
     }).then(x => x.json());
     if (seq !== S.seq || S.status !== 'playing') return;      // a newer guess/turn superseded this
-    logRow({ expected: exLabel, guess: text, result: r.match ? 'correct' : 'no', source: r.source, score: r.score, ms: r.latencyMs, jev: r.jev, error: r.error });
+    logRow({ expected: exLabel, guess: text, result: r.match ? 'correct' : 'no', source: r.source, ms: Math.round(performance.now() - t0), jev: r.jev, error: r.error });
     if (r.match) scoreCorrect();
     else { $('#feedback').textContent = `"${text}" — ${T().notQuite}`; $('#feedback').className = 'feedback bad'; }
   } catch {
@@ -601,7 +681,7 @@ function beginTurn() {
 function startTurn() {
   warmMic();
   $('#intro').hidden = true; $('#stage').hidden = false;
-  $('#reveal').hidden = true; $('#controls').hidden = false;
+  $('#reveal').hidden = true; $('#controls').hidden = false; clearConfirm();
   $('#who').textContent = S.teams[S.curTeam].name;
   $('#rnd').textContent = T().round(Math.ceil(S.turnNo / 2), S.turnsPerTeam);
   renderCatLine();
@@ -651,6 +731,7 @@ function nextImage() {
   S.item = S.deck.pop();
   S.seq++;    // invalidate any in-flight guess for the previous image
   S.imgShownAt = Date.now(); S.hintLevel = 0;
+  clearConfirm();
   $('#hint').textContent = ''; $('#ans').textContent = '';
   $('#img').src = `/rapid/items/${S.category.imgDir || S.category.key}/${S.item.file}`;
   $('#img').alt = 'Name this';
@@ -693,7 +774,7 @@ function endTurn() {
   if (S.status !== 'playing' && S.status !== 'ready') return;
   S.status = 'reveal';
   clearInterval(S.clockTimer); setClock(0);
-  stopListening(); renderMic();
+  stopListening(); renderMic(); clearConfirm();
   Sound.buzzer();
   const team = S.teams[S.curTeam];
   say(T().sayTimeUp(team.name, S.turnScore), { interrupt: true });
@@ -799,6 +880,8 @@ $('#endBtn').onclick = endTurn;
 $('#logBtn').onclick = (e) => { const on = $('#log').hidden; $('#log').hidden = !on; e.currentTarget.setAttribute('aria-pressed', on); if (on) renderLog(); };
 $('#copyLog').onclick = async () => { try { await navigator.clipboard.writeText(JSON.stringify(S.log, null, 2)); $('#copyLog').textContent = 'Copied'; } catch { $('#copyLog').textContent = 'Copy failed'; } setTimeout(() => ($('#copyLog').textContent = 'Copy as JSON'), 1500); };
 $('#revealBtn').onclick = proceedAfterReveal;
+$('#confirmYes').onclick = () => resolveConfirm(true);
+$('#confirmNo').onclick = () => resolveConfirm(false);
 $('#helpBtn').onclick = () => openTour(true);
 $('#tourNext').onclick = () => { const n = T().tour.length; if (tourStep < n - 1) { tourStep++; renderTour(); } else closeTour(); };
 $('#tourBack').onclick = () => { if (tourStep > 0) { tourStep--; renderTour(); } };
@@ -825,6 +908,8 @@ async function boot() {
   try {
     const st = await fetch('/api/status').then(r => r.json());
     S.jev = st.jev;
+    if (typeof st.accept === 'number') S.accept = st.accept;
+    if (typeof st.confirm === 'number') S.confirmAt = st.confirm;
     const pill = $('#jevPill');
     pill.textContent = st.jev ? `Jev · ${st.model}` : 'Local only';
     pill.className = 'pill ' + (st.jev ? 'on' : 'warn');

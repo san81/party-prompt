@@ -60,6 +60,23 @@ html[data-theme="neon"] {
   --seg-ink: #05010d;
 }
 
+/* ---- Fall (warm autumn) ---- */
+html[data-theme="fall"] {
+  color-scheme: dark;
+  --stage: #24130c;
+  --panel: #3a2113;
+  --line: #5e3820;
+  --ink: #fdeeda;
+  --muted: #d1a885;
+  --brass: #f0962f;
+  --brass-ink: #2a1403;
+  --coral: #e0472a;
+  --mint: #b0b33e;
+  --glow: 0 0 24px rgba(240, 150, 47, .28);
+  --seg1: #f0962f; --seg2: #e0472a; --seg3: #b0b33e; --seg4: #d9893b; --seg5: #c05a2a; --seg6: #e6b53c;
+  --seg-ink: #24130c;
+}
+
 /* ---- Daylight (light) ---- */
 html[data-theme="daylight"] {
   color-scheme: light;

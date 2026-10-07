@@ -50,10 +50,10 @@ const routes = {
 
   // Rapid Fire: match one spoken guess against one image's expected name.
   'POST /api/match-one': async (req) => {
-    const { expected, guess, category } = await readJson(req);
+    const { expected, guess, category, kind } = await readJson(req);
     if (typeof expected !== 'string' || !expected.trim()) return [400, { error: 'expected required' }];
     if (typeof guess !== 'string' || !guess.trim()) return [400, { error: 'Send a non-empty guess.' }];
-    const result = await matchOne(expected.slice(0, 120), guess.slice(0, 200), { category: (category || '').slice(0, 60) });
+    const result = await matchOne(expected.slice(0, 120), guess.slice(0, 200), { category: (category || '').slice(0, 60), kind: kind === 'letter' ? 'letter' : '' });
     appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), game: 'rapid', expected, category, guess, ...result }) + '\n').catch(() => {});
     return result;
   },

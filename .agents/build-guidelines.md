@@ -54,7 +54,11 @@ Notes:
 - Two categories share the `letters/` images (single A–X letter pictures):
   `alphabet` (answer = the letter shown) and `priorAlphabet` (answer = the letter *before* it,
   with `shown` = the displayed letter, `imgDir: 'letters'`). The "prior" rule is baked into the
-  expected answer, so matching stays a plain local single-letter check — **no Jev** for letters.
+  expected answer. Letter matching (rapid.html `letterLocal`): filler like "letter"/"it's" is
+  stripped; the exact letter or its spoken name ("dee") scores; a word that merely starts with
+  the letter ("Ditto", "Dog") asks "Did you mean D?"; a different letter is rejected; anything
+  else goes to Jev via `match-one` with `kind: 'letter'` (mishearing-aware prompt), whose
+  0.45–0.75 band also asks "Did you mean?".
   rapid.html resolves the image path with `category.imgDir || category.key`.
 
 Filenames with spaces (e.g. `Bill Gates.jpg`) are fine — the answer is the cleaned file name,
