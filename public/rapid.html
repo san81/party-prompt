@@ -64,6 +64,8 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .meter { height: 6px; background: var(--line); border-radius: 4px; overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--brass); width: 100%; transition: width .2s linear; }
 .meter.hot i { background: var(--coral); }
+.catline { text-align: center; margin: 0; font-size: 13px; color: var(--muted); }
+.catline b { color: var(--brass); font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .02em; margin-right: 6px; }
 
 /* Image stage */
 .imgwrap { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; min-height: 240px;
@@ -193,6 +195,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
       <span class="clock" id="clock">20</span>
     </div>
     <div class="meter" id="meter"><i></i></div>
+    <p class="catline" id="catLine"></p>
     <div class="imgwrap" id="imgwrap"><img id="img" alt="Name this"><div class="ans" id="ans"></div></div>
     <div class="host"><span class="mark">HOST</span><p id="caption"></p></div>
     <p class="hint" id="hint"></p>
@@ -601,6 +604,7 @@ function startTurn() {
   $('#reveal').hidden = true; $('#controls').hidden = false;
   $('#who').textContent = S.teams[S.curTeam].name;
   $('#rnd').textContent = T().round(Math.ceil(S.turnNo / 2), S.turnsPerTeam);
+  renderCatLine();
   $('#feedback').textContent = ''; $('#live').textContent = ''; $('#hint').textContent = '';
   const notes = [];
   if (S.hostOn && !canSpeak) notes.push(T().noVoice);
@@ -747,7 +751,7 @@ function applyLang(code) {
   if (curCat) $('#category').value = curCat;      // keep the chosen category across a language switch
   showCatDesc();
   renderMic();
-  if (!$('#stage').hidden) { renderScores(); }
+  if (!$('#stage').hidden) { renderScores(); renderCatLine(); }
   if (!$('#tour').hidden) renderTour();
 }
 
@@ -758,6 +762,15 @@ function showCatDesc() {
   if (!info) { d.innerHTML = ''; return; }
   const x = info[S.lang === 'te-IN' ? 'te' : 'en'] || info.en;
   d.innerHTML = esc(x.desc) + (x.eg ? ` <b>${esc(T().egLabel)}:</b> ${esc(x.eg)}` : '');
+}
+// Category name + rule shown on the play stage too, so players always see what to do.
+function renderCatLine() {
+  if (!S.category) { $('#catLine').innerHTML = ''; return; }
+  const te = S.lang === 'te-IN';
+  const name = S.category[te ? 'te' : 'en'];
+  const info = CAT_INFO[S.category.key];
+  const desc = info ? (info[te ? 'te' : 'en'] || info.en).desc : '';
+  $('#catLine').innerHTML = `<b>${esc(name)}</b>${desc ? esc(desc) : ''}`;
 }
 
 let tourStep = 0;
