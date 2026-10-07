@@ -47,6 +47,36 @@ button, select { cursor: pointer; }
 .game .tag { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; }
 .game .play { align-self: flex-start; margin-top: 4px; background: var(--brass); color: var(--brass-ink); border: 0; border-radius: 10px; padding: 11px 22px; font-weight: 700; font-size: 16px; }
 
+/* "Play it together" — cast scene + steps */
+.together { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+@media (max-width: 720px) { .together { grid-template-columns: minmax(0, 1fr); } }
+.together h2 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0 0 10px; color: var(--brass); }
+.together ol { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; counter-reset: s; }
+.together li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.together li::before { content: counter(s); width: 28px; height: 28px; border-radius: 50%; background: var(--brass); color: var(--brass-ink);
+  font-weight: 700; display: grid; place-items: center; font-size: 14px; }
+.together li b { display: block; color: var(--ink); }
+.together li span { color: var(--muted); font-size: 14px; }
+.together .tip { margin: 14px 0 0; font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; }
+.scene { width: 100%; height: auto; display: block; border-radius: 12px; }
+.scene .wall { fill: var(--stage); } .scene .floor { fill: color-mix(in srgb, var(--panel) 70%, var(--line)); }
+.scene .bezel { fill: #0d0b16; } .scene .screen { fill: var(--panel); } .scene .ink { fill: var(--ink); }
+.scene .brass { fill: var(--brass); } .scene .coral { fill: var(--coral); } .scene .mint { fill: var(--mint); }
+.scene .muted { fill: var(--muted); } .scene .line { fill: var(--line); }
+.scene .s1 { fill: var(--seg1); } .scene .s2 { fill: var(--seg2); } .scene .s3 { fill: var(--seg3); } .scene .s4 { fill: var(--seg4); } .scene .s5 { fill: var(--seg5); }
+.scene .skin { fill: #c98b62; } .scene .skin2 { fill: #8d5a3b; } .scene .skin3 { fill: #e0b48c; }
+.scene .wave { fill: none; stroke: var(--brass); stroke-width: 4; stroke-linecap: round; }
+.scene .beam { fill: none; stroke: var(--brass); stroke-width: 2.5; stroke-dasharray: 2 9; stroke-linecap: round; opacity: .9; }
+.scene .arm { fill: none; stroke-width: 11; stroke-linecap: round; }
+.scene text { font-family: var(--display); }
+@media (prefers-reduced-motion: no-preference) {
+  .scene .pulse { animation: pulse 1.8s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  .scene .beam { animation: dash 1.2s linear infinite; }
+  @keyframes pulse { 0%, 100% { opacity: .35 } 50% { opacity: 1 } }
+  @keyframes dash { to { stroke-dashoffset: -22 } }
+}
+
 .foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: auto; }
 @media (prefers-reduced-motion: reduce) { .game { transition: none; } }
 </style>
@@ -82,6 +112,78 @@ button, select { cursor: pointer; }
     </a>
   </div>
 
+  <section class="together" aria-labelledby="togetherTitle">
+    <svg class="scene" viewBox="0 0 800 460" role="img" aria-labelledby="sceneTitle">
+      <title id="sceneTitle">A laptop casts the game to a TV; friends on a couch watch while one player stands and shouts the answer</title>
+      <rect class="wall" x="0" y="0" width="800" height="335"/>
+      <rect class="floor" x="0" y="335" width="800" height="125"/>
+
+      <!-- TV showing Rapid Fire -->
+      <rect class="bezel" x="330" y="34" width="384" height="226" rx="12"/>
+      <rect class="screen" x="342" y="46" width="360" height="202" rx="6"/>
+      <rect class="s2" x="356" y="58" width="86" height="20" rx="10"/><text x="399" y="73" text-anchor="middle" font-size="12" class="ink">PINK 3</text>
+      <rect class="s4" x="450" y="58" width="86" height="20" rx="10"/><text x="493" y="73" text-anchor="middle" font-size="12" class="ink">BLUE 2</text>
+      <circle class="coral" cx="672" cy="68" r="15"/><text x="672" y="74" text-anchor="middle" font-size="16" class="ink">7</text>
+      <rect class="ink" x="438" y="90" width="168" height="112" rx="8"/>
+      <rect class="mint" x="438" y="176" width="168" height="26" rx="0" opacity=".55"/>
+      <ellipse class="brass" cx="514" cy="160" rx="50" ry="17"/>
+      <circle class="brass" cx="563" cy="146" r="13"/>
+      <rect class="brass" x="476" y="168" width="7" height="22"/><rect class="brass" x="496" y="170" width="7" height="22"/>
+      <rect class="brass" x="526" y="170" width="7" height="22"/><rect class="brass" x="544" y="168" width="7" height="22"/>
+      <path d="M466 156 q-18 -6 -22 -20" class="wave" style="stroke-width:5"/>
+      <circle class="bezel" cx="490" cy="156" r="3"/><circle class="bezel" cx="505" cy="164" r="3"/><circle class="bezel" cx="522" cy="152" r="3"/><circle class="bezel" cx="538" cy="162" r="3"/><circle class="bezel" cx="567" cy="143" r="2"/>
+      <rect class="line" x="356" y="222" width="332" height="7" rx="3"/><rect class="brass" x="356" y="222" width="150" height="7" rx="3"/>
+      <rect class="bezel" x="506" y="260" width="32" height="16"/><rect class="bezel" x="476" y="274" width="92" height="6" rx="3"/>
+      <!-- "receiving cast" badge on the TV -->
+      <g class="pulse"><path class="wave" d="M352 238 a14 14 0 0 1 14 14 M352 230 a22 22 0 0 1 22 22" style="stroke-width:3"/><circle class="brass" cx="353" cy="251" r="3"/></g>
+
+      <!-- cast beam from laptop to TV -->
+      <path class="beam" d="M170 238 C 210 150, 270 120, 334 132"/>
+
+      <!-- laptop on a coffee table -->
+      <rect class="line" x="40" y="356" width="240" height="14" rx="5"/>
+      <rect class="line" x="58" y="370" width="10" height="56"/><rect class="line" x="252" y="370" width="10" height="56"/>
+      <rect class="bezel" x="88" y="262" width="154" height="96" rx="7"/>
+      <rect class="screen" x="96" y="270" width="138" height="80" rx="3"/>
+      <rect class="s2" x="102" y="276" width="34" height="9" rx="4"/><rect class="s4" x="140" y="276" width="34" height="9" rx="4"/>
+      <rect class="ink" x="128" y="292" width="74" height="46" rx="4"/><ellipse class="brass" cx="165" cy="318" rx="22" ry="8"/>
+      <polygon class="muted" points="72,358 258,358 272,368 58,368"/>
+      <!-- cast icon above the laptop -->
+      <g class="pulse">
+        <path class="wave" d="M146 222 v-14 a4 4 0 0 1 4 -4 h40 a4 4 0 0 1 4 4 v30 a4 4 0 0 1 -4 4 h-16" style="stroke-width:3.5"/>
+        <path class="wave" d="M146 230 a12 12 0 0 1 12 12 M146 222 a20 20 0 0 1 20 20" style="stroke-width:3.5"/>
+        <circle class="brass" cx="147" cy="241" r="3"/>
+      </g>
+
+      <!-- couch with friends -->
+      <rect x="236" y="338" width="320" height="62" rx="20" style="fill:color-mix(in srgb, var(--coral) 45%, var(--stage))"/>
+      <circle class="skin" cx="300" cy="326" r="18"/><rect class="s1" x="279" y="343" width="42" height="56" rx="18"/>
+      <circle class="skin2" cx="396" cy="320" r="18"/><rect class="s3" x="375" y="337" width="42" height="60" rx="18"/>
+      <path class="arm" d="M381 350 L362 318" style="stroke:var(--seg3)"/><path class="arm" d="M411 350 L430 316" style="stroke:var(--seg3)"/>
+      <circle class="skin3" cx="492" cy="326" r="18"/><rect class="s5" x="471" y="343" width="42" height="56" rx="18"/>
+      <rect x="226" y="392" width="340" height="40" rx="16" style="fill:color-mix(in srgb, var(--coral) 60%, var(--stage))"/>
+      <rect x="210" y="364" width="38" height="70" rx="15" style="fill:color-mix(in srgb, var(--coral) 52%, var(--stage))"/>
+      <rect x="544" y="364" width="38" height="70" rx="15" style="fill:color-mix(in srgb, var(--coral) 52%, var(--stage))"/>
+
+      <!-- standing player shouting -->
+      <rect class="bezel" x="732" y="372" width="12" height="54" rx="5"/><rect class="bezel" x="750" y="372" width="12" height="54" rx="5"/>
+      <rect class="s2" x="727" y="314" width="40" height="64" rx="15"/>
+      <circle class="skin" cx="747" cy="297" r="17"/>
+      <path class="arm" d="M733 330 L708 288" style="stroke:var(--seg2)"/>
+      <rect class="ink" x="596" y="292" width="118" height="40" rx="16"/><polygon class="ink" points="700,326 724,316 708,340"/>
+      <text id="bubbleText" x="655" y="319" text-anchor="middle" font-size="19" style="fill:var(--stage)">CHEETAH!</text>
+    </svg>
+    <div>
+      <h2 id="togetherTitle">Play it together</h2>
+      <ol>
+        <li><div><b id="st1b">Open it on a laptop</b><span id="st1s">Any browser works — Chrome is best for voice.</span></div></li>
+        <li><div><b id="st2b">Cast the tab to your TV</b><span id="st2s">Chrome menu ⋮ → Cast… → pick your TV. Or plug in an HDMI cable.</span></div></li>
+        <li><div><b id="st3b">Gather on the couch</b><span id="st3s">Teams sit together; whoever's up stands and shouts the answer.</span></div></li>
+      </ol>
+      <p class="tip" id="togetherTip">The laptop's mic does the listening — keep it near the player who's answering.</p>
+    </div>
+  </section>
+
   <p class="foot" id="foot">English &amp; తెలుగు · host voice · pick your theme</p>
 </div>
 
@@ -100,6 +202,11 @@ const STR = {
     rapidTags: ['Voice', 'Images', '2 teams'],
     play: 'Play ▶',
     foot: 'English & తెలుగు · host voice · pick your theme',
+    together: 'Play it together', bubble: 'CHEETAH!',
+    steps: [['Open it on a laptop', 'Any browser works — Chrome is best for voice.'],
+            ['Cast the tab to your TV', 'Chrome menu ⋮ → Cast… → pick your TV. Or plug in an HDMI cable.'],
+            ['Gather on the couch', "Teams sit together; whoever's up stands and shouts the answer."]],
+    tip: "The laptop's mic does the listening — keep it near the player who's answering.",
   },
   'te-IN': {
     heroTitle: 'పార్టీ గేమ్స్', heroSub: 'ఈ రోజు ఆడటానికి ఒక గేమ్ ఎంచుకోండి',
@@ -111,6 +218,11 @@ const STR = {
     rapidTags: ['వాయిస్', 'చిత్రాలు', '2 జట్లు'],
     play: 'ఆడండి ▶',
     foot: 'English & తెలుగు · హోస్ట్ వాయిస్ · మీ థీమ్ ఎంచుకోండి',
+    together: 'అందరూ కలిసి ఆడండి', bubble: 'చిరుత!',
+    steps: [['ల్యాప్‌టాప్‌లో తెరవండి', 'ఏ బ్రౌజర్ అయినా సరే — వాయిస్‌కి Chrome ఉత్తమం.'],
+            ['ట్యాబ్‌ను టీవీకి కాస్ట్ చేయండి', 'Chrome మెనూ ⋮ → Cast… → మీ టీవీ ఎంచుకోండి. లేదా HDMI కేబుల్ కనెక్ట్ చేయండి.'],
+            ['సోఫాలో కూర్చోండి', 'జట్లు కలిసి కూర్చుంటాయి; వంతు వచ్చినవారు లేచి నిలబడి సమాధానం గట్టిగా చెప్తారు.']],
+    tip: 'ల్యాప్‌టాప్ మైక్ వింటుంది — సమాధానం చెప్పేవారికి దగ్గరగా ఉంచండి.',
   },
 };
 
@@ -126,6 +238,10 @@ function applyLang(code) {
   [1, 2, 3].forEach((i) => { $('#vibeTag' + i).textContent = T.vibeTags[i - 1]; $('#rapidTag' + i).textContent = T.rapidTags[i - 1]; });
   $('#vibePlay').textContent = T.play; $('#rapidPlay').textContent = T.play;
   $('#foot').textContent = T.foot;
+  $('#togetherTitle').textContent = T.together;
+  $('#bubbleText').textContent = T.bubble;
+  T.steps.forEach(([b, sub], i) => { $('#st' + (i + 1) + 'b').textContent = b; $('#st' + (i + 1) + 's').textContent = sub; });
+  $('#togetherTip').textContent = T.tip;
 }
 
 async function boot() {
