@@ -2,10 +2,10 @@
 // Run: node scripts/gen-rapid-items.mjs
 //
 // Most categories map 1:1 to a folder; the answer is the cleaned file name. Two special
-// categories SHARE the `letters/` images (single A–X letter pictures):
-//   - alphabet      → say the letter shown (answer = the letter)
-//   - priorAlphabet → say the letter that comes BEFORE the one shown (answer = prior letter)
-// Both are matched locally (single letters), so Jev isn't involved.
+// categories SHARE the `letters/` images (24 pictures of the letters B–Y):
+//   - alphabet      → say the letter drawn (answer = drawn letter)
+//   - priorAlphabet → say the letter BEFORE the one drawn (answer = the file's own letter)
+// Matching for both is in rapid.html (letterLocal → Jev with kind:'letter' if unclear).
 import fs from 'node:fs';
 
 const DIR = 'public/rapid/items';
@@ -41,13 +41,15 @@ for (const c of fs.readdirSync(DIR)) {
   const files = imgs(`${DIR}/${c}`);
   if (files.length) items[c] = files.map((f) => ({ file: f, answer: clean(f) }));
 }
-// 2) the two letter categories, sharing letters/
-const letterFiles = imgs(`${DIR}/letters`);
-items.alphabet = letterFiles.map((f) => ({ file: f, answer: clean(f), imgDir: 'letters' }));
-items.priorAlphabet = letterFiles
-  .map((f) => ({ file: f, letter: clean(f) }))
-  .filter((x) => /^[B-Z]$/.test(x.letter))                       // 'A' has no prior
-  .map((x) => ({ file: x.file, answer: String.fromCharCode(x.letter.charCodeAt(0) - 1), shown: x.letter, imgDir: 'letters' }));
+// 2) the two letter categories, sharing letters/.
+// NOTE: these images come from the original "alphabetPrior" game, where each file is named
+// after the letter BEFORE the one drawn — a.png shows B, t.png shows U, x.png shows Y.
+// So the drawn letter is file letter + 1. (Checked visually for all 24 files.)
+const next = (c) => String.fromCharCode(c.charCodeAt(0) + 1);
+const letterFiles = imgs(`${DIR}/letters`).map((f) => ({ file: f, fileLetter: clean(f) }))
+  .filter((x) => /^[A-Y]$/.test(x.fileLetter));
+items.alphabet = letterFiles.map((x) => ({ file: x.file, answer: next(x.fileLetter), shown: next(x.fileLetter), imgDir: 'letters' }));
+items.priorAlphabet = letterFiles.map((x) => ({ file: x.file, answer: x.fileLetter, shown: next(x.fileLetter), imgDir: 'letters' }));
 
 // order: put the alphabet pair first, then the rest
 const order = ['alphabet', 'priorAlphabet', ...Object.keys(items).filter((k) => k !== 'alphabet' && k !== 'priorAlphabet')];
@@ -62,4 +64,5 @@ fs.writeFileSync('public/rapid/items.js',
   'window.RAPID_CATEGORIES = ' + JSON.stringify(categories, null, 2) + ';\n' +
   'window.RAPID_ITEMS = ' + JSON.stringify(ordered, null, 2) + ';\n');
 console.log('categories:', categories.map((c) => `${c.en}(${c.count})`).join(', '));
-console.log('priorAlphabet sample:', items.priorAlphabet.slice(0, 3).map((i) => `${i.shown}→${i.answer}`).join(', '));
+console.log('alphabet sample:', items.alphabet.slice(0, 3).map((i) => `${i.file} shows ${i.shown} → ${i.answer}`).join(', '));
+console.log('priorAlphabet sample:', items.priorAlphabet.slice(0, 3).map((i) => `${i.file} shows ${i.shown} → ${i.answer}`).join(', '));

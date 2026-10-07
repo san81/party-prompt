@@ -51,10 +51,12 @@ Notes:
   is translated; otherwise the folder key is used verbatim.
 - `missingPerson` is excluded (personal photos); empty folders (e.g. `teluguCinema` until you
   add images) are skipped so nothing broken ships.
-- Two categories share the `letters/` images (single A–X letter pictures):
-  `alphabet` (answer = the letter shown) and `priorAlphabet` (answer = the letter *before* it,
-  with `shown` = the displayed letter, `imgDir: 'letters'`). The "prior" rule is baked into the
-  expected answer. Letter matching (rapid.html `letterLocal`): filler like "letter"/"it's" is
+- Two categories share the `letters/` images. **Gotcha:** those files come from the original
+  "alphabetPrior" game and are named after the letter BEFORE the one drawn — `a.png` shows B,
+  `t.png` shows U, `x.png` shows Y. So the drawn letter is file letter + 1 (verified visually for
+  all 24). `alphabet`: answer = drawn letter. `priorAlphabet`: answer = the file's own letter
+  (the one before the drawn letter). Both carry `shown` = drawn letter and `imgDir: 'letters'`.
+  If you add letter images, check what each one actually shows before trusting its name. Letter matching (rapid.html `letterLocal`): filler like "letter"/"it's" is
   stripped; the exact letter or its spoken name ("dee") scores; a word that merely starts with
   the letter ("Ditto", "Dog") asks "Did you mean D?"; a different letter is rejected; anything
   else goes to Jev via `match-one` with `kind: 'letter'` (mishearing-aware prompt), whose

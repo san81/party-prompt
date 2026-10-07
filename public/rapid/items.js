@@ -11,7 +11,7 @@ window.RAPID_CATEGORIES = [
     "key": "priorAlphabet",
     "en": "Prior Alphabet",
     "te": "ముందు అక్షరం",
-    "count": 23,
+    "count": 24,
     "imgDir": "letters"
   },
   {
@@ -73,262 +73,292 @@ window.RAPID_ITEMS = {
   "alphabet": [
     {
       "file": "a.png",
-      "answer": "A",
+      "answer": "B",
+      "shown": "B",
       "imgDir": "letters"
     },
     {
       "file": "b.png",
-      "answer": "B",
+      "answer": "C",
+      "shown": "C",
       "imgDir": "letters"
     },
     {
       "file": "c.png",
-      "answer": "C",
+      "answer": "D",
+      "shown": "D",
       "imgDir": "letters"
     },
     {
       "file": "d.png",
-      "answer": "D",
+      "answer": "E",
+      "shown": "E",
       "imgDir": "letters"
     },
     {
       "file": "e.png",
-      "answer": "E",
+      "answer": "F",
+      "shown": "F",
       "imgDir": "letters"
     },
     {
       "file": "f.png",
-      "answer": "F",
+      "answer": "G",
+      "shown": "G",
       "imgDir": "letters"
     },
     {
       "file": "g.png",
-      "answer": "G",
+      "answer": "H",
+      "shown": "H",
       "imgDir": "letters"
     },
     {
       "file": "h.png",
-      "answer": "H",
+      "answer": "I",
+      "shown": "I",
       "imgDir": "letters"
     },
     {
       "file": "i.png",
-      "answer": "I",
+      "answer": "J",
+      "shown": "J",
       "imgDir": "letters"
     },
     {
       "file": "j.png",
-      "answer": "J",
+      "answer": "K",
+      "shown": "K",
       "imgDir": "letters"
     },
     {
       "file": "k.png",
-      "answer": "K",
+      "answer": "L",
+      "shown": "L",
       "imgDir": "letters"
     },
     {
       "file": "l.png",
-      "answer": "L",
+      "answer": "M",
+      "shown": "M",
       "imgDir": "letters"
     },
     {
       "file": "m.png",
-      "answer": "M",
+      "answer": "N",
+      "shown": "N",
       "imgDir": "letters"
     },
     {
       "file": "n.png",
-      "answer": "N",
+      "answer": "O",
+      "shown": "O",
       "imgDir": "letters"
     },
     {
       "file": "o.png",
-      "answer": "O",
+      "answer": "P",
+      "shown": "P",
       "imgDir": "letters"
     },
     {
       "file": "p.png",
-      "answer": "P",
+      "answer": "Q",
+      "shown": "Q",
       "imgDir": "letters"
     },
     {
       "file": "q.png",
-      "answer": "Q",
+      "answer": "R",
+      "shown": "R",
       "imgDir": "letters"
     },
     {
       "file": "r.png",
-      "answer": "R",
+      "answer": "S",
+      "shown": "S",
       "imgDir": "letters"
     },
     {
       "file": "s.png",
-      "answer": "S",
+      "answer": "T",
+      "shown": "T",
       "imgDir": "letters"
     },
     {
       "file": "t.png",
-      "answer": "T",
+      "answer": "U",
+      "shown": "U",
       "imgDir": "letters"
     },
     {
       "file": "u.png",
-      "answer": "U",
+      "answer": "V",
+      "shown": "V",
       "imgDir": "letters"
     },
     {
       "file": "v.png",
-      "answer": "V",
+      "answer": "W",
+      "shown": "W",
       "imgDir": "letters"
     },
     {
       "file": "w.png",
-      "answer": "W",
+      "answer": "X",
+      "shown": "X",
       "imgDir": "letters"
     },
     {
       "file": "x.png",
-      "answer": "X",
+      "answer": "Y",
+      "shown": "Y",
       "imgDir": "letters"
     }
   ],
   "priorAlphabet": [
     {
-      "file": "b.png",
+      "file": "a.png",
       "answer": "A",
       "shown": "B",
       "imgDir": "letters"
     },
     {
-      "file": "c.png",
+      "file": "b.png",
       "answer": "B",
       "shown": "C",
       "imgDir": "letters"
     },
     {
-      "file": "d.png",
+      "file": "c.png",
       "answer": "C",
       "shown": "D",
       "imgDir": "letters"
     },
     {
-      "file": "e.png",
+      "file": "d.png",
       "answer": "D",
       "shown": "E",
       "imgDir": "letters"
     },
     {
-      "file": "f.png",
+      "file": "e.png",
       "answer": "E",
       "shown": "F",
       "imgDir": "letters"
     },
     {
-      "file": "g.png",
+      "file": "f.png",
       "answer": "F",
       "shown": "G",
       "imgDir": "letters"
     },
     {
-      "file": "h.png",
+      "file": "g.png",
       "answer": "G",
       "shown": "H",
       "imgDir": "letters"
     },
     {
-      "file": "i.png",
+      "file": "h.png",
       "answer": "H",
       "shown": "I",
       "imgDir": "letters"
     },
     {
-      "file": "j.png",
+      "file": "i.png",
       "answer": "I",
       "shown": "J",
       "imgDir": "letters"
     },
     {
-      "file": "k.png",
+      "file": "j.png",
       "answer": "J",
       "shown": "K",
       "imgDir": "letters"
     },
     {
-      "file": "l.png",
+      "file": "k.png",
       "answer": "K",
       "shown": "L",
       "imgDir": "letters"
     },
     {
-      "file": "m.png",
+      "file": "l.png",
       "answer": "L",
       "shown": "M",
       "imgDir": "letters"
     },
     {
-      "file": "n.png",
+      "file": "m.png",
       "answer": "M",
       "shown": "N",
       "imgDir": "letters"
     },
     {
-      "file": "o.png",
+      "file": "n.png",
       "answer": "N",
       "shown": "O",
       "imgDir": "letters"
     },
     {
-      "file": "p.png",
+      "file": "o.png",
       "answer": "O",
       "shown": "P",
       "imgDir": "letters"
     },
     {
-      "file": "q.png",
+      "file": "p.png",
       "answer": "P",
       "shown": "Q",
       "imgDir": "letters"
     },
     {
-      "file": "r.png",
+      "file": "q.png",
       "answer": "Q",
       "shown": "R",
       "imgDir": "letters"
     },
     {
-      "file": "s.png",
+      "file": "r.png",
       "answer": "R",
       "shown": "S",
       "imgDir": "letters"
     },
     {
-      "file": "t.png",
+      "file": "s.png",
       "answer": "S",
       "shown": "T",
       "imgDir": "letters"
     },
     {
-      "file": "u.png",
+      "file": "t.png",
       "answer": "T",
       "shown": "U",
       "imgDir": "letters"
     },
     {
-      "file": "v.png",
+      "file": "u.png",
       "answer": "U",
       "shown": "V",
       "imgDir": "letters"
     },
     {
-      "file": "w.png",
+      "file": "v.png",
       "answer": "V",
       "shown": "W",
       "imgDir": "letters"
     },
     {
-      "file": "x.png",
+      "file": "w.png",
       "answer": "W",
       "shown": "X",
+      "imgDir": "letters"
+    },
+    {
+      "file": "x.png",
+      "answer": "X",
+      "shown": "Y",
       "imgDir": "letters"
     }
   ],
