@@ -47,6 +47,11 @@ button, select { cursor: pointer; }
 .game .tag { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; }
 .game .play { align-self: flex-start; margin-top: 4px; background: var(--brass); color: var(--brass-ink); border: 0; border-radius: 10px; padding: 11px 22px; font-weight: 700; font-size: 16px; }
 
+/* "See it in action" — recorded walkthrough */
+.demo { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.demo h2 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0; color: var(--brass); }
+.demo img { width: 100%; height: auto; display: block; border-radius: 12px; border: 1px solid var(--line); background: var(--stage); }
+.demo figcaption { color: var(--muted); font-size: 14px; }
 /* "Play it together" — cast scene + steps */
 .together { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: center;
   background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
@@ -184,6 +189,13 @@ button, select { cursor: pointer; }
     </div>
   </section>
 
+  <figure class="demo">
+    <h2 id="demoTitle">See it in action</h2>
+    <img src="/img/rapid-fire-howto.gif" width="1483" height="812" loading="lazy" id="demoImg"
+         alt="Recorded walkthrough: open Rapid Fire, pick Animals, start a turn, a cheetah appears with a hint, the player says cheetah and scores, then time runs out and the answer Zebra is revealed">
+    <figcaption id="demoCap">Pick a category, start your turn, shout what you see. Stuck? A hint pops up — and when time's up, the answer waits for you.</figcaption>
+  </figure>
+
   <p class="foot" id="foot">English &amp; తెలుగు · host voice · pick your theme</p>
 </div>
 
@@ -207,6 +219,7 @@ const STR = {
             ['Cast the tab to your TV', 'Chrome menu ⋮ → Cast… → pick your TV. Or plug in an HDMI cable.'],
             ['Gather on the couch', "Teams sit together; whoever's up stands and shouts the answer."]],
     tip: "The laptop's mic does the listening — keep it near the player who's answering.",
+    demo: 'See it in action', demoCap: "Pick a category, start your turn, shout what you see. Stuck? A hint pops up — and when time's up, the answer waits for you.",
   },
   'te-IN': {
     heroTitle: 'పార్టీ గేమ్స్', heroSub: 'ఈ రోజు ఆడటానికి ఒక గేమ్ ఎంచుకోండి',
@@ -223,6 +236,7 @@ const STR = {
             ['ట్యాబ్‌ను టీవీకి కాస్ట్ చేయండి', 'Chrome మెనూ ⋮ → Cast… → మీ టీవీ ఎంచుకోండి. లేదా HDMI కేబుల్ కనెక్ట్ చేయండి.'],
             ['సోఫాలో కూర్చోండి', 'జట్లు కలిసి కూర్చుంటాయి; వంతు వచ్చినవారు లేచి నిలబడి సమాధానం గట్టిగా చెప్తారు.']],
     tip: 'ల్యాప్‌టాప్ మైక్ వింటుంది — సమాధానం చెప్పేవారికి దగ్గరగా ఉంచండి.',
+    demo: 'ఆట ఎలా సాగుతుందో చూడండి', demoCap: 'విభాగం ఎంచుకోండి, మీ వంతు మొదలుపెట్టండి, కనిపించేది గట్టిగా చెప్పండి. ఆగిపోతే క్లూ వస్తుంది — సమయం అయిపోయాక సమాధానం చూపిస్తుంది.',
   },
 };
 
@@ -242,6 +256,7 @@ function applyLang(code) {
   $('#bubbleText').textContent = T.bubble;
   T.steps.forEach(([b, sub], i) => { $('#st' + (i + 1) + 'b').textContent = b; $('#st' + (i + 1) + 's').textContent = sub; });
   $('#togetherTip').textContent = T.tip;
+  $('#demoTitle').textContent = T.demo; $('#demoCap').textContent = T.demoCap;
 }
 
 async function boot() {
