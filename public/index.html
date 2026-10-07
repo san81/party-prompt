@@ -47,6 +47,12 @@ button, select { cursor: pointer; }
 .game .tag { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; }
 .game .play { align-self: flex-start; margin-top: 4px; background: var(--brass); color: var(--brass-ink); border: 0; border-radius: 10px; padding: 11px 22px; font-weight: 700; font-size: 16px; }
 
+/* Group-play photo */
+.photo { margin: 0; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); position: relative; }
+.photo img { width: 100%; height: auto; display: block; }
+.photo figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 18px 14px; color: #fff; font-weight: 700;
+  font-size: clamp(15px, 2.4vw, 20px); background: linear-gradient(transparent, rgba(10, 6, 20, .78)); text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+@media (max-width: 560px) { .photo figcaption { position: static; background: var(--panel); color: var(--ink); text-shadow: none; padding: 12px 14px; } }
 /* "See it in action" — recorded walkthrough */
 .demo { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .demo h2 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0; color: var(--brass); }
@@ -116,6 +122,12 @@ button, select { cursor: pointer; }
       <span class="play" id="rapidPlay">Play ▶</span>
     </a>
   </div>
+
+  <figure class="photo">
+    <img src="/img/play-together.jpg" width="1408" height="768" loading="lazy" id="photoImg"
+         alt="A family game night: Rapid Fire is cast from a laptop on the coffee table to the TV, a girl points at the cheetah on screen and shouts the answer, and the family on the couch cheers">
+    <figcaption id="photoCap">Cast it to the TV, gather the family, and shout it out.</figcaption>
+  </figure>
 
   <section class="together" aria-labelledby="togetherTitle">
     <svg class="scene" viewBox="0 0 800 460" role="img" aria-labelledby="sceneTitle">
@@ -219,6 +231,7 @@ const STR = {
             ['Cast the tab to your TV', 'Chrome menu ⋮ → Cast… → pick your TV. Or plug in an HDMI cable.'],
             ['Gather on the couch', "Teams sit together; whoever's up stands and shouts the answer."]],
     tip: "The laptop's mic does the listening — keep it near the player who's answering.",
+    photoCap: 'Cast it to the TV, gather the family, and shout it out.',
     demo: 'See it in action', demoCap: "Pick a category, start your turn, shout what you see. Stuck? A hint pops up — and when time's up, the answer waits for you.",
   },
   'te-IN': {
@@ -236,6 +249,7 @@ const STR = {
             ['ట్యాబ్‌ను టీవీకి కాస్ట్ చేయండి', 'Chrome మెనూ ⋮ → Cast… → మీ టీవీ ఎంచుకోండి. లేదా HDMI కేబుల్ కనెక్ట్ చేయండి.'],
             ['సోఫాలో కూర్చోండి', 'జట్లు కలిసి కూర్చుంటాయి; వంతు వచ్చినవారు లేచి నిలబడి సమాధానం గట్టిగా చెప్తారు.']],
     tip: 'ల్యాప్‌టాప్ మైక్ వింటుంది — సమాధానం చెప్పేవారికి దగ్గరగా ఉంచండి.',
+    photoCap: 'టీవీకి కాస్ట్ చేయండి, కుటుంబాన్ని పిలవండి, గట్టిగా చెప్పండి!',
     demo: 'ఆట ఎలా సాగుతుందో చూడండి', demoCap: 'విభాగం ఎంచుకోండి, మీ వంతు మొదలుపెట్టండి, కనిపించేది గట్టిగా చెప్పండి. ఆగిపోతే క్లూ వస్తుంది — సమయం అయిపోయాక సమాధానం చూపిస్తుంది.',
   },
 };
@@ -256,6 +270,7 @@ function applyLang(code) {
   $('#bubbleText').textContent = T.bubble;
   T.steps.forEach(([b, sub], i) => { $('#st' + (i + 1) + 'b').textContent = b; $('#st' + (i + 1) + 's').textContent = sub; });
   $('#togetherTip').textContent = T.tip;
+  $('#photoCap').textContent = T.photoCap;
   $('#demoTitle').textContent = T.demo; $('#demoCap').textContent = T.demoCap;
 }
 
