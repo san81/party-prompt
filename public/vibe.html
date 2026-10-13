@@ -3,7 +3,7 @@
 <title>Vibe Guess · Party Games</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>try{document.documentElement.dataset.theme=localStorage.getItem('pg-theme')||'celebration'}catch(e){document.documentElement.dataset.theme='celebration'}</script>
+<script>try{var k=localStorage.getItem('pg-kids')==='1',d=document.documentElement;d.dataset.kids=k?'on':'off';d.dataset.theme=k?(localStorage.getItem('pg-kids-theme')||'candy'):(localStorage.getItem('pg-theme')||'celebration')}catch(e){document.documentElement.dataset.theme='celebration'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Telugu:wght@400;500;700&display=swap">
 <link rel="icon" href="/favicon.svg">
@@ -18,7 +18,7 @@ html, body { height: 100%; }
 body {
   margin: 0; background: var(--stage); color: var(--ink);
   font: 16px/1.45 var(--body);
-  background-image: radial-gradient(120% 60% at 50% -10%, #2b2660 0%, transparent 60%);
+  background-image: radial-gradient(120% 60% at 50% -10%, color-mix(in srgb, var(--panel) 85%, var(--brass) 15%) 0%, transparent 60%);
   background-repeat: no-repeat; background-size: 100% 900px;
 }
 button, input, select { font: inherit; color: inherit; }
@@ -120,6 +120,8 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .tile.hit .n, .tile.hit .pts { color: var(--brass-ink); }
 .tile.missed { color: var(--muted); border-style: dashed; }
 .tile.missed .txt { font-weight: 500; }
+/* Kid-mode hint: first letter of a hidden answer, e.g. "L _ _ _" */
+.tile.hinted .txt { color: var(--mint); letter-spacing: .12em; font-weight: 700; }
 @keyframes flip { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
 .host { display: flex; gap: 10px; align-items: flex-start; }
 .host .mark { font-family: var(--display); font-size: 12px; color: var(--stage); background: var(--mint); border-radius: 6px; padding: 3px 6px; flex: none; margin-top: 2px; }
@@ -179,6 +181,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <button class="ghost" id="sfxBtn" aria-pressed="true">Sounds</button>
     <button class="ghost" id="hostBtn" aria-pressed="true">Host voice</button>
     <button class="ghost" id="logBtn" aria-pressed="false">Match log</button>
+    <button class="kids-toggle" id="kidsBtn" aria-pressed="false"><span class="knob"></span><span id="kidsLbl">Kids</span></button>
     <select class="ghost" id="themeSel" aria-label="Theme" style="padding:6px 8px"></select>
   </div>
 
@@ -368,6 +371,30 @@ const STR = {
   },
 };
 
+// Kid mode: gentler, encouraging host lines. Merged over STR when kid mode is on.
+const KID_STR = {
+  'en-US': {
+    kids: 'Kids',
+    sayIntro: (topic, n) => `Your topic: ${topic}. There are ${n} answers hiding on the board. Tap the button and say as many as you can. You can do it!`,
+    cheers: ['Super star!', 'Great job!', 'Yay!', 'Wow!', 'Brilliant!', 'You got it!'],
+    sayHit: (names, pts) => `${pick1(KID_STR['en-US'].cheers)} ${names}! ${pts} ${plural(pts, 'point', 'points')}.`,
+    sayHalf: "Halfway there! You're doing great!", sayTen: 'Ten more seconds! Keep going!',
+    sayTime: (p, found, total, pts, missed) => `Great playing, ${p}! You found ${found} of ${total} and got ${pts} ${plural(pts, 'point', 'points')}. ${missed.length ? `The board also had ${missed.join(' and ')}.` : 'You found them all. Amazing!'}`,
+    notOnBoard: 'good try — try another!',
+    hintNote: 'Stuck? Letter hints pop up on the board.',
+  },
+  'te-IN': {
+    kids: 'పిల్లలు',
+    sayIntro: (topic, n) => `మీ అంశం: ${topic}. బోర్డులో ${n} సమాధానాలు దాక్కున్నాయి. బటన్ నొక్కి వీలైనన్ని చెప్పండి. మీరు చేయగలరు!`,
+    cheers: ['సూపర్ స్టార్!', 'భలే!', 'హుర్రే!', 'వావ్!', 'శభాష్!', 'కరెక్ట్!'],
+    sayHit: (names, pts) => `${pick1(KID_STR['te-IN'].cheers)} ${names}! ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}.`,
+    sayHalf: 'సగం అయిపోయింది! చాలా బాగా ఆడుతున్నారు!', sayTen: 'ఇంకా పది సెకన్లు! ఆపకండి!',
+    sayTime: (p, found, total, pts, missed) => `చాలా బాగా ఆడారు, ${p}! ${total} లో ${found} కనిపెట్టారు, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}. ${missed.length ? `బోర్డులో ఇవి కూడా ఉన్నాయి: ${missed.join(', ')}.` : 'అన్నీ కనిపెట్టేశారు. అద్భుతం!'}`,
+    notOnBoard: 'మంచి ప్రయత్నం — ఇంకోటి చెప్పు!',
+    hintNote: 'ఆగిపోయారా? బోర్డులో అక్షరం క్లూలు కనిపిస్తాయి.',
+  },
+};
+
 /* ======================= randomness + storage ======================= */
 function randInt(n) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
 function rand() { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 2 ** 32; }
@@ -455,6 +482,7 @@ const Sound = (() => {
       else { tone(1100, t, 0.04, 0.22, { type: 'sine' }); noise(t, 0.03, 0.2, { freq: 3000, q: 4 }); }
     },
     buzzer() {
+      if (S.kids) { if (!ready()) return; const t = now(); [784, 659, 523].forEach((f, i) => tone(f, t + i * 0.16, 0.3, 0.2, { type: 'sine' })); return; }
       if (!ready()) return; const t = now();
       tone(110, t, 0.9, 0.3, { type: 'sawtooth' }); tone(116.5, t, 0.9, 0.3, { type: 'sawtooth' });
     },
@@ -463,7 +491,8 @@ const Sound = (() => {
       const notes = pts >= 3 ? [783.99, 987.77, 1174.66, 1567.98] : pts === 2 ? [783.99, 987.77, 1318.5] : [880, 1318.5];
       notes.forEach((f, i) => tone(f, t + i * 0.07, 0.18, 0.2, { type: 'triangle' }));
     },
-    miss() { if (ready()) tone(220, now(), 0.22, 0.14, { type: 'triangle', glide: 150 }); },
+    miss() { if (ready()) S.kids ? tone(392, now(), 0.16, 0.12, { type: 'sine', glide: 330 }) : tone(220, now(), 0.22, 0.14, { type: 'triangle', glide: 150 }); },
+    sparkle() { if (!ready()) return; const t = now(); [1319, 1568, 2093].forEach((f, i) => tone(f, t + i * 0.05, 0.12, 0.08, { type: 'sine' })); },
     repeat() { if (ready()) { const t = now(); tone(660, t, 0.06, 0.12); tone(660, t + 0.1, 0.06, 0.12); } },
     ask() { if (ready()) tone(523.25, now(), 0.25, 0.18, { type: 'triangle', glide: 784 }); },
     micOn()  { if (ready()) tone(880,  now(), 0.07, 0.18, { type: 'sine' }); },
@@ -478,9 +507,14 @@ const Sound = (() => {
 
   // Background music: a light four-chord loop that speeds up for the last ten seconds.
   const music = (() => {
-    let timer = null, next = 0, step = 0, bpm = 112, intense = false, mel = [];
-    const roots = [110, 87.31, 130.81, 98];                    // A2, F2, C3, G2
-    const scale = [440, 523.25, 587.33, 659.25, 783.99, 880];  // A minor pentatonic
+    let timer = null, next = 0, step = 0, bpm = 112, base = 112, intense = false, mel = [];
+    let roots = [110, 87.31, 130.81, 98];                      // A2, F2, C3, G2
+    let scale = [440, 523.25, 587.33, 659.25, 783.99, 880];    // A minor pentatonic
+    // Kid mode: a sunnier major-key loop, a little slower.
+    function pickKey() {
+      if (S.kids) { roots = [130.81, 174.61, 196, 220]; scale = [523.25, 587.33, 659.25, 783.99, 880, 1046.5]; base = 104; }  // C F G A, C major pentatonic
+      else { roots = [110, 87.31, 130.81, 98]; scale = [440, 523.25, 587.33, 659.25, 783.99, 880]; base = 112; }
+    }
     const melodySteps = [0, 3, 6, 8, 11, 14];
     function compose() {
       mel = [0, 1, 2, 3].map(() => {
@@ -505,9 +539,9 @@ const Sound = (() => {
     }
     function sched() { while (next < ctx.currentTime + 0.12) { play(step, next); next += 60 / bpm / 4; step++; } }
     return {
-      start() { if (!init() || timer) return; compose(); intense = false; bpm = 112; step = 0; next = ctx.currentTime + 0.06; timer = setInterval(sched, 25); },
+      start() { if (!init() || timer) return; pickKey(); compose(); intense = false; bpm = base; step = 0; next = ctx.currentTime + 0.06; timer = setInterval(sched, 25); },
       stop() { clearInterval(timer); timer = null; },
-      setIntense(v) { intense = v; bpm = v ? 136 : 112; },
+      setIntense(v) { intense = v; bpm = v ? base + 24 : base; },
       get playing() { return Boolean(timer); },
     };
   })();
@@ -563,11 +597,13 @@ const S = {
   player: null, topic: null, matched: new Set(), turnScore: 0, status: 'wheel', turnId: 0,
   deadline: 0, clockTimer: null, halfDone: false, warned: false, lastSec: null, seq: 0, confirm: null,
   hostOn: load('sg-host', true), log: [], lastTopic: null,
+  kids: Shell.getKids(), lastHitAt: 0, lastHintAt: 0,
 };
-const T = () => STR[S.locale] || STR['en-US'];
+const T = () => { const base = STR[S.locale] || STR['en-US']; return S.kids ? { ...base, ...(KID_STR[S.locale] || KID_STR['en-US']) } : base; };
+// Kid mode plays only boards marked kids: true.
 function topicsFor(loc) {
-  const all = S.allTopics.filter(t => t.locale === loc);
-  if (S.style === 'all') return all;
+  const all = S.allTopics.filter(t => t.locale === loc && (!S.kids || t.kids));
+  if (S.style === 'all' || S.kids) return all;   // kids play every kid board, whatever the style filter
   const styled = all.filter(t => t.style === S.style);
   return styled.length ? styled : all;
 }
@@ -948,9 +984,9 @@ function award(key) {
   if (!a || S.matched.has(key)) return 0;
   S.matched.add(key);
   const pts = S.points[a.difficulty] || 1;
-  S.turnScore += pts; $('#turnScore').textContent = S.turnScore;
+  S.turnScore += pts; $('#turnScore').textContent = S.turnScore; S.lastHitAt = Date.now();
   const tile = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
-  if (tile) { tile.classList.add('hit'); tile.querySelector('.txt').textContent = a.text; }
+  if (tile) { tile.classList.remove('hinted'); tile.classList.add('hit'); tile.querySelector('.txt').textContent = a.text; }
   if (S.matched.size === S.topic.answers.length) setTimeout(endTurn, 600);
   return pts;
 }
@@ -976,7 +1012,7 @@ function clearConfirm() { if (S.confirm) clearTimeout(S.confirm.timer); S.confir
 // Random topic without repeats: each language keeps a shuffled deck that refills when empty.
 function nextTopic() {
   const pool = topicsFor(S.locale).map(t => t.id);
-  const key = `sg-deck-${S.locale}-${S.style}`;
+  const key = S.kids ? `sg-deck-${S.locale}-kids` : `sg-deck-${S.locale}-${S.style}`;
   let deck = load(key, []).filter(id => pool.includes(id));
   if (!deck.length) { deck = shuffle(pool.filter(id => id !== S.lastTopic)); if (!deck.length) deck = shuffle([...pool]); }
   const id = deck.pop(); save(key, deck); S.lastTopic = id;
@@ -988,12 +1024,12 @@ async function startTurn() {
   warmMic();   // request mic permission now, during the untimed intro, not when the clock starts
   pickVoice();
   S.turnId++; S.status = 'intro'; S.matched = new Set(); S.turnScore = 0;
-  S.halfDone = false; S.warned = false; S.lastSec = null;
+  S.halfDone = false; S.warned = false; S.lastSec = null; S.lastHitAt = 0; S.lastHintAt = 0;
   S.topic = nextTopic();
   clearConfirm();
   $('#wheelView').hidden = true; $('#stage').hidden = false;
   $('#feed').innerHTML = ''; $('#live').textContent = '';
-  $('#stageNote').textContent = S.hostOn && !canSpeak ? T().noVoice : '';
+  $('#stageNote').textContent = [S.hostOn && !canSpeak ? T().noVoice : '', S.kids ? T().hintNote : ''].filter(Boolean).join(' ');
   $('#backBtn').hidden = true; $('#result').hidden = true; $('#typed').hidden = false; $('#ptt').hidden = false;
   $('#who').textContent = S.player; $('#turnScore').textContent = '0';
   $('#topic').textContent = S.topic.prompt;
@@ -1037,8 +1073,23 @@ function startClock() {
       if (sec <= 10 && sec > 0) Sound.sfx.clockTick(sec <= 3);
       if (sec === 10 && !S.warned) { S.warned = true; Sound.music.setIntense(true); say(T().sayTen); }
     }
+    if (S.kids) maybeKidHint();
     if (left <= 0) endTurn();
   }, 100);
+}
+// Kid mode: when nothing has scored for a while, show the first letter of one hidden
+// answer on its tile ("L _ _ _", first letter of each word). Graphemes, not code points, so Telugu stays intact.
+function maybeKidHint() {
+  const t = Date.now(), quiet = t - Math.max(S.lastHitAt, S.deadline - S.turnSecs * 1000);
+  if (quiet < 10000 || t - S.lastHintAt < 10000) return;
+  const hidden = [...document.querySelectorAll('#board .tile:not(.hit):not(.hinted)')];
+  if (!hidden.length) return;
+  const tile = hidden[randInt(hidden.length)], a = answer(tile.dataset.key);
+  const seg = new Intl.Segmenter(S.locale, { granularity: 'grapheme' });
+  const mask = a.text.split(/\s+/).map((w) => [...seg.segment(w)].map((g, i) => (i === 0 ? g.segment : '_')).join(' ')).join('   ');
+  tile.classList.add('hinted'); tile.querySelector('.txt').textContent = mask;
+  S.lastHintAt = t;
+  Sound.sfx.sparkle();
 }
 function setClock(left) {
   const hot = S.status === 'playing' && left <= 10;
@@ -1060,7 +1111,7 @@ function endTurn() {
   const missed = S.topic.answers.filter(a => !S.matched.has(a.key));
   for (const a of missed) {
     const tile = document.querySelector(`[data-key="${CSS.escape(a.key)}"]`);
-    tile.classList.add('missed'); tile.querySelector('.txt').textContent = a.text;
+    tile.classList.remove('hinted'); tile.classList.add('missed'); tile.querySelector('.txt').textContent = a.text;
   }
   const s = S.scores[S.player] || { points: 0, turns: 0 };
   S.scores[S.player] = { points: s.points + S.turnScore, turns: s.turns + 1 };
@@ -1075,6 +1126,7 @@ function endTurn() {
 
 function backToWheel() {
   S.status = 'wheel';
+  if (S.kids !== Shell.getKids()) applyKids();
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   $('#stage').hidden = true; $('#wheelView').hidden = false;
   if (S.turnOrder === 'sequence') {
@@ -1179,7 +1231,25 @@ $('#resetScores').onclick = (e) => {
 };
 $('#onceEach').addEventListener('change', (e) => { S.onceEach = e.target.checked; save('sg-once', S.onceEach); renderNames(); });
 $('#lang').addEventListener('change', (e) => setLocale(e.target.value));
-$('#turnSecs').addEventListener('change', (e) => { S.turnSecs = Number(e.target.value); save('sg-secs', S.turnSecs); });
+$('#turnSecs').addEventListener('change', (e) => { S.turnSecs = Number(e.target.value); save(S.kids ? 'sg-secs-kids' : 'sg-secs', S.turnSecs); });
+// Kids get longer turns; each mode remembers its own choice.
+function buildTurnSecs() {
+  const opts = S.kids ? [60, 90, 120] : [45, 60, 90];
+  S.turnSecs = load(S.kids ? 'sg-secs-kids' : 'sg-secs', S.kids ? 90 : 60);
+  if (!opts.includes(S.turnSecs)) S.turnSecs = S.kids ? 90 : 60;
+  $('#turnSecs').innerHTML = opts.map(n => `<option value="${n}">${n} seconds</option>`).join('');
+  $('#turnSecs').value = String(S.turnSecs);
+}
+// Kid mode is read between turns; a switch mid-turn applies once the turn ends.
+function applyKids() {
+  S.kids = Shell.getKids();
+  $('#kidsLbl').textContent = (KID_STR[S.locale] || KID_STR['en-US']).kids;
+  buildTurnSecs();
+  $('#topicStyle').closest('label').hidden = S.kids;
+  if (S.allTopics.length) setLocale(S.locale);
+}
+Shell.bindKidsToggle($('#kidsBtn'));
+window.addEventListener('kidschange', () => { if (S.status !== 'intro' && S.status !== 'playing') applyKids(); });
 $('#turnOrder').addEventListener('change', (e) => { S.turnOrder = e.target.value; save('sg-order', S.turnOrder); applyTurnOrderUI(); renderNames(); });
 $('#topicStyle').addEventListener('change', (e) => { S.style = e.target.value; save('sg-style', S.style); setLocale(S.locale); });
 
@@ -1210,6 +1280,7 @@ $('#typed').addEventListener('submit', (e) => {
 $('#confirmYes').onclick = () => resolveConfirm(true);
 $('#confirmNo').onclick = () => resolveConfirm(false);
 addEventListener('resize', drawWheel);
+addEventListener('themechange', () => requestAnimationFrame(drawWheel));
 
 async function boot() {
   Shell.fillThemeSelect($('#themeSel'));
@@ -1217,7 +1288,9 @@ async function boot() {
   window.addEventListener('langchange', (e) => { if (S.locales[e.detail] && e.detail !== S.locale) { $('#lang').value = e.detail; setLocale(e.detail); } });
   setToggle($('#musicBtn'), Sound.prefs.music); setToggle($('#sfxBtn'), Sound.prefs.sfx); setToggle($('#hostBtn'), S.hostOn);
   $('#onceEach').checked = S.onceEach;
-  $('#turnSecs').value = String(S.turnSecs);
+  $('#kidsLbl').textContent = (KID_STR[S.locale] || KID_STR['en-US']).kids;
+  $('#topicStyle').closest('label').hidden = S.kids;
+  buildTurnSecs();
   $('#topicStyle').value = S.style;
   $('#turnOrder').value = S.turnOrder;
   applyTurnOrderUI();

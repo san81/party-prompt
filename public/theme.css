@@ -24,6 +24,7 @@ html, html[data-theme="celebration"] {
   --glow: 0 0 24px rgba(255, 210, 63, .25);
   --seg1: #ffd23f; --seg2: #ff4d8d; --seg3: #2ee6a6; --seg4: #4db8ff; --seg5: #b088ff; --seg6: #ff8a3d;
   --seg-ink: #2a0a3a;
+  --team1: #ff4d8d; --team2: #4db8ff;   /* Rapid Fire sides: Pink (left) and Blue (right) */
 }
 
 /* ---- Midnight (calm dark game-show) ---- */
@@ -41,6 +42,7 @@ html[data-theme="midnight"] {
   --glow: 0 0 20px rgba(232, 182, 74, .18);
   --seg1: #e8b64a; --seg2: #ff8f73; --seg3: #5ed1a3; --seg4: #7cc4f5; --seg5: #b9a2ff; --seg6: #f59fc0;
   --seg-ink: #1b1633;
+  --team1: #f59fc0; --team2: #7cc4f5;   /* Rapid Fire sides: Pink (left) and Blue (right) */
 }
 
 /* ---- Neon (black + electric) ---- */
@@ -58,6 +60,7 @@ html[data-theme="neon"] {
   --glow: 0 0 26px rgba(0, 255, 200, .3);
   --seg1: #f5d90a; --seg2: #ff2e97; --seg3: #00ffc8; --seg4: #00b3ff; --seg5: #b14dff; --seg6: #ff6b00;
   --seg-ink: #05010d;
+  --team1: #ff2e97; --team2: #00b3ff;   /* Rapid Fire sides: Pink (left) and Blue (right) */
 }
 
 /* ---- Fall (warm autumn) ---- */
@@ -75,6 +78,7 @@ html[data-theme="fall"] {
   --glow: 0 0 24px rgba(240, 150, 47, .28);
   --seg1: #f0962f; --seg2: #e0472a; --seg3: #b0b33e; --seg4: #d9893b; --seg5: #c05a2a; --seg6: #e6b53c;
   --seg-ink: #24130c;
+  --team1: #e8708a; --team2: #6fa8c9;   /* Rapid Fire sides: Pink (left) and Blue (right) */
 }
 
 /* ---- Daylight (light) ---- */
@@ -92,4 +96,71 @@ html[data-theme="daylight"] {
   --glow: 0 6px 18px rgba(30, 27, 51, .12);
   --seg1: #f0b429; --seg2: #ff8f73; --seg3: #4fc99a; --seg4: #5bb3ef; --seg5: #a98cf0; --seg6: #ef8fb6;
   --seg-ink: #1e1b33;
+  --team1: #d93365; --team2: #2b7fd1;   /* Rapid Fire sides: Pink (left) and Blue (right) */
 }
+
+/* ==== Kid-mode palettes (shown in the picker only while Kids is on) ==== */
+
+/* ---- Candy (kids default: bubblegum pink + sky, light) ---- */
+html[data-theme="candy"] {
+  color-scheme: light;
+  --stage: #fff1f8;
+  --panel: #ffffff;
+  --line: #f7c6e1;
+  --ink: #3a1a5c;
+  --muted: #8b64ab;
+  --brass: #f76707;
+  --brass-ink: #ffffff;
+  --coral: #f2367f;
+  --mint: #0b9e74;
+  --glow: 0 6px 20px rgba(242, 54, 127, .22);
+  --seg1: #ffc20e; --seg2: #ff5d9e; --seg3: #2ec4b6; --seg4: #4dabf7; --seg5: #9b7bff; --seg6: #ff8c42;
+  --seg-ink: #3a1a5c;
+  --team1: #f2367f; --team2: #228be6;
+}
+
+/* ---- Jungle (kids: sunny greens + parrot colours, light) ---- */
+html[data-theme="jungle"] {
+  color-scheme: light;
+  --stage: #f1fae6;
+  --panel: #ffffff;
+  --line: #c7e5a6;
+  --ink: #1d3a17;
+  --muted: #5b7a4c;
+  --brass: #e67700;
+  --brass-ink: #ffffff;
+  --coral: #e8590c;
+  --mint: #2b8a3e;
+  --glow: 0 6px 20px rgba(245, 159, 0, .25);
+  --seg1: #fcc419; --seg2: #ff6b6b; --seg3: #51cf66; --seg4: #22b8cf; --seg5: #845ef7; --seg6: #ff922b;
+  --seg-ink: #1d3a17;
+  --team1: #e64980; --team2: #1c7ed6;
+}
+
+/* ---- Space (kids: bright planets on a deep blue sky, dark) ---- */
+html[data-theme="space"] {
+  color-scheme: dark;
+  --stage: #0f1a4d;
+  --panel: #1a2a6c;
+  --line: #34489c;
+  --ink: #f7f8ff;
+  --muted: #b4c0f2;
+  --brass: #ffd43b;
+  --brass-ink: #2a1f00;
+  --coral: #ff6b9d;
+  --mint: #63e6be;
+  --glow: 0 0 24px rgba(255, 212, 59, .32);
+  --seg1: #ffd43b; --seg2: #ff6b9d; --seg3: #63e6be; --seg4: #4dabf7; --seg5: #b197fc; --seg6: #ff922b;
+  --seg-ink: #0f1a4d;
+  --team1: #ff6b9d; --team2: #4dabf7;
+}
+
+/* Kid-mode toggle, shared by the landing and both games' top bars. */
+.kids-toggle { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px 12px 5px 6px; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; }
+.kids-toggle .knob { width: 30px; height: 18px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; }
+.kids-toggle .knob::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink); transition: transform .2s; }
+.kids-toggle[aria-pressed="true"] { border-color: var(--mint); color: var(--ink); box-shadow: var(--glow); }
+.kids-toggle[aria-pressed="true"] .knob { background: var(--mint); }
+.kids-toggle[aria-pressed="true"] .knob::after { transform: translateX(12px); }
+@media (prefers-reduced-motion: reduce) { .kids-toggle .knob, .kids-toggle .knob::after { transition: none; } }

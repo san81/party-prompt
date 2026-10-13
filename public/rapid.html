@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Rapid Fire · Party Games</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>try{document.documentElement.dataset.theme=localStorage.getItem('pg-theme')||'celebration'}catch(e){document.documentElement.dataset.theme='celebration'}</script>
+<script>try{var k=localStorage.getItem('pg-kids')==='1',d=document.documentElement;d.dataset.kids=k?'on':'off';d.dataset.theme=k?(localStorage.getItem('pg-kids-theme')||'candy'):(localStorage.getItem('pg-theme')||'celebration')}catch(e){document.documentElement.dataset.theme='celebration'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Telugu:wght@400;500;700&display=swap">
 <link rel="icon" href="/favicon.svg">
@@ -49,49 +49,171 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .note { font-size: 13px; color: var(--muted); margin: 0; }
 .teamrow { display: flex; gap: 12px; }
 .teamrow .field { flex: 1; }
+.teamrow .field:nth-child(1) { --tc: var(--team1); } .teamrow .field:nth-child(2) { --tc: var(--team2); }
+.teamrow input { border-left: 6px solid var(--tc); width: 100%; min-width: 0; }
 .swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 6px; }
 
-/* Scoreboard */
-.scores { display: flex; gap: 10px; align-items: stretch; }
-.team { flex: 1; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; background: var(--panel); }
-.team.active { border-color: var(--brass); box-shadow: var(--glow); }
-.team .nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.team .sc { margin-left: auto; font-family: var(--display); font-size: 22px; color: var(--brass); }
-.turnline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.turnline .who { font-weight: 700; }
-.turnline .rnd { color: var(--muted); font-size: 13px; }
-.clock { margin-left: auto; font-family: var(--display); font-size: 30px; font-variant-numeric: tabular-nums; min-width: 2.4ch; text-align: right; }
-.clock.hot { color: var(--coral); }
-.meter { height: 6px; background: var(--line); border-radius: 4px; overflow: hidden; }
-.meter i { display: block; height: 100%; background: var(--brass); width: 100%; transition: width .2s linear; }
-.meter.hot i { background: var(--coral); }
-.catline { text-align: center; margin: 0; font-size: 13px; color: var(--muted); }
-.catline b { color: var(--brass); font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .02em; margin-right: 6px; }
+/* ===== Arena: Pink plays the left half, Blue the right. On each shot a fire spreads from the
+   centre seam across the active team's whole half; reaching the outer edge = burned. ===== */
+body.in-game .wrap { max-width: none; height: 100dvh; padding-bottom: 10px; gap: 8px; }
+.arena { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.catline { display: flex; align-items: baseline; justify-content: center; gap: 6px 10px; flex-wrap: wrap; margin: 0; font-size: 13px; color: var(--muted); text-align: center; }
+.catline b { color: var(--brass); font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .02em; }
+.catline .rnd { border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.halves { position: relative; flex: 1; min-height: 0; display: flex; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--panel);
+  /* fire colours come from the theme: brass core near the seam, coral at the leading edge */
+  --f-core: color-mix(in srgb, var(--brass) 62%, transparent);
+  --f-mid: color-mix(in srgb, color-mix(in srgb, var(--brass) 45%, var(--coral)) 88%, transparent);
+  --f-edge: var(--coral); }
+.half { --tc: var(--team1); --p: 0; position: relative; flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 12px;
+  background: radial-gradient(85% 70% at 50% 55%, color-mix(in srgb, var(--tc) 16%, var(--panel)), var(--panel)); }
+.half.right { --tc: var(--team2); }
+.half::before { content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; border: 3px solid var(--tc); opacity: 0; transition: opacity .25s; }
+.half.left::before { border-radius: 17px 0 0 17px; } .half.right::before { border-radius: 0 17px 17px 0; }
+.half.active::before { opacity: 1; box-shadow: inset 0 0 28px color-mix(in srgb, var(--tc) 45%, transparent); }
 
-/* Image stage */
-.imgwrap { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; min-height: 240px;
-  display: flex; align-items: center; justify-content: center; padding: 16px; overflow: hidden; }
-.imgwrap img { max-width: 100%; max-height: 46vh; border-radius: 8px; object-fit: contain; }
-.imgwrap .ans { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 22px; color: var(--ink); text-shadow: 0 1px 4px rgba(0,0,0,.5); }
-.host { display: flex; gap: 8px; align-items: baseline; min-height: 1.4em; }
-.host .mark { font-size: 11px; letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
-.host p { margin: 0; font-weight: 500; }
-.live { min-height: 1.3em; color: var(--muted); font-style: italic; margin: 0; text-align: center; }
-.feedback { min-height: 1.4em; text-align: center; font-weight: 700; margin: 0; }
+/* the fire shade */
+.fire { position: absolute; top: 0; bottom: 0; width: calc(var(--p) * 100%); z-index: 1; pointer-events: none; opacity: 0;
+  box-shadow: 0 0 46px color-mix(in srgb, var(--coral) 55%, transparent); transition: width .5s ease-out, height .5s ease-out, opacity .4s; }
+.half.active .fire, .half.burned .fire { opacity: 1; }
+.half.active .fire { transition: opacity .4s; }      /* JS drives --p every frame while live */
+.half.left .fire { right: 0; background: linear-gradient(to left, var(--f-core), var(--f-mid) 58%, var(--f-edge)); }
+.half.right .fire { left: 0; background: linear-gradient(to right, var(--f-core), var(--f-mid) 58%, var(--f-edge)); }
+/* rising embers */
+.fire::before { content: ''; position: absolute; inset: 0; opacity: .75;
+  background-image: radial-gradient(circle, var(--brass) 0 1.6px, transparent 2.6px), radial-gradient(circle, var(--ink) 0 1.2px, transparent 2.2px);
+  background-size: 38px 54px, 62px 44px; animation: embers 1.8s linear infinite; }
+@keyframes embers { to { background-position: 0 -54px, 20px -88px; } }
+/* licking flame tongues on the leading edge */
+.fire::after { content: ''; position: absolute; filter: blur(1.5px); }
+.half.left .fire::after, .half.right .fire::after { top: -8%; bottom: -8%; width: 76px;
+  animation: lick-y .62s linear infinite, flick-x .24s ease-in-out infinite alternate; }
+.half.left .fire::after { left: -58px; transform-origin: right center;
+  background: radial-gradient(ellipse 72% 44% at 100% 50%, var(--f-edge) 0 34%, transparent 72%) 0 0 / 76px 48px,
+              radial-gradient(ellipse 58% 34% at 100% 50%, var(--f-mid) 0 30%, transparent 70%) 0 24px / 76px 48px; }
+.half.right .fire::after { right: -58px; transform-origin: left center;
+  background: radial-gradient(ellipse 72% 44% at 0% 50%, var(--f-edge) 0 34%, transparent 72%) 0 0 / 76px 48px,
+              radial-gradient(ellipse 58% 34% at 0% 50%, var(--f-mid) 0 30%, transparent 70%) 0 24px / 76px 48px; }
+@keyframes lick-y { to { background-position: 0 -48px, 0 -24px; } }
+@keyframes flick-x { from { transform: scaleX(.8); } to { transform: scaleX(1.12); } }
+.half.hot .fire::after { animation-duration: .3s, .12s; }
+.half.hot { animation: heat .11s linear infinite alternate; }
+@keyframes heat { to { transform: translate(1px, -1px); } }
+.arena.paused .fire::before, .arena.paused .fire::after { animation-play-state: paused; }
+
+/* centre seam with the ignition spark */
+.seam { position: absolute; z-index: 3; left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); pointer-events: none;
+  background: linear-gradient(transparent, var(--line) 15%, var(--line) 85%, transparent); }
+.seam::after { content: ''; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px; border-radius: 50%;
+  background: var(--brass); box-shadow: 0 0 16px var(--brass), 0 0 34px var(--coral); animation: spark 1.1s ease-in-out infinite alternate; }
+@keyframes spark { from { transform: scale(.7); opacity: .7; } to { transform: scale(1.15); opacity: 1; } }
+
+/* each side: name + score, clock, the picture (or a waiting card) */
+.side-head { position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.half.right .side-head { flex-direction: row-reverse; }
+.tag { display: flex; align-items: center; gap: 8px; min-width: 0; background: var(--panel); border: 2px solid var(--tc); border-radius: 999px; padding: 4px 12px 4px 6px; box-shadow: var(--glow); }
+.half.right .tag { flex-direction: row-reverse; padding: 4px 6px 4px 12px; }
+.tag .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--tc); flex: none; }
+.tag .nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag .sc { font-family: var(--display); font-size: 24px; line-height: 1; color: var(--tc); }
+.side-clock { font-family: var(--display); font-size: clamp(30px, 5vw, 48px); line-height: 1.15; font-variant-numeric: tabular-nums; min-width: 1.9em; text-align: center;
+  background: var(--panel); color: var(--ink); border: 2px solid var(--tc); border-radius: 999px; padding: 0 .25em; }
+.half:not(.active) .side-clock { visibility: hidden; }
+.half.hot .side-clock { color: var(--coral); border-color: var(--coral); animation: throb .5s ease-in-out infinite alternate; }
+@keyframes throb { to { transform: scale(1.12); } }
+.side-body { position: relative; z-index: 3; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding-top: 10px; }
+.wait { margin: 0; text-align: center; font-family: var(--display); font-size: clamp(20px, 3.4vw, 34px); color: var(--tc); line-height: 1.1;
+  background: color-mix(in srgb, var(--panel) 80%, transparent); border-radius: 14px; padding: 10px 16px; }
+.wait small { display: block; font-family: var(--body); font-size: 14px; color: var(--muted); margin-top: 4px; }
+.half.active .wait, .half.burned .wait { display: none; }
+
+.shot { container-type: inline-size; width: min(100%, 620px); height: 100%; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: color-mix(in srgb, var(--panel) 84%, transparent); backdrop-filter: blur(3px); border: 2px solid var(--tc); border-radius: 16px; padding: 10px; box-shadow: var(--glow); }
+.shot .pic { position: relative; min-height: 60px; flex: 1; width: 100%; }
+.shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+.shot .ans { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 22px; color: var(--ink); text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.hint { min-height: 1.3em; text-align: center; margin: 0; font-weight: 600; color: var(--brass); }
+.hint .dots { letter-spacing: .12em; color: var(--ink); }
+/* Kids' maths rounds show the sum instead of a picture */
+.shot .sum { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: clamp(32px, 15cqi, 116px); line-height: 1; color: var(--ink); white-space: nowrap; }
+.shot .sum b { color: var(--tc); font-weight: 400; }
+.shot.math .ans { display: none; }
+/* Kid mode: the burn is a friendly star burst, no flash or shake */
+html[data-kids="on"] .half.burned { animation: none; }
+html[data-kids="on"] .boom { display: none; }
+.ember.star { width: auto; height: auto; margin: -14px; background: none !important; box-shadow: none; border-radius: 0; font-size: 28px; line-height: 1; color: var(--sc); text-shadow: 0 0 8px var(--sc); }
+.hint:empty, .live:empty, .feedback:empty { display: none; }
+.live { color: var(--muted); font-style: italic; margin: 0; text-align: center; }
+.feedback { text-align: center; font-weight: 700; margin: 0; }
 .feedback.good { color: var(--mint); }
 .feedback.bad { color: var(--coral); }
 
-/* Controls */
-.controls { display: flex; flex-direction: column; gap: 12px; align-items: center; }
-.ptt { width: 118px; height: 118px; border-radius: 50%; border: 0; background: var(--panel); box-shadow: inset 0 0 0 2px var(--line);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; touch-action: none; user-select: none; }
-.ptt.live { box-shadow: inset 0 0 0 3px var(--coral), var(--glow); }
-.ptt-ic { font-size: 38px; line-height: 1; }
-.ptt-tx { font-size: 12px; font-weight: 700; }
+/* +1 pop and the burn explosion (start invisible so reduced-motion just skips them) */
+.pop { position: absolute; z-index: 6; left: 50%; top: 42%; font-family: var(--display); font-size: clamp(44px, 8vw, 84px); color: var(--tc);
+  text-shadow: 0 2px 0 var(--panel), 0 0 18px var(--tc); opacity: 0; pointer-events: none; animation: pop 1s ease-out forwards; }
+@keyframes pop { 0% { opacity: 0; transform: translate(-50%, 0) scale(.5); } 20% { opacity: 1; transform: translate(-50%, -8px) scale(1.12); } 100% { opacity: 0; transform: translate(-50%, -90px) scale(1); } }
+.boom, .ring, .ember { position: absolute; z-index: 7; left: 50%; top: 50%; border-radius: 50%; pointer-events: none; opacity: 0; }
+.boom { width: 40px; height: 40px; margin: -20px; background: radial-gradient(circle, var(--ink) 0 12%, var(--brass) 30%, var(--coral) 60%, transparent 70%); animation: explode .8s ease-out forwards; }
+.ring { width: 40px; height: 40px; margin: -20px; border: 4px solid var(--brass); animation: shock .9s ease-out forwards; }
+.ember { width: 8px; height: 8px; margin: -4px; background: var(--brass); box-shadow: 0 0 8px var(--coral); animation: fly 1s ease-out forwards; }
+.ember:nth-child(even) { background: var(--coral); }
+@keyframes explode { 0% { opacity: 1; transform: scale(.2); } 45% { opacity: .95; transform: scale(9); } 100% { opacity: 0; transform: scale(13); } }
+@keyframes shock { 0% { opacity: 1; transform: scale(.2); } 100% { opacity: 0; transform: scale(16); } }
+@keyframes fly { 0% { opacity: 1; transform: translate(0, 0) scale(1.3); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.4); } }
+.half.burned { animation: shake .5s ease-out; }
+@keyframes shake { 15% { transform: translate(-8px, 3px); } 30% { transform: translate(7px, -4px); } 45% { transform: translate(-5px, 2px); } 60% { transform: translate(4px, -1px); } 80% { transform: translate(-2px, 0); } }
+
+/* round intro / burned reveal, centred over the arena */
+.callout { position: absolute; inset: 0; z-index: 9; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--stage) 55%, transparent); backdrop-filter: blur(2px); }
+.callout-card { width: min(100%, 480px); background: var(--panel); border: 1px solid var(--brass); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; box-shadow: var(--glow); }
+.callout-card .big { font-family: var(--display); font-size: clamp(24px, 5vw, 38px); line-height: 1.1; margin: 0; color: var(--ink); }
+.callout-card .sub { color: var(--muted); margin: 0; }
+.vs { display: flex; gap: 10px; align-items: center; justify-content: center; font-weight: 700; }
+.vs i { font-style: normal; color: var(--muted); font-size: 13px; }
+.vs .t1 { color: var(--team1); } .vs .t2 { color: var(--team2); }
+
+/* dock: host caption + controls */
+.dock { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; justify-content: center; }
+.host { display: flex; gap: 8px; align-items: baseline; min-height: 1.4em; flex: 1 1 260px; }
+.host .mark { font-size: 11px; letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+.host p { margin: 0; font-weight: 500; }
 .btnrow { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .btn { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 10px 16px; font-weight: 600; font-size: 15px; color: var(--ink); }
 .btn.good { border-color: var(--mint); color: var(--mint); }
 .btn.skip { border-color: var(--coral); color: var(--coral); }
+.btn:disabled { opacity: .4; cursor: default; }
+.ptt { display: flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 10px 16px; background: var(--panel); box-shadow: inset 0 0 0 2px var(--line); touch-action: none; user-select: none; }
+.ptt.live { box-shadow: inset 0 0 0 3px var(--coral), var(--glow); }
+.ptt-ic { font-size: 18px; line-height: 1; }
+.ptt-tx { font-size: 13px; font-weight: 700; }
+.dock .note { flex-basis: 100%; text-align: center; }
+.dock .note:empty { display: none; }
+
+/* phones held upright: Pink on top, Blue below, the fire runs from the middle line up / down */
+@media (max-width: 700px) and (orientation: portrait) {
+  .halves { flex-direction: column; }
+  .half.left::before { border-radius: 17px 17px 0 0; } .half.right::before { border-radius: 0 0 17px 17px; }
+  .half.left .fire, .half.right .fire { left: 0; right: 0; width: auto; height: calc(var(--p) * 100%); }
+  .half.left .fire { top: auto; bottom: 0; background: linear-gradient(to top, var(--f-core), var(--f-mid) 58%, var(--f-edge)); }
+  .half.right .fire { top: 0; bottom: auto; background: linear-gradient(to bottom, var(--f-core), var(--f-mid) 58%, var(--f-edge)); }
+  .half.left .fire::after, .half.right .fire::after { top: auto; bottom: auto; left: -8%; right: -8%; width: auto; height: 76px;
+    animation: lick-x .62s linear infinite, flick-y .24s ease-in-out infinite alternate; }
+  .half.left .fire::after { top: -58px; transform-origin: center bottom;
+    background: radial-gradient(ellipse 44% 72% at 50% 100%, var(--f-edge) 0 34%, transparent 72%) 0 0 / 48px 76px,
+                radial-gradient(ellipse 34% 58% at 50% 100%, var(--f-mid) 0 30%, transparent 70%) 24px 0 / 48px 76px; }
+  .half.right .fire::after { bottom: -58px; transform-origin: center top;
+    background: radial-gradient(ellipse 44% 72% at 50% 0%, var(--f-edge) 0 34%, transparent 72%) 0 0 / 48px 76px,
+                radial-gradient(ellipse 34% 58% at 50% 0%, var(--f-mid) 0 30%, transparent 70%) 24px 0 / 48px 76px; }
+  .half.hot .fire::after { animation-duration: .3s, .12s; }
+  .seam { left: 0; right: 0; top: 50%; bottom: auto; width: auto; height: 2px; transform: translateY(-50%); background: linear-gradient(90deg, transparent, var(--line) 15%, var(--line) 85%, transparent); }
+  .half.right .side-head { flex-direction: row; }
+  .half.right .tag { flex-direction: row; padding: 4px 12px 4px 6px; }
+  .half { transition: flex-grow .35s ease; }
+  .half.active { flex-grow: 1.9; }
+  .shot { padding: 6px; }
+}
+@keyframes lick-x { to { background-position: -48px 0, -24px 0; } }
+@keyframes flick-y { from { transform: scaleY(.8); } to { transform: scaleY(1.12); } }
 
 /* Final */
 .standings { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -119,13 +241,6 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .catdesc { background: color-mix(in srgb, var(--panel) 70%, var(--stage)); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--muted); }
 .catdesc b { color: var(--ink); }
 .catdesc:empty { display: none; }
-/* Hint */
-.hint { min-height: 1.3em; text-align: center; margin: 0; font-weight: 600; color: var(--brass); }
-.hint:empty { display: none; }
-/* Reveal (turn end) — shows the answer and waits for the user */
-.reveal { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0 2px; }
-.reveal .big { font-family: var(--display); font-size: clamp(22px, 5vw, 34px); margin: 0; color: var(--ink); text-align: center; }
-.reveal .sub { color: var(--muted); margin: 0; }
 /* ? help button */
 #helpBtn { width: 30px; text-align: center; font-weight: 700; }
 /* Tour overlay */
@@ -154,6 +269,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
     <button class="ghost" id="soundBtn" aria-pressed="true">Sounds</button>
     <button class="ghost" id="hostBtn" aria-pressed="true">Host voice</button>
     <button class="ghost" id="logBtn" aria-pressed="false">Match log</button>
+    <button class="kids-toggle" id="kidsBtn" aria-pressed="false"><span class="knob"></span><span id="kidsLbl">Kids</span></button>
     <select class="ctl" id="langSel" aria-label="Language"></select>
     <select class="ctl" id="themeSel" aria-label="Theme"></select>
   </div>
@@ -161,7 +277,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
   <!-- ===== Setup ===== -->
   <section class="card" id="setup">
     <h1 id="title">Spot it. Shout it.</h1>
-    <p class="lede" id="lede">An image flashes up. Your team shouts what it is before the clock runs out. Name as many as you can in your window — the AI host judges each call.</p>
+    <p class="lede" id="lede">Pink plays the left half, Blue the right. A picture appears on your side and a fire races from the centre to your edge — shout what it is before it gets there. Get it right and the fire jumps across. Burn, and the other team scores.</p>
     <label class="field" for="category" id="lblCategory">Category
       <select id="category"></select>
     </label>
@@ -171,60 +287,72 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
       <label class="field" id="lblTeam2">Team 2<input type="text" id="team2" maxlength="18" value="Blue"></label>
     </div>
     <div class="row">
-      <label class="field" for="secs" id="lblSecs">Seconds per turn
-        <select id="secs"><option value="15">15</option><option value="20" selected>20</option><option value="30">30</option><option value="45">45</option></select>
+      <label class="field" for="secs" id="lblSecs">Seconds per picture
+        <select id="secs"><option value="5">5</option><option value="8">8</option><option value="10" selected>10</option><option value="15">15</option></select>
       </label>
-      <label class="field" for="turns" id="lblTurns">Turns per team
-        <select id="turns"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
+      <label class="field" for="rounds" id="lblRounds">Rounds
+        <select id="rounds"><option value="1">1</option><option value="3" selected>3</option><option value="5">5</option><option value="7">7</option></select>
       </label>
       <button class="primary" id="startBtn">Start game</button>
     </div>
     <p class="note" id="setupNote"></p>
   </section>
 
-  <!-- ===== Turn intro ===== -->
-  <section class="card" id="intro" hidden style="align-items:center;text-align:center;gap:18px">
-    <p class="note" id="introRound"></p>
-    <h1 id="introTeam"></h1>
-    <p class="lede" id="introHint" style="text-align:center"></p>
-    <button class="primary" id="introStart">Start turn</button>
-  </section>
-
-  <!-- ===== Play stage ===== -->
-  <section id="stage" hidden style="display:flex;flex-direction:column;gap:12px;flex:1">
-    <div class="scores" id="scores"></div>
-    <div class="turnline">
-      <span class="who" id="who"></span>
-      <span class="rnd" id="rnd"></span>
-      <span class="clock" id="clock">20</span>
-    </div>
-    <div class="meter" id="meter"><i></i></div>
+  <!-- ===== Play arena: Pink left, Blue right ===== -->
+  <section class="arena" id="stage" hidden>
     <p class="catline" id="catLine"></p>
-    <div class="imgwrap" id="imgwrap"><img id="img" alt="Name this"><div class="ans" id="ans"></div></div>
-    <div class="host"><span class="mark">HOST</span><p id="caption"></p></div>
-    <p class="hint" id="hint"></p>
-    <p class="live" id="live"></p>
-    <p class="feedback" id="feedback"></p>
-    <div class="confirm" id="confirm" hidden>
-      <p id="confirmText"></p>
-      <div class="btnrow">
-        <button class="btn good" id="confirmYes">Yes</button>
-        <button class="btn skip" id="confirmNo">No</button>
+    <div class="halves" id="halves">
+      <div class="half left" id="half0">
+        <div class="fire"></div>
+        <div class="side-head"><span class="tag"><span class="dot"></span><span class="nm"></span><span class="sc"></span></span><span class="side-clock"></span></div>
+        <div class="side-body"><p class="wait"></p></div>
+      </div>
+      <div class="seam"></div>
+      <div class="half right" id="half1">
+        <div class="fire"></div>
+        <div class="side-head"><span class="tag"><span class="dot"></span><span class="nm"></span><span class="sc"></span></span><span class="side-clock"></span></div>
+        <div class="side-body"><p class="wait"></p></div>
+      </div>
+      <!-- the one picture card; JS moves it into the active team's half -->
+      <div class="shot" id="shot" hidden>
+        <div class="pic"><img id="img" alt="Name this"><div class="sum" id="sum" hidden></div><div class="ans" id="ans"></div></div>
+        <p class="hint" id="hint"></p>
+        <p class="live" id="live"></p>
+        <p class="feedback" id="feedback"></p>
+        <div class="confirm" id="confirm" hidden>
+          <p id="confirmText"></p>
+          <div class="btnrow">
+            <button class="btn good" id="confirmYes">Yes</button>
+            <button class="btn skip" id="confirmNo">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="callout" id="intro" hidden>
+        <div class="callout-card">
+          <p class="note" id="introRound"></p>
+          <p class="vs" id="introVs"></p>
+          <h1 id="introTeam"></h1>
+          <p class="sub" id="introHint"></p>
+          <button class="primary" id="introStart">Start round</button>
+        </div>
+      </div>
+      <div class="callout" id="reveal" hidden>
+        <div class="callout-card">
+          <p class="big" id="revealBig"></p>
+          <p class="sub" id="revealSub"></p>
+          <button class="primary" id="revealBtn">Next →</button>
+        </div>
       </div>
     </div>
-    <div class="controls" id="controls">
-      <button class="ptt" id="ptt" aria-label="Talk"><span class="ptt-ic">▶</span><span class="ptt-tx"></span></button>
+    <div class="dock" id="controls">
+      <div class="host"><span class="mark">HOST</span><p id="caption"></p></div>
       <div class="btnrow">
+        <button class="ptt" id="ptt" aria-label="Talk"><span class="ptt-ic">▶</span><span class="ptt-tx"></span></button>
         <button class="btn good" id="gotBtn">Got it ✓</button>
         <button class="btn skip" id="skipBtn">Skip →</button>
-        <button class="btn" id="endBtn">End turn</button>
+        <button class="btn" id="pauseBtn">Pause</button>
       </div>
       <p class="note" id="stageNote"></p>
-    </div>
-    <div class="reveal" id="reveal" hidden>
-      <p class="big" id="revealBig"></p>
-      <p class="sub" id="revealSub"></p>
-      <button class="primary" id="revealBtn">Next →</button>
     </div>
   </section>
 
@@ -279,16 +407,18 @@ const STR = {
   'en-US': {
     speech: 'en-US',
     title: 'Spot it. Shout it.',
-    lede: 'An image flashes up. Your team shouts what it is before the clock runs out. Name as many as you can in your window — the AI host judges each call.',
-    category: 'Category', team1: 'Team 1', team2: 'Team 2', secsPerTurn: 'Seconds per turn', turnsPerTeam: 'Turns per team',
-    start: 'Start game', startTurn: 'Start turn', playAgain: 'Play again',
-    got: 'Got it ✓', skip: 'Skip →', endTurn: 'End turn', talk: 'Tap to talk', listening: 'Listening', tapStart: 'Tap to start',
-    round: (r, t) => `Round ${r} of ${t}`, teamReady: (n) => `${n}, get ready!`,
-    introHint: 'Tap start, then shout the name of each picture. Go fast!',
-    scored: (n) => `Nice! +1 for ${n}`, correct: 'Correct!', notQuite: 'Not quite…', skipped: (ans) => `It was ${ans}`,
-    turnWho: (n) => n, found: (c) => `${c} ${plural(c, 'point', 'points')} this turn`,
-    sayReady: (n) => `${n}, get ready! Name as many as you can.`,
-    sayGo: 'Go!', sayCorrect: (ans) => `${ans}! Yes!`, sayTimeUp: (n, c) => `Time! ${n} got ${c} ${plural(c, 'point', 'points')}.`,
+    lede: 'Pink plays the left half, Blue the right. A picture appears on your side and a fire races from the centre to your edge — shout what it is before it gets there. Get it right and the fire jumps across. Burn, and the other team scores.',
+    category: 'Category', team1: 'Team 1 · left', team2: 'Team 2 · right', secsPerShot: 'Seconds per picture', rounds: 'Rounds',
+    start: 'Start game', startRound: 'Start round', playAgain: 'Play again',
+    got: 'Got it ✓', skip: 'Skip →', pause: 'Pause ⏸', resume: 'Resume ▶', talk: 'Tap to talk', listening: 'Listening', tapStart: 'Tap to start',
+    round: (r, t) => `Round ${r} of ${t}`, teamStarts: (n) => `${n} starts!`, vs: 'vs',
+    introHint: 'Name the picture on your side before the fire reaches your edge. Get it right and the fire jumps to the other team.',
+    waiting: 'Get ready…', waitSub: 'Your picture comes when the fire jumps over',
+    correct: 'Correct!', notQuite: 'Not quite…', skipped: (ans) => `It was ${ans}`,
+    sayReady: (n) => `${n}, you start. Beat the fire!`,
+    sayGo: 'Go!', sayCorrect: (ans) => `${ans}! Yes!`,
+    burnedTitle: (n) => `🔥 ${n} burned!`, burnedSub: (w) => `+1 for ${w}`,
+    sayBurned: (l, w) => `Boom! ${l} burned. Point to ${w}.`,
     sayWin: (n, s) => `${n} wins with ${s} ${plural(s, 'point', 'points')}!`, sayTie: "It's a tie!",
     winTitle: (n) => `${n} wins!`, tieTitle: "It's a tie!",
     micBlocked: 'Microphone blocked. Allow it in the address bar, or use the Got it / Skip buttons.',
@@ -298,32 +428,34 @@ const STR = {
     hintCat: (cat) => `Hint: it's a "${cat}" answer.`,
     hintLetter: (l, n) => `Starts with "${l}" · ${n} letters`,
     answerWas: (a) => `The answer was: ${a}`,
-    seeScores: 'See scores →', nextTeam: (n) => `Next team: ${n} →`,
+    seeScores: 'See scores →', nextRound: 'Next round →',
     alphabetNote: 'Single letters are tricky for voice — say "ay, bee, see…", or just tap Got it.',
     confirmQ: (x) => `Did you mean “${x}”?`, yes: 'Yes', no: 'No',
     yesWords: ['yes', 'yeah', 'yep', 'yup', 'correct', 'right', 'ya', 'yah', 'yup yup'], noWords: ['no', 'nope', 'nah', 'wrong', 'not that'],
     tourNext: 'Next', tourDone: "Let's play!", tourBack: 'Back', tourSkip: 'Skip',
     tour: [
-      { emoji: '⚡', title: 'Welcome to Rapid Fire', body: 'A picture pops up and your team shouts what it is before the clock runs out. The team with the most correct calls wins.' },
-      { emoji: '🏷️', title: 'Set it up', body: 'Pick a category, name the two teams, and choose how long each turn lasts. Each team gets a few turns.' },
-      { emoji: '🎙️', title: 'Shout it out', body: 'When your turn starts the mic opens on its own — just say what you see. The AI host accepts synonyms and even the Telugu word.' },
-      { emoji: '🎛️', title: 'The buttons', body: 'Got it ✓ scores it yourself · Skip → jumps to the next picture · ⏸ pauses the mic · End turn stops the turn early.' },
-      { emoji: '💡', title: 'Stuck? No rush.', body: 'Take too long and a hint appears. When the clock ends, the answer is shown and waits — tap Next when everyone is ready.' },
+      { emoji: '⚡', title: 'Welcome to Rapid Fire', body: 'Two teams, one screen. Pink plays the left half, Blue the right, and you take turns — one picture at a time.' },
+      { emoji: '🏷️', title: 'Set it up', body: 'Pick a category, name the teams, and choose how many seconds each picture gets and how many rounds to play.' },
+      { emoji: '🔥', title: 'Beat the fire', body: 'On your go, a picture shows on your side and a fire spreads from the centre toward your edge. Shout what it is before it gets there. Right answer = +1, and the fire jumps to the other team.' },
+      { emoji: '💥', title: 'Burned!', body: 'If the fire reaches your edge you burn: the round ends and the other team gets +1. The answer is shown and waits until you tap Next round.' },
+      { emoji: '🎛️', title: 'The buttons', body: 'Got it ✓ scores it yourself · Skip → swaps the picture but your fire keeps burning · Pause stops the clock · the mic button mutes listening. Stuck? A hint pops up.' },
     ],
   },
   'te-IN': {
     speech: 'te-IN',
     title: 'చూడండి. చెప్పండి.',
-    lede: 'ఒక చిత్రం కనిపిస్తుంది. గడియారం అయిపోకముందే మీ జట్టు అది ఏమిటో గట్టిగా చెప్పాలి. మీ సమయంలో వీలైనన్ని చెప్పండి — AI హోస్ట్ ప్రతి సమాధానాన్ని తీర్పు చేస్తుంది.',
-    category: 'విభాగం', team1: 'జట్టు 1', team2: 'జట్టు 2', secsPerTurn: 'ఒక్కో వంతుకు సెకన్లు', turnsPerTeam: 'ఒక్కో జట్టుకు వంతులు',
-    start: 'గేమ్ మొదలు', startTurn: 'వంతు మొదలు', playAgain: 'మళ్ళీ ఆడండి',
-    got: 'సరైనది ✓', skip: 'వదిలేయ్ →', endTurn: 'వంతు ముగించు', talk: 'నొక్కి మాట్లాడండి', listening: 'వింటున్నాను', tapStart: 'నొక్కితే మొదలు',
-    round: (r, t) => `${t} లో ${r}వ రౌండ్`, teamReady: (n) => `${n}, సిద్ధంగా ఉండండి!`,
-    introHint: 'నొక్కి, ప్రతి చిత్రం పేరు గట్టిగా చెప్పండి. వేగంగా!',
-    scored: (n) => `భలే! ${n} కి +1`, correct: 'కరెక్ట్!', notQuite: 'కాదు…', skipped: (ans) => `అది ${ans}`,
-    turnWho: (n) => n, found: (c) => `ఈ వంతులో ${c} ${plural(c, 'పాయింట్', 'పాయింట్లు')}`,
-    sayReady: (n) => `${n}, సిద్ధంగా ఉండండి! వీలైనన్ని చెప్పండి.`,
-    sayGo: 'మొదలు!', sayCorrect: (ans) => `${ans}! అవును!`, sayTimeUp: (n, c) => `సమయం! ${n} కి ${c} ${plural(c, 'పాయింట్', 'పాయింట్లు')}.`,
+    lede: 'పింక్ ఎడమ సగం, బ్లూ కుడి సగం. మీ వైపు ఒక చిత్రం కనిపిస్తుంది, మధ్య నుంచి మీ అంచు వైపు మంట పరుగెడుతుంది — అది చేరేలోపు అది ఏమిటో గట్టిగా చెప్పండి. సరిగ్గా చెబితే మంట అవతలి వైపుకు దూకుతుంది. మీరు కాలిపోతే, అవతలి జట్టుకు పాయింట్.',
+    category: 'విభాగం', team1: 'జట్టు 1 · ఎడమ', team2: 'జట్టు 2 · కుడి', secsPerShot: 'ఒక్కో చిత్రానికి సెకన్లు', rounds: 'రౌండ్లు',
+    start: 'గేమ్ మొదలు', startRound: 'రౌండ్ మొదలు', playAgain: 'మళ్ళీ ఆడండి',
+    got: 'సరైనది ✓', skip: 'వదిలేయ్ →', pause: 'ఆపు ⏸', resume: 'కొనసాగించు ▶', talk: 'నొక్కి మాట్లాడండి', listening: 'వింటున్నాను', tapStart: 'నొక్కితే మొదలు',
+    round: (r, t) => `${t} లో ${r}వ రౌండ్`, teamStarts: (n) => `${n} మొదలుపెడతారు!`, vs: 'vs',
+    introHint: 'మంట మీ అంచుకు చేరేలోపు మీ వైపు ఉన్న చిత్రం పేరు చెప్పండి. సరిగ్గా చెబితే మంట అవతలి జట్టుకు దూకుతుంది.',
+    waiting: 'సిద్ధంగా ఉండండి…', waitSub: 'మంట ఇటు దూకగానే మీ చిత్రం వస్తుంది',
+    correct: 'కరెక్ట్!', notQuite: 'కాదు…', skipped: (ans) => `అది ${ans}`,
+    sayReady: (n) => `${n}, మీరు మొదలుపెట్టండి. మంటను ఓడించండి!`,
+    sayGo: 'మొదలు!', sayCorrect: (ans) => `${ans}! అవును!`,
+    burnedTitle: (n) => `🔥 ${n} కాలిపోయారు!`, burnedSub: (w) => `${w} కి +1`,
+    sayBurned: (l, w) => `బూమ్! ${l} కాలిపోయారు. ${w} కి పాయింట్.`,
     sayWin: (n, s) => `${s} ${plural(s, 'పాయింట్', 'పాయింట్లు')}తో ${n} గెలిచారు!`, sayTie: 'టై అయింది!',
     winTitle: (n) => `${n} గెలిచారు!`, tieTitle: 'టై అయింది!',
     micBlocked: 'మైక్రోఫోన్ అనుమతి లేదు. అడ్రస్ బార్‌లో అనుమతి ఇవ్వండి, లేదా సరైనది / వదిలేయ్ బటన్లు వాడండి.',
@@ -333,20 +465,81 @@ const STR = {
     hintCat: (cat) => `క్లూ: ఇది "${cat}" విభాగం.`,
     hintLetter: (l, n) => `"${l}" తో మొదలవుతుంది · ${n} అక్షరాలు`,
     answerWas: (a) => `సమాధానం: ${a}`,
-    seeScores: 'స్కోర్లు చూడండి →', nextTeam: (n) => `తర్వాత జట్టు: ${n} →`,
+    seeScores: 'స్కోర్లు చూడండి →', nextRound: 'తర్వాత రౌండ్ →',
     alphabetNote: 'ఒక్క అక్షరం వాయిస్‌కి కష్టం — "ఏ, బీ, సీ…" అని చెప్పండి, లేదా సరైనది నొక్కండి.',
     confirmQ: (x) => `“${x}” అన్నారా?`, yes: 'అవును', no: 'కాదు',
     yesWords: ['అవును', 'ఆ', 'అవునండి', 'కరెక్ట్', 'ఔను', 'yes', 'yeah', 'ya'], noWords: ['కాదు', 'లేదు', 'వద్దు', 'no', 'nope'],
     tourNext: 'తర్వాత', tourDone: 'ఆడదాం!', tourBack: 'వెనక్కి', tourSkip: 'వదిలేయ్',
     tour: [
-      { emoji: '⚡', title: 'రాపిడ్ ఫైర్‌కి స్వాగతం', body: 'ఒక చిత్రం కనిపిస్తుంది, గడియారం అయిపోకముందే మీ జట్టు అది ఏమిటో గట్టిగా చెప్పాలి. ఎక్కువ సరైన సమాధానాలు చెప్పిన జట్టు గెలుస్తుంది.' },
-      { emoji: '🏷️', title: 'సిద్ధం చేసుకోండి', body: 'ఒక విభాగం ఎంచుకోండి, రెండు జట్లకు పేర్లు పెట్టండి, ఒక్కో వంతు ఎంతసేపు ఉండాలో ఎంచుకోండి. ప్రతి జట్టుకు కొన్ని వంతులు.' },
-      { emoji: '🎙️', title: 'గట్టిగా చెప్పండి', body: 'మీ వంతు మొదలైనప్పుడు మైక్ దానంతట అదే తెరుచుకుంటుంది — కనిపించేది చెప్పండి. AI హోస్ట్ పర్యాయపదాలు, తెలుగు పదాలను కూడా అంగీకరిస్తుంది.' },
-      { emoji: '🎛️', title: 'బటన్లు', body: 'సరైనది ✓ మీరే స్కోర్ ఇవ్వడం · వదిలేయ్ → తర్వాత చిత్రం · ⏸ మైక్ ఆపడం · వంతు ముగించు ముందే ఆపడం.' },
-      { emoji: '💡', title: 'ఆగిపోయారా? తొందరేం లేదు.', body: 'ఎక్కువ సమయం తీసుకుంటే క్లూ కనిపిస్తుంది. గడియారం అయిపోయాక సమాధానం చూపించి ఆగుతుంది — అందరూ సిద్ధమైనప్పుడు తర్వాత నొక్కండి.' },
+      { emoji: '⚡', title: 'రాపిడ్ ఫైర్‌కి స్వాగతం', body: 'రెండు జట్లు, ఒకే తెర. పింక్ ఎడమ సగం, బ్లూ కుడి సగం — ఒకరి తర్వాత ఒకరు, ఒక్కో చిత్రం.' },
+      { emoji: '🏷️', title: 'సిద్ధం చేసుకోండి', body: 'ఒక విభాగం ఎంచుకోండి, జట్లకు పేర్లు పెట్టండి, ఒక్కో చిత్రానికి ఎన్ని సెకన్లు, ఎన్ని రౌండ్లు ఆడాలో ఎంచుకోండి.' },
+      { emoji: '🔥', title: 'మంటను ఓడించండి', body: 'మీ వంతులో మీ వైపు చిత్రం కనిపిస్తుంది, మధ్య నుంచి మీ అంచు వైపు మంట వ్యాపిస్తుంది. అది చేరేలోపు గట్టిగా చెప్పండి. సరైన సమాధానం = +1, మంట అవతలి జట్టుకు దూకుతుంది.' },
+      { emoji: '💥', title: 'కాలిపోయారు!', body: 'మంట మీ అంచుకు చేరితే మీరు కాలిపోయినట్టే: రౌండ్ ముగుస్తుంది, అవతలి జట్టుకు +1. సమాధానం చూపించి, తర్వాత రౌండ్ నొక్కే వరకు ఆగుతుంది.' },
+      { emoji: '🎛️', title: 'బటన్లు', body: 'సరైనది ✓ మీరే స్కోర్ ఇవ్వడం · వదిలేయ్ → చిత్రం మారుతుంది కానీ మంట ఆగదు · ఆపు గడియారాన్ని ఆపుతుంది · మైక్ బటన్ వినడం ఆపుతుంది. ఆగిపోతే క్లూ కనిపిస్తుంది.' },
     ],
   },
 };
+
+/* Kid mode overrides: gentler, encouraging host lines and setup copy. Merged over STR. */
+const pickOne = (a) => a[Math.floor(Math.random() * a.length)];
+const KID_STR = {
+  'en-US': {
+    kids: 'Kids',
+    lede: 'Pink plays the left side, Blue the right. A picture or a sum pops up on your side — say the answer before the fire reaches your edge! Get it right and the fire jumps to your friends.',
+    introHint: 'Say the answer before the fire reaches your side. Get it right and the fire jumps across!',
+    cheers: ['Super star!', 'Great job!', 'You got it!', 'Wow, amazing!', 'Yay!', 'Brilliant!'],
+    sayCorrect: (ans) => `${pickOne(KID_STR['en-US'].cheers)} ${ans}!`,
+    notQuite: 'Good try! Have another go!',
+    sayReady: (n) => `${n}, you go first. You can do it!`,
+    burnedTitle: (n) => `⏰ Time's up, ${n}!`,
+    burnedSub: (w) => `Good try! +1 for ${w}`,
+    sayBurned: (l, w) => `Time's up, ${l}! Good try. A point for ${w}.`,
+    sayWin: (n) => `Hooray! ${n} wins! Everyone played so well!`, sayTie: "It's a tie! You're all winners!",
+    winTitle: (n) => `🎉 ${n} wins!`, tieTitle: "🎉 It's a tie — everyone wins!",
+    mathHint1: (a, op, b) => op === '+' ? `${a} + ${b}` : `${a} take away ${b}`,
+    mathHint2: (a, op, b) => op === '+' ? `Start at ${a} and count up ${b} more` : `Start at ${a} and count back ${b}`,
+    mathHint3: (n) => n === 0 ? 'Nothing is left!' : `It's between ${n - 1} and ${n + 1}`,
+    hintMask: (m) => `Sounds like: ${m}`,
+  },
+  'te-IN': {
+    kids: 'పిల్లలు',
+    lede: 'పింక్ ఎడమ వైపు, బ్లూ కుడి వైపు. మీ వైపు ఒక చిత్రం లేదా లెక్క కనిపిస్తుంది — మంట మీ అంచుకు చేరేలోపు జవాబు చెప్పండి! సరిగ్గా చెబితే మంట మీ స్నేహితుల వైపు దూకుతుంది.',
+    introHint: 'మంట మీ వైపు చేరేలోపు జవాబు చెప్పండి. సరిగ్గా చెబితే మంట అవతలి వైపుకు దూకుతుంది!',
+    cheers: ['సూపర్ స్టార్!', 'భలే చెప్పావ్!', 'కరెక్ట్!', 'వావ్, అద్భుతం!', 'హుర్రే!', 'శభాష్!'],
+    sayCorrect: (ans) => `${pickOne(KID_STR['te-IN'].cheers)} ${ans}!`,
+    notQuite: 'మంచి ప్రయత్నం! మళ్ళీ చెప్పు!',
+    sayReady: (n) => `${n}, మీరు ముందు. మీరు చేయగలరు!`,
+    burnedTitle: (n) => `⏰ ${n}, సమయం అయిపోయింది!`,
+    burnedSub: (w) => `మంచి ప్రయత్నం! ${w} కి +1`,
+    sayBurned: (l, w) => `${l}, సమయం అయిపోయింది! మంచి ప్రయత్నం. ${w} కి ఒక పాయింట్.`,
+    sayWin: (n) => `హుర్రే! ${n} గెలిచారు! అందరూ బాగా ఆడారు!`, sayTie: 'టై అయింది! అందరూ గెలిచారు!',
+    winTitle: (n) => `🎉 ${n} గెలిచారు!`, tieTitle: '🎉 టై — అందరూ గెలిచారు!',
+    mathHint1: (a, op, b) => op === '+' ? `${a} + ${b}` : `${a} లో ${b} తీసేయండి`,
+    mathHint2: (a, op, b) => op === '+' ? `${a} నుంచి మొదలుపెట్టి ఇంకా ${b} లెక్కపెట్టండి` : `${a} నుంచి ${b} వెనక్కి లెక్కపెట్టండి`,
+    mathHint3: (n) => n === 0 ? 'ఏమీ మిగలదు!' : `${n - 1} కి, ${n + 1} కి మధ్యలో ఉంటుంది`,
+    hintMask: (m) => `ఇలా ఉంటుంది: ${m}`,
+  },
+};
+// Categories shown in kid mode (in this order); maths categories exist only in kid mode.
+const KID_CATS = ['addition', 'subtraction', 'alphabet', 'animals', 'kitchenObject'];
+const MATH_CATS = [
+  { key: 'addition', en: 'Addition', te: 'కూడికలు', op: '+' },
+  { key: 'subtraction', en: 'Subtraction', te: 'తీసివేతలు', op: '-' },
+];
+// Fresh sums for a round: addition up to 10 + 10, subtraction from up to 15, never below 0.
+function mathDeck(op) {
+  const seen = new Set(), deck = [];
+  while (deck.length < 30) {
+    let a, b;
+    if (op === '+') { a = 1 + Math.floor(Math.random() * 10); b = 1 + Math.floor(Math.random() * 10); }
+    else { a = 2 + Math.floor(Math.random() * 14); b = 1 + Math.floor(Math.random() * (a - 1)); }
+    const k = `${a}${op}${b}`;
+    if (seen.has(k) && seen.size < 60) continue;
+    seen.add(k);
+    deck.push({ math: true, a, b, op, answer: String(op === '+' ? a + b : a - b) });
+  }
+  return deck;
+}
 
 /* Category descriptions (shown on setup) and showcase hints (animals; others fall back to
    a category + first-letter hint). Add a `hint`/CAT_INFO entry for new content as needed. */
@@ -362,6 +555,8 @@ const CAT_INFO = {
   seeds:         { en: { desc: 'Seeds, spices and grains up close.', eg: 'Cardamom…' }, te: { desc: 'విత్తనాలు, మసాలా దినుసులు దగ్గరగా.', eg: 'ఏలకులు…' } },
   techIcons:     { en: { desc: 'Tech founders and leaders.', eg: 'Bill Gates…' }, te: { desc: 'టెక్ వ్యవస్థాపకులు, నాయకులు.', eg: 'బిల్ గేట్స్…' } },
   usStates:      { en: { desc: 'Outline maps of US states.', eg: 'California…' }, te: { desc: 'అమెరికా రాష్ట్రాల మ్యాప్‌లు.', eg: 'కాలిఫోర్నియా…' } },
+  addition:      { en: { desc: 'A sum pops up — add the two numbers and shout the answer.', eg: '3 + 4 → “7”' }, te: { desc: 'ఒక లెక్క కనిపిస్తుంది — రెండు సంఖ్యలు కలిపి జవాబు చెప్పండి.', eg: '3 + 4 → “ఏడు”' } },
+  subtraction:   { en: { desc: 'Take the second number away from the first and shout what is left.', eg: '9 − 3 → “6”' }, te: { desc: 'మొదటి సంఖ్యలో నుంచి రెండోది తీసేసి మిగిలింది చెప్పండి.', eg: '9 − 3 → “ఆరు”' } },
   teluguCinema:  { en: { desc: 'Telugu cinema stars.', eg: '' }, te: { desc: 'తెలుగు సినిమా తారలు.', eg: '' } },
 };
 const HINTS = {
@@ -395,20 +590,20 @@ const HINTS = {
 
 const S = {
   lang: 'en-US', jev: false, category: null,
-  teams: [], curTeam: 0, turnsPerTeam: 3, turnNo: 0, totalTurns: 6, turnSecs: 20,
-  deck: [], item: null, turnScore: 0, seq: 0,
-  status: 'setup', deadline: 0, clockTimer: null, warned: false, lastSec: null,
+  teams: [], curTeam: 0, rounds: 3, roundNo: 0, shotSecs: 10,
+  deck: [], item: null, seq: 0,
+  status: 'setup', deadline: 0, remaining: 0, clockTimer: null, lastSec: null,
   imgShownAt: 0, hintLevel: 0,
-  soundOn: true, hostOn: true, log: [],
+  soundOn: true, hostOn: true, log: [], kids: Shell.getKids(),
   accept: 0.75, confirmAt: 0.45, pendingConfirm: null,   // thresholds refreshed from /api/status
 };
-const T = () => STR[S.lang] || STR['en-US'];
+const T = () => { const base = STR[S.lang] || STR['en-US']; return S.kids ? { ...base, ...KID_STR[S.lang in KID_STR ? S.lang : 'en-US'] } : base; };
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 /* ---------- match log (host/debug) ---------- */
-const expectedLabel = () => !S.item ? '' : (S.category?.key === 'priorAlphabet' ? `${S.item.shown}→${S.item.answer}` : S.item.answer);
+const expectedLabel = () => !S.item ? '' : S.item.math ? `${S.item.a}${S.item.op}${S.item.b}=${S.item.answer}` : (S.category?.key === 'priorAlphabet' ? `${S.item.shown}→${S.item.answer}` : S.item.answer);
 // Same shape and stats line as Vibe Guess's match log.
 function logRow(entry) {
   S.log.unshift({ at: new Date().toISOString(), player: S.teams[S.curTeam]?.name, category: S.category?.key, ...entry });
@@ -446,15 +641,46 @@ const Sound = (() => {
   }
   return {
     resume,
-    tick(urgent) { if (ready()) tone(urgent ? 1320 : 1100, now(), urgent ? 0.1 : 0.04, 0.3, { type: urgent ? 'square' : 'sine' }); },
+    // Kid mode swaps in softer, toy-like versions: woodblock ticks, xylophone cheers,
+    // a slide whistle when the fire jumps, and a "wah-wah" instead of an explosion.
+    tick(urgent) {
+      if (!ready()) return;
+      if (S.kids) return tone(urgent ? 880 : 620, now(), 0.06, urgent ? 0.22 : 0.14, { type: 'triangle' });
+      tone(urgent ? 1320 : 1100, now(), urgent ? 0.1 : 0.04, 0.3, { type: urgent ? 'square' : 'sine' });
+    },
     go() { if (!ready()) return; const t = now(); tone(880, t, 0.12, 0.3, { type: 'triangle' }); tone(1320, t + 0.1, 0.2, 0.25, { type: 'triangle' }); },
-    correct() { if (!ready()) return; const t = now(); [784, 988, 1319].forEach((f, i) => tone(f, t + i * 0.06, 0.16, 0.3, { type: 'triangle' })); },
-    wrong() { if (ready()) tone(220, now(), 0.22, 0.25, { type: 'sawtooth', glide: 150 }); },
-    buzzer() { if (!ready()) return; const t = now(); tone(130, t, 0.6, 0.3, { type: 'sawtooth' }); tone(120, t, 0.6, 0.3, { type: 'sawtooth' }); },
+    correct() {
+      if (!ready()) return; const t = now();
+      if (S.kids) { [523, 659, 784, 1047, 1319].forEach((f, i) => { tone(f, t + i * 0.07, 0.28, 0.24, { type: 'sine' }); tone(f * 4, t + i * 0.07, 0.05, 0.04, { type: 'sine' }); }); return; }
+      [784, 988, 1319].forEach((f, i) => tone(f, t + i * 0.06, 0.16, 0.3, { type: 'triangle' }));
+    },
+    wrong() {
+      if (!ready()) return;
+      if (S.kids) { const t = now(); tone(392, t, 0.12, 0.16, { type: 'sine' }); tone(330, t + 0.13, 0.16, 0.16, { type: 'sine' }); return; }
+      tone(220, now(), 0.22, 0.25, { type: 'sawtooth', glide: 150 });
+    },
+    whoosh() { if (ready()) tone(S.kids ? 420 : 260, now(), S.kids ? 0.36 : 0.28, 0.18, { type: S.kids ? 'sine' : 'triangle', glide: S.kids ? 1700 : 1200 }); },
+    boom() {
+      if (!ready()) return;
+      if (S.kids) { const t = now(); [392, 370, 349].forEach((f, i) => tone(f, t + i * 0.28, 0.24, 0.2, { type: 'triangle' })); tone(330, t + 0.84, 0.6, 0.2, { type: 'triangle', glide: 300 }); return; }
+      const t = now(), len = Math.floor(ctx.sampleRate * 0.9);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4);
+      const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = buf; f.type = 'lowpass';
+      f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(110, t + 0.8);
+      g.gain.value = 0.9;
+      src.connect(f).connect(g).connect(master); src.start(t);
+      tone(110, t, 0.7, 0.45, { type: 'sine', glide: 38 });
+    },
     micOn() { if (ready()) tone(880, now(), 0.07, 0.25, { type: 'sine' }); },
     micOff() { if (ready()) tone(660, now(), 0.07, 0.2, { type: 'sine' }); },
     ask() { if (ready()) tone(523, now(), 0.25, 0.25, { type: 'triangle', glide: 784 }); },
-    fanfare() { if (!ready()) return; const t = now() + 0.02; [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * 0.1, 0.3, 0.3, { type: 'square' })); },
+    fanfare() {
+      if (!ready()) return; const t = now() + 0.02;
+      if (S.kids) { [523, 523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, t + i * 0.13, i === 6 ? 0.7 : 0.16, 0.24, { type: 'sine' })); return; }
+      [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * 0.1, 0.3, 0.3, { type: 'square' }));
+    },
   };
 })();
 
@@ -578,6 +804,25 @@ function resolveConfirm(yes) {
   if (yes) scoreCorrect();
   else { $('#feedback').textContent = T().notQuite; $('#feedback').className = 'feedback bad'; }
 }
+// Kids' maths answers: read a whole number from digits or number words (English, Telugu
+// script, romanized Telugu) plus common mishearings. null = can't tell → ask Jev.
+const NUM_WORDS = {};
+[['zero', 'nil', 'none', 'nothing', 'సున్నా', 'sunna'], ['one', 'won', 'ఒకటి', 'okati', 'okkati'], ['two', 'to', 'too', 'రెండు', 'rendu'],
+ ['three', 'tree', 'మూడు', 'moodu', 'mudu'], ['four', 'for', 'fore', 'నాలుగు', 'nalugu', 'naalugu'], ['five', 'ఐదు', 'అయిదు', 'aidu', 'ayidu'],
+ ['six', 'ఆరు', 'aaru', 'aru'], ['seven', 'ఏడు', 'edu', 'eedu'], ['eight', 'ate', 'ఎనిమిది', 'enimidi'], ['nine', 'తొమ్మిది', 'tommidi', 'thommidi'],
+ ['ten', 'పది', 'padi'], ['eleven', 'పదకొండు', 'padakondu'], ['twelve', 'పన్నెండు', 'pannendu'], ['thirteen', 'పదమూడు', 'padamudu'],
+ ['fourteen', 'పద్నాలుగు', 'padnalugu'], ['fifteen', 'పదిహేను', 'padihenu'], ['sixteen', 'పదహారు', 'padaharu'], ['seventeen', 'పదిహేడు', 'padihedu'],
+ ['eighteen', 'పద్దెనిమిది', 'paddenimidi'], ['nineteen', 'పందొమ్మిది', 'pandommidi'], ['twenty', 'ఇరవై', 'iravai', 'iravay']]
+  .forEach((words, n) => words.forEach(w => { NUM_WORDS[w] = n; }));
+function readNumber(text) {
+  const t = text.normalize('NFC').toLowerCase();
+  const d = t.match(/\d+/);
+  if (d) return Number(d[0]);
+  const words = t.replace(/[^\p{L}\p{M}\s]/gu, ' ').split(/\s+/).filter(Boolean);
+  for (let i = words.length - 1; i >= 0; i--) if (words[i] in NUM_WORDS) return NUM_WORDS[words[i]];   // last number said wins ("three plus four is seven")
+  return null;
+}
+
 const notQuite = (text) => { $('#feedback').textContent = `"${text}" — ${T().notQuite}`; $('#feedback').className = 'feedback bad'; };
 
 async function handleUtterance(text) {
@@ -590,6 +835,26 @@ async function handleUtterance(text) {
     clearConfirm();                             // a fresh guess replaces the question
   }
   const expected = S.item.answer, seq = ++S.seq;
+  if (S.item.math) {             // kids' Addition / Subtraction
+    const t0 = performance.now(), n = readNumber(text);
+    if (n !== null) {
+      logRow({ expected: expectedLabel(), guess: text, result: String(n) === expected ? 'correct' : 'no', source: 'local', ms: 0 });
+      return String(n) === expected ? scoreCorrect() : notQuite(text);
+    }
+    try {
+      const r = await fetch('/api/match-one', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expected, guess: text, kind: 'number' }),
+      }).then(x => x.json());
+      if (seq !== S.seq || S.status !== 'playing') return;
+      logRow({ expected: expectedLabel(), guess: text, result: r.match ? 'correct' : 'no', source: r.source, ms: Math.round(performance.now() - t0), jev: r.jev, error: r.error });
+      if (r.match) return scoreCorrect();
+      notQuite(text);
+    } catch {
+      if (seq === S.seq) { logRow({ expected: expectedLabel(), guess: text, result: 'error', source: 'local', error: 'network' }); notQuite(text); }
+    }
+    return;
+  }
   if (expected.length === 1) {   // Alphabet / Prior Alphabet
     const t0 = performance.now();
     if (!cleanLetter(text)) return;            // only filler ("the", "um") — ignore, keep listening
@@ -632,116 +897,188 @@ async function handleUtterance(text) {
   }
 }
 
+// Right answer: +1 to the team on the clock, then the fire jumps to the other side with a
+// fresh picture and a fresh clock.
 function scoreCorrect() {
   if (S.status !== 'playing') return;
-  S.teams[S.curTeam].score++; S.turnScore++;
-  Sound.correct();
-  $('#feedback').textContent = T().scored(S.teams[S.curTeam].name); $('#feedback').className = 'feedback good';
+  const side = S.curTeam;
+  S.teams[side].score++;
+  Sound.correct(); Sound.whoosh();
   say(T().sayCorrect(S.item.answer));
-  renderScores();
+  popScore(side);
+  S.curTeam = 1 - side;
+  armShot();
   nextImage();
+  renderHalves();
 }
 
 /* ================= game flow ================= */
+// Kid mode lists only kid categories (maths first); otherwise every picture category.
+function categories() {
+  const all = window.RAPID_CATEGORIES || [];
+  if (!S.kids) return all;
+  return KID_CATS.map(k => MATH_CATS.find(c => c.key === k) || all.find(c => c.key === k)).filter(Boolean);
+}
 function buildCategorySelect() {
   const sel = $('#category');
-  sel.innerHTML = (window.RAPID_CATEGORIES || []).map(c => `<option value="${c.key}">${esc(c[S.lang === 'te-IN' ? 'te' : 'en'])} (${c.count})</option>`).join('');
+  sel.innerHTML = categories().map(c => `<option value="${c.key}">${esc(c[S.lang === 'te-IN' ? 'te' : 'en'])}${c.count ? ` (${c.count})` : ''}</option>`).join('');
+}
+// Kids get longer shots.
+function buildSecsSelect() {
+  const opts = S.kids ? [10, 15, 20, 30] : [5, 8, 10, 15], def = S.kids ? 20 : 10;
+  $('#secs').innerHTML = opts.map(n => `<option value="${n}"${n === def ? ' selected' : ''}>${n}</option>`).join('');
+}
+const deckFor = (cat) => cat.op ? mathDeck(cat.op) : shuffle([...(window.RAPID_ITEMS[cat.key] || [])]);
+// Kid mode is read when a game starts; a switch mid-game applies from the next setup screen.
+function applyKids() {
+  S.kids = Shell.getKids();
+  const cur = $('#category').value;
+  buildCategorySelect(); buildSecsSelect();
+  if ([...$('#category').options].some(o => o.value === cur)) $('#category').value = cur;
+  applyLang(S.lang);
 }
 function startGame() {
   unlockAudio();
   const catKey = $('#category').value;
-  S.category = (window.RAPID_CATEGORIES || []).find(c => c.key === catKey);
+  S.category = categories().find(c => c.key === catKey);
   if (!S.category) { $('#setupNote').textContent = 'Pick a category.'; return; }
   S.teams = [
     { name: $('#team1').value.trim() || 'Team 1', score: 0 },
     { name: $('#team2').value.trim() || 'Team 2', score: 0 },
   ];
-  S.turnSecs = Number($('#secs').value);
-  S.turnsPerTeam = Number($('#turns').value);
-  S.totalTurns = S.turnsPerTeam * 2;
-  S.deck = shuffle([...(window.RAPID_ITEMS[catKey] || [])]);
-  S.curTeam = 0; S.turnNo = 0;
+  S.shotSecs = Number($('#secs').value);
+  S.rounds = Number($('#rounds').value);
+  S.deck = deckFor(S.category);
+  S.roundNo = 0;
   $('#setup').hidden = true; $('#final').hidden = true;
-  beginTurn();
+  $('#stage').hidden = false; document.body.classList.add('in-game');
+  beginRound();
 }
 
-function beginTurn() {
-  S.turnNo++;
-  S.status = 'intro'; S.turnScore = 0; S.warned = false; S.lastSec = null;
+// Rounds alternate who starts: Pink opens round 1, Blue round 2, …
+function beginRound() {
+  S.roundNo++;
+  S.curTeam = (S.roundNo - 1) % 2;
+  S.status = 'intro'; S.item = null; S.lastSec = null;
+  clearInterval(S.clockTimer); clearConfirm();
+  for (const i of [0, 1]) { const h = $('#half' + i); h.classList.remove('burned', 'hot'); h.style.setProperty('--p', 0); }
+  $('#halves').querySelectorAll('.boom, .ring, .ember, .pop').forEach(e => e.remove());
+  $('#shot').hidden = true; $('#reveal').hidden = true; $('#intro').hidden = false;
+  $('#stage').classList.remove('paused');
   const team = S.teams[S.curTeam];
-  $('#stage').hidden = true; $('#final').hidden = true; $('#intro').hidden = false;
-  const roundNo = Math.ceil(S.turnNo / 2);
-  $('#introRound').textContent = T().round(roundNo, S.turnsPerTeam);
-  $('#introTeam').textContent = T().teamReady(team.name);
+  $('#introRound').textContent = T().round(S.roundNo, S.rounds);
+  $('#introVs').innerHTML = `<span class="t1">${esc(S.teams[0].name)} · ${S.teams[0].score}</span><i>${esc(T().vs)}</i><span class="t2">${esc(S.teams[1].name)} · ${S.teams[1].score}</span>`;
+  $('#introTeam').textContent = T().teamStarts(team.name);
+  $('#introTeam').style.color = `var(--team${S.curTeam + 1})`;
   $('#introHint').textContent = T().introHint;
-  $('#introStart').textContent = T().startTurn;
+  $('#introStart').textContent = T().startRound;
+  $('#caption').textContent = '';
+  renderHalves(); renderCatLine(); renderPause();
   say(T().sayReady(team.name), { interrupt: true });
 }
 
-function startTurn() {
+function startRound() {
   warmMic();
-  $('#intro').hidden = true; $('#stage').hidden = false;
-  $('#reveal').hidden = true; $('#controls').hidden = false; clearConfirm();
-  $('#who').textContent = S.teams[S.curTeam].name;
-  $('#rnd').textContent = T().round(Math.ceil(S.turnNo / 2), S.turnsPerTeam);
-  renderCatLine();
+  $('#intro').hidden = true;
   $('#feedback').textContent = ''; $('#live').textContent = ''; $('#hint').textContent = '';
   const notes = [];
   if (S.hostOn && !canSpeak) notes.push(T().noVoice);
   if (S.category.imgDir === 'letters') notes.push(T().alphabetNote);
   $('#stageNote').textContent = notes.join('  ');
-  renderScores(); renderMic();
-  setClock(S.turnSecs);
+  S.status = 'ready';
+  $('#shot').hidden = false;
   nextImage();
+  renderHalves(); renderMic();
   fetch('/api/warm', { method: 'POST' }).catch(() => {});
+  // the mic permission prompt must not eat the first team's time
   const startWhenReady = () => {
-    if (S.status !== 'intro' && S.status !== 'ready') return;
+    if (S.status !== 'ready') return;
     if (micResolved) startClock(); else setTimeout(startWhenReady, 150);
   };
-  S.status = 'ready';
   startWhenReady();
 }
 
 function startClock() {
   if (S.status !== 'ready') return;
   S.status = 'playing';
-  S.deadline = Date.now() + S.turnSecs * 1000;
+  armShot();
   Sound.go(); say(T().sayGo);
   startListening();
-  clearInterval(S.clockTimer);
-  S.clockTimer = setInterval(() => {
-    const left = Math.max(0, (S.deadline - Date.now()) / 1000);
-    setClock(left);
-    const sec = Math.ceil(left);
-    if (sec !== S.lastSec) { S.lastSec = sec; if (sec <= 5 && sec > 0) Sound.tick(sec <= 3); }
-    maybeHint();
-    if (left <= 0) endTurn();
-  }, 100);
+  runClock(); renderPause();
 }
-function setClock(left) {
-  const hot = S.status === 'playing' && left <= 5;
-  $('#clock').textContent = Math.ceil(left);
-  $('#clock').classList.toggle('hot', hot);
-  $('#meter').classList.toggle('hot', hot);
-  $('#meter i').style.width = `${(left / S.turnSecs) * 100}%`;
+function armShot() { S.deadline = Date.now() + S.shotSecs * 1000; S.lastSec = null; }
+function runClock() {
+  clearInterval(S.clockTimer);
+  S.clockTimer = setInterval(tickClock, 100);
+  requestAnimationFrame(drawFire);
+}
+function tickClock() {
+  if (S.status !== 'playing') return;
+  const left = Math.max(0, (S.deadline - Date.now()) / 1000);
+  const sec = Math.ceil(left);
+  if (sec !== S.lastSec) { S.lastSec = sec; if (sec > 0) Sound.tick(sec <= 3); }
+  maybeHint();
+  if (left <= 0) burn();
+}
+// The fire is the clock: --p goes 0 → 1 as the shot's time runs out (smooth, every frame).
+function drawFire() {
+  if (S.status !== 'playing') return;
+  const left = Math.max(0, (S.deadline - Date.now()) / 1000);
+  const h = $('#half' + S.curTeam);
+  h.style.setProperty('--p', Math.min(1, 1 - left / S.shotSecs).toFixed(4));
+  h.classList.toggle('hot', left <= 3);
+  h.querySelector('.side-clock').textContent = Math.ceil(left);
+  requestAnimationFrame(drawFire);
+}
+
+function togglePause() {
+  if (S.status === 'playing') {
+    S.status = 'paused'; S.remaining = Math.max(0, S.deadline - Date.now());
+    clearInterval(S.clockTimer); stopListening();
+  } else if (S.status === 'paused') {
+    S.status = 'playing'; S.deadline = Date.now() + S.remaining;
+    startListening(); runClock();
+  }
+  renderPause();
+}
+function renderPause() {
+  const paused = S.status === 'paused';
+  $('#stage').classList.toggle('paused', paused);
+  $('#pauseBtn').textContent = paused ? T().resume : T().pause;
+  $('#pauseBtn').disabled = !paused && S.status !== 'playing';
+  $('#gotBtn').disabled = $('#skipBtn').disabled = S.status !== 'playing';
 }
 
 function nextImage() {
-  if (!S.deck.length) S.deck = shuffle([...(window.RAPID_ITEMS[S.category.key] || [])]);
+  if (!S.deck.length) S.deck = deckFor(S.category);
   S.item = S.deck.pop();
   S.seq++;    // invalidate any in-flight guess for the previous image
   S.imgShownAt = Date.now(); S.hintLevel = 0;
   clearConfirm();
-  $('#hint').textContent = ''; $('#ans').textContent = '';
-  $('#img').src = `/rapid/items/${S.category.imgDir || S.category.key}/${S.item.file}`;
-  $('#img').alt = 'Name this';
+  $('#hint').textContent = ''; $('#ans').textContent = ''; $('#live').textContent = ''; $('#feedback').textContent = '';
+  const math = Boolean(S.item.math);
+  $('#shot').classList.toggle('math', math);
+  $('#img').hidden = math; $('#sum').hidden = !math;
+  if (math) renderSum(false);
+  else { $('#img').src = `/rapid/items/${S.category.imgDir || S.category.key}/${S.item.file}`; $('#img').alt = 'Name this'; }
+}
+
+function renderSum(solved) {
+  const it = S.item;
+  $('#sum').innerHTML = `<span>${it.a} ${it.op === '+' ? '+' : '−'} ${it.b} = <b>${solved ? it.answer : '?'}</b></span>`;
 }
 
 // Hint ladder: a semantic hint (authored for animals) or a category hint first, then a
-// first-letter + length hint. Fires after the player dwells on the same image.
+// first-letter + length hint. Paced to the shot length so short shots still get them.
 function hintText(level) {
   if (!S.item) return '';
   const te = S.lang === 'te-IN';
+  if (S.item.math) {             // dots to count, then a counting strategy, then a range
+    const { a, b, op } = S.item, n = Number(S.item.answer);
+    if (level === 1) return T().mathHint1('●'.repeat(a), op, '●'.repeat(b));
+    if (level === 2) return T().mathHint2(a, op, b);
+    return T().mathHint3(n);
+  }
   if (S.category.imgDir === 'letters') {   // single-letter rounds: nudge the rule, never reveal the letter
     if (S.category.key === 'priorAlphabet') return te ? `"${S.item.shown}" కి ముందు వచ్చే అక్షరం ఏది?` : `Which letter comes just before "${S.item.shown}"?`;
     return te ? 'కనిపించే అక్షరాన్నే చెప్పండి' : 'Just say the letter you see';
@@ -752,65 +1089,115 @@ function hintText(level) {
     if (authored) return (te ? authored.te : authored.en) || authored.en;
     return T().hintCat(S.category[te ? 'te' : 'en']);
   }
+  if (level === 3) {             // kids: every other letter shown, e.g. "Z _ B _ A"
+    const mask = [...ans.toUpperCase()].map((c, i) => (/[A-Z]/.test(c) ? (i % 2 === 0 ? c : '_') : c === ' ' ? '  ' : c)).join(' ');
+    return T().hintMask(mask);
+  }
   const letters = ans.replace(/[^A-Za-z]/g, '').length;
   return T().hintLetter(ans[0].toUpperCase(), letters);
 }
 function maybeHint() {
   if (S.status !== 'playing' || !S.item) return;
   const on = (Date.now() - S.imgShownAt) / 1000;
-  if (S.hintLevel < 1 && on >= 4) { S.hintLevel = 1; $('#hint').textContent = '💡 ' + hintText(1); }
-  else if (S.hintLevel < 2 && on >= 8) { S.hintLevel = 2; $('#hint').textContent = '💡 ' + hintText(2); }
+  // Kids get three hints, sooner; grown-ups two.
+  const steps = S.kids ? [0.2, 0.45, 0.7] : [0.4, 0.7];
+  const next = S.hintLevel;
+  if (next < steps.length && on >= S.shotSecs * steps[next]) {
+    S.hintLevel = next + 1;
+    const txt = hintText(S.hintLevel);
+    if (S.item.math && S.hintLevel === 1) $('#hint').innerHTML = '💡 <span class="dots">' + esc(txt) + '</span>';
+    else $('#hint').textContent = '💡 ' + txt;
+  }
 }
 
+// Skip swaps the picture but not the clock: the fire keeps burning toward the same edge.
 function skipImage() {
   if (S.status !== 'playing') return;
   logRow({ expected: expectedLabel(), guess: '—', result: 'skip', source: 'manual' });
-  $('#feedback').textContent = T().skipped(S.item.answer); $('#feedback').className = 'feedback bad';
+  const was = S.item.answer;
   Sound.wrong();
   nextImage();
+  $('#feedback').textContent = T().skipped(was); $('#feedback').className = 'feedback bad';
 }
 
-function endTurn() {
-  if (S.status !== 'playing' && S.status !== 'ready') return;
+// The fire reached the edge: the team on the clock burns, the other team scores, round over.
+function burn() {
+  if (!['playing', 'ready', 'paused'].includes(S.status)) return;
   S.status = 'reveal';
-  clearInterval(S.clockTimer); setClock(0);
-  stopListening(); renderMic(); clearConfirm();
-  Sound.buzzer();
-  const team = S.teams[S.curTeam];
-  say(T().sayTimeUp(team.name, S.turnScore), { interrupt: true });
-  // Reveal the answer the team was stuck on and WAIT — don't auto-advance to scores.
-  // Leave any hint on screen so a player who saw it can still connect it to the answer.
-  $('#feedback').textContent = '';
-  const revealAns = (S.category.key === 'priorAlphabet' && S.item) ? `${S.item.shown} → ${S.item.answer}` : (S.item ? S.item.answer : '');
+  clearInterval(S.clockTimer);
+  stopListening(); renderMic(); clearConfirm(); renderPause();
+  const loser = S.curTeam, winner = 1 - loser;
+  S.teams[winner].score++;
+  const h = $('#half' + loser);
+  h.classList.remove('hot'); h.style.setProperty('--p', 1); h.classList.add('burned');
+  h.querySelector('.side-clock').textContent = '0';
+  explode(loser);
+  Sound.boom();
+  say(T().sayBurned(S.teams[loser].name, S.teams[winner].name), { interrupt: true });
+  // Show the answer they were stuck on (hint stays, so it can be connected) and WAIT.
+  $('#feedback').textContent = ''; $('#live').textContent = '';
+  const revealAns = !S.item ? '' : S.item.math ? `${S.item.a} ${S.item.op === '+' ? '+' : '−'} ${S.item.b} = ${S.item.answer}` : S.category.key === 'priorAlphabet' ? `${S.item.shown} → ${S.item.answer}` : S.item.answer;
   if (S.item) $('#ans').textContent = S.item.answer;
-  $('#controls').hidden = true;
-  $('#reveal').hidden = false;
-  $('#revealBig').textContent = revealAns ? T().answerWas(revealAns) : '';
-  $('#revealSub').textContent = T().found(S.turnScore);
-  $('#revealBtn').textContent = S.turnNo >= S.totalTurns ? T().seeScores : T().nextTeam(S.teams[1 - S.curTeam].name);
+  if (S.item?.math) renderSum(true);
+  renderHalves();
+  $('#revealBig').textContent = T().burnedTitle(S.teams[loser].name);
+  $('#revealSub').textContent = [T().burnedSub(S.teams[winner].name), revealAns && T().answerWas(revealAns)].filter(Boolean).join(' · ');
+  $('#revealBtn').textContent = S.roundNo >= S.rounds ? T().seeScores : T().nextRound;
+  const round = S.roundNo;
+  setTimeout(() => { if (S.status === 'reveal' && S.roundNo === round) $('#reveal').hidden = false; }, 1100);
 }
 function proceedAfterReveal() {
-  $('#reveal').hidden = true; $('#controls').hidden = false;
-  if (S.turnNo >= S.totalTurns) return finish();
-  S.curTeam = 1 - S.curTeam;
-  beginTurn();
+  $('#reveal').hidden = true;
+  if (S.roundNo >= S.rounds) return finish();
+  beginRound();
 }
 
 function finish() {
   S.status = 'final';
-  $('#stage').hidden = true; $('#intro').hidden = true; $('#final').hidden = false;
+  document.body.classList.remove('in-game');
+  $('#stage').hidden = true; $('#final').hidden = false;
   const ranked = [...S.teams].sort((a, b) => b.score - a.score);
   const tie = ranked[0].score === ranked[1].score;
   $('#winner').textContent = tie ? T().tieTitle : T().winTitle(ranked[0].name);
-  $('#standings').innerHTML = ranked.map((t, i) => `<li class="${i === 0 && !tie ? 'win' : ''}"><span class="nm">${esc(t.name)}</span><b>${t.score}</b></li>`).join('');
+  $('#standings').innerHTML = ranked.map((t, i) => `<li class="${i === 0 && !tie ? 'win' : ''}"><span class="swatch" style="background:var(--team${S.teams.indexOf(t) + 1})"></span><span class="nm">${esc(t.name)}</span><b>${t.score}</b></li>`).join('');
   $('#againBtn').textContent = T().playAgain;
   Sound.fanfare();
   say(tie ? T().sayTie : T().sayWin(ranked[0].name, ranked[0].score), { interrupt: true });
 }
 
-function renderScores() {
-  $('#scores').innerHTML = S.teams.map((t, i) =>
-    `<div class="team ${i === S.curTeam && (S.status === 'playing' || S.status === 'ready') ? 'active' : ''}"><span class="nm">${esc(t.name)}</span><span class="sc">${t.score}</span></div>`).join('');
+// Names, scores and which half is live; the picture card follows the active team.
+function renderHalves() {
+  const live = ['ready', 'playing', 'paused'].includes(S.status);
+  S.teams.forEach((t, i) => {
+    const h = $('#half' + i), on = live && i === S.curTeam;
+    h.querySelector('.nm').textContent = t.name;
+    h.querySelector('.sc').textContent = t.score;
+    h.querySelector('.wait').innerHTML = `${esc(t.name)}<small>${esc(T().waiting)} ${esc(T().waitSub)}</small>`;
+    h.classList.toggle('active', on);
+    if (!on && !h.classList.contains('burned')) { h.classList.remove('hot'); h.style.setProperty('--p', 0); }
+    if (on && S.status === 'ready') h.querySelector('.side-clock').textContent = S.shotSecs;
+  });
+  if (live) $('#half' + S.curTeam + ' .side-body').appendChild($('#shot'));
+}
+function popScore(side) {
+  const el = document.createElement('div');
+  el.className = 'pop'; el.textContent = '+1';
+  $('#half' + side).appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+function explode(side) {
+  const h = $('#half' + side), parts = ['boom', 'ring'];
+  for (let i = 0; i < 16; i++) parts.push('ember');
+  parts.forEach((cls, i) => {
+    const el = document.createElement('div');
+    el.className = cls;
+    if (cls === 'ember') {
+      const a = (i / 16) * Math.PI * 2 + Math.random() * 0.4, r = 120 + Math.random() * 160;
+      el.style.setProperty('--dx', `${Math.cos(a) * r}px`); el.style.setProperty('--dy', `${Math.sin(a) * r}px`);
+      if (S.kids) { el.classList.add('star'); el.textContent = '★'; el.style.setProperty('--sc', `var(--seg${1 + (i % 6)})`); }
+    }
+    h.appendChild(el);
+  });
 }
 
 /* ================= i18n apply ================= */
@@ -820,19 +1207,20 @@ function applyLang(code) {
   pickVoice();
   const t = T();
   $('#title').textContent = t.title; $('#lede').textContent = t.lede;
+  $('#kidsLbl').textContent = (KID_STR[S.lang] || KID_STR['en-US']).kids;
   $('#lblCategory').childNodes[0].textContent = t.category;
   $('#lblTeam1').childNodes[0].textContent = t.team1;
   $('#lblTeam2').childNodes[0].textContent = t.team2;
-  $('#lblSecs').childNodes[0].textContent = t.secsPerTurn;
-  $('#lblTurns').childNodes[0].textContent = t.turnsPerTeam;
+  $('#lblSecs').childNodes[0].textContent = t.secsPerShot;
+  $('#lblRounds').childNodes[0].textContent = t.rounds;
   $('#startBtn').textContent = t.start;
-  $('#gotBtn').textContent = t.got; $('#skipBtn').textContent = t.skip; $('#endBtn').textContent = t.endTurn;
+  $('#gotBtn').textContent = t.got; $('#skipBtn').textContent = t.skip; renderPause();
   const curCat = $('#category').value;
   buildCategorySelect();
-  if (curCat) $('#category').value = curCat;      // keep the chosen category across a language switch
+  if (curCat && [...$('#category').options].some(o => o.value === curCat)) $('#category').value = curCat;      // keep the chosen category across a language switch
   showCatDesc();
   renderMic();
-  if (!$('#stage').hidden) { renderScores(); renderCatLine(); }
+  if (!$('#stage').hidden) { renderHalves(); renderCatLine(); }
   if (!$('#tour').hidden) renderTour();
 }
 
@@ -851,7 +1239,7 @@ function renderCatLine() {
   const name = S.category[te ? 'te' : 'en'];
   const info = CAT_INFO[S.category.key];
   const desc = info ? (info[te ? 'te' : 'en'] || info.en).desc : '';
-  $('#catLine').innerHTML = `<b>${esc(name)}</b>${desc ? esc(desc) : ''}`;
+  $('#catLine').innerHTML = `<b>${esc(name)}</b><span>${desc ? esc(desc) : ''}</span><span class="rnd">${esc(T().round(S.roundNo, S.rounds))}</span>`;
 }
 
 let tourStep = 0;
@@ -873,10 +1261,10 @@ function closeTour() { $('#tour').hidden = true; try { localStorage.setItem('rap
 document.addEventListener('pointerdown', unlockAudio);
 $('#startBtn').onclick = startGame;
 $('#category').addEventListener('change', showCatDesc);
-$('#introStart').onclick = () => { unlockAudio(); startTurn(); };
+$('#introStart').onclick = () => { unlockAudio(); startRound(); };
 $('#gotBtn').onclick = () => { if (S.status === 'playing') { logRow({ expected: expectedLabel(), guess: '(host)', result: 'got it', source: 'manual' }); scoreCorrect(); } };
 $('#skipBtn').onclick = skipImage;
-$('#endBtn').onclick = endTurn;
+$('#pauseBtn').onclick = togglePause;
 $('#logBtn').onclick = (e) => { const on = $('#log').hidden; $('#log').hidden = !on; e.currentTarget.setAttribute('aria-pressed', on); if (on) renderLog(); };
 $('#copyLog').onclick = async () => { try { await navigator.clipboard.writeText(JSON.stringify(S.log, null, 2)); $('#copyLog').textContent = 'Copied'; } catch { $('#copyLog').textContent = 'Copy failed'; } setTimeout(() => ($('#copyLog').textContent = 'Copy as JSON'), 1500); };
 $('#revealBtn').onclick = proceedAfterReveal;
@@ -886,7 +1274,9 @@ $('#helpBtn').onclick = () => openTour(true);
 $('#tourNext').onclick = () => { const n = T().tour.length; if (tourStep < n - 1) { tourStep++; renderTour(); } else closeTour(); };
 $('#tourBack').onclick = () => { if (tourStep > 0) { tourStep--; renderTour(); } };
 $('#tourSkip').onclick = closeTour;
-$('#againBtn').onclick = () => { $('#final').hidden = true; $('#setup').hidden = false; S.status = 'setup'; };
+$('#againBtn').onclick = () => { $('#final').hidden = true; $('#setup').hidden = false; S.status = 'setup'; if (S.kids !== Shell.getKids()) applyKids(); };
+Shell.bindKidsToggle($('#kidsBtn'));
+window.addEventListener('kidschange', () => { if (S.status === 'setup' || S.status === 'final') applyKids(); });
 $('#ptt').addEventListener('click', () => { unlockAudio(); holding ? stopListening() : startListening(); });
 $('#soundBtn').onclick = (e) => { S.soundOn = !S.soundOn; e.currentTarget.setAttribute('aria-pressed', S.soundOn); };
 $('#hostBtn').onclick = (e) => { S.hostOn = !S.hostOn; e.currentTarget.setAttribute('aria-pressed', S.hostOn); if (!S.hostOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
@@ -903,6 +1293,7 @@ async function boot() {
     if (data.locales) locales = Object.fromEntries(Object.entries(data.locales).map(([k, v]) => [k, v.name]));
   } catch {}
   Shell.fillLangSelect($('#langSel'), locales);
+  buildSecsSelect();
   applyLang(Shell.getLang());
   window.addEventListener('langchange', (e) => applyLang(e.detail));
   try {

@@ -35,7 +35,7 @@ const routes = {
   'GET /api/topics': () => ({
     points: POINTS,
     locales: Object.fromEntries(Object.entries(LOCALES).map(([code, l]) => [code, { name: l.name, speech: l.speech }])),
-    topics: TOPICS.map(({ id, locale, style, prompt, answers }) => ({ id, locale, style, prompt, answers: answers.map(({ key, text, difficulty }) => ({ key, text, difficulty })) })),
+    topics: TOPICS.map(({ id, locale, style, kids, prompt, answers }) => ({ id, locale, style, kids: Boolean(kids), prompt, answers: answers.map(({ key, text, difficulty }) => ({ key, text, difficulty })) })),
   }),
 
   'POST /api/match': async (req) => {
@@ -53,7 +53,7 @@ const routes = {
     const { expected, guess, category, kind } = await readJson(req);
     if (typeof expected !== 'string' || !expected.trim()) return [400, { error: 'expected required' }];
     if (typeof guess !== 'string' || !guess.trim()) return [400, { error: 'Send a non-empty guess.' }];
-    const result = await matchOne(expected.slice(0, 120), guess.slice(0, 200), { category: (category || '').slice(0, 60), kind: kind === 'letter' ? 'letter' : '' });
+    const result = await matchOne(expected.slice(0, 120), guess.slice(0, 200), { category: (category || '').slice(0, 60), kind: ['letter', 'number'].includes(kind) ? kind : '' });
     appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), game: 'rapid', expected, category, guess, ...result }) + '\n').catch(() => {});
     return result;
   },

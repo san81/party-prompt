@@ -35,7 +35,8 @@ Both games are two-stage: a free/instant local check first, Jev only when needed
 
 - Colour/elevation tokens (`--stage`, `--panel`, `--brass`, `--coral`, `--mint`, `--seg1..6`,
   `--glow`, …) are defined per theme under `html[data-theme="..."]`. Fonts live in `:root`.
-- Four themes: `celebration` (default, high-energy), `midnight`, `neon`, `daylight` (light).
+- Grown-up themes: `celebration` (default, high-energy), `fall`, `midnight`, `neon`, `daylight`
+  (light). Kid mode has its own three (see Kid mode below).
 - `window.Shell` (theme.js) reads/writes `localStorage['pg-theme']`, applies `data-theme`, and
   builds the theme `<select>`. A tiny inline `<head>` script on every page sets `data-theme`
   before CSS loads to avoid a flash — keep that script when adding pages.
@@ -52,6 +53,33 @@ Both games are two-stage: a free/instant local check first, Jev only when needed
   English; Jev handles the player speaking Telugu.
 - Telugu host voice depends on a device TTS voice; most devices have none → captions only (by
   design). Test spoken host with English.
+
+## Kid mode (global)
+
+- `Shell.getKids()/setKids()/bindKidsToggle()` in theme.js persist `localStorage['pg-kids']`,
+  set `html[data-kids="on|off"]` (also in each page's head script) and fire `kidschange`.
+- Each page merges a `KID_STR` block over `STR` when kid mode is on. Games read the flag at
+  setup/between turns; a switch mid-turn applies afterwards.
+- Vibe: only `kids: true` boards (style filter ignored), 60/90/120 s turns, a first-letter
+  hint on a hidden tile after 10 s without a score, major-key music, softer buzzer/miss.
+- Rapid Fire: `KID_CATS` (Addition, Subtraction, Alphabet, Animals, Kitchen), 10–30 s shots,
+  three hints (maths: dots → counting strategy → range; words: … → `Z _ B _ A` mask), toy-like
+  sounds, star burst instead of an explosion. Maths sums are generated client-side
+  (`mathDeck`); answers are read locally by `readNumber` (digits, English, Telugu script,
+  romanized Telugu), otherwise `match-one` with `kind: 'number'`.
+- Landing: Everyone/Kids switch; the hero photo is replaced by an inline SVG kids poster.
+- Kid palettes: `KID_THEMES` (candy (default), jungle, space) in theme.js/theme.css. While Kids
+  is on, the theme picker lists only these and saves to `pg-kids-theme`; grown-up themes keep
+  `pg-theme`. `setKids()` switches palette and fires `themechange` (Vibe redraws its wheel).
+
+## Rapid Fire game flow
+
+- One round = alternating shots. The active team's picture card (`#shot`) is moved into its
+  half; the fire (`.fire`, `--p` 0→1 set every frame from `S.deadline`) is the clock.
+- Correct → +1, `S.curTeam` flips, fresh clock. Skip → new picture, same clock. Clock out →
+  `burn()`: other team +1, round ends, reveal waits. Starting team alternates per round.
+- Team colours are the `--team1`/`--team2` tokens in `theme.css`; fire colours derive from
+  `--brass` → `--coral`, so each theme gets its own fire.
 
 ## Rapid Fire assets
 

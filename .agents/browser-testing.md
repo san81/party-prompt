@@ -44,10 +44,17 @@ When you hand off, state plainly what was ear-verified vs reasoned.
    setting carries to `/vibe` and `/rapid`.
 2. Vibe `/vibe`: start a turn (sequence mode); type a guess that should score; confirm the
    board + host caption + score update. `← Menu` returns to landing.
-3. Rapid `/rapid`: pick a category, Start game → Start turn; image shows + clock runs; tap
-   `Got it ✓` (score +1, next image) and `Skip →`; let the clock hit 0 → buzzer, other team's
-   turn; finish all turns → winner screen. In Telugu, a spoken Telugu word should match via Jev.
+3. Rapid `/rapid`: pick a category, Start game → Start round; the picture shows on the starting
+   team's half and the fire spreads from the centre seam. `Got it ✓` → +1 and the picture + fire
+   jump to the other half; `Skip →` swaps the picture but the fire keeps going; `Pause` freezes it.
+   Set `S.deadline = Date.now()` → that half burns (explosion), the other team +1, reveal waits
+   for Next round; rounds alternate the starting team; last round → winner screen. Check portrait
+   phone width too (halves stack, fire runs up/down). In Telugu, a spoken Telugu word should match via Jev.
 4. Mobile width: both games' setup + play stage are readable and usable.
+5. Kid mode: flip Kids on the landing → kids poster + copy; `/rapid` lists Addition/Subtraction
+   first with 10–30 s shots, a sum renders on one line, `handleUtterance('seven')` scores, a burn
+   shows the star burst + "Time's up"; `/vibe` offers only `kids` boards with 60–120 s turns and
+   letter hints appear on tiles. Flip back to Everyone → everything returns to normal.
 
 ## Gotchas that have bitten us
 

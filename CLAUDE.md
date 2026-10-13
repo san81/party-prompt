@@ -6,9 +6,13 @@ Pradesh and Telangana students.
 
 - **Vibe Guess** (`/vibe`) — the original: describe answers on a hidden board, the AI host
   matches the *vibe* contextually and scores it. Spin-the-wheel or in-sequence turns.
-- **Rapid Fire** (`/rapid`) — an image flashes; two teams race a countdown to shout what it is;
-  Jev judges voice answers (synonyms + cross-language).
-- **Landing** (`/`) — two game cards + global theme/language pickers.
+- **Rapid Fire** (`/rapid`) — Pink (left half) and Blue (right half) alternate pictures; a fire
+  spreads from the centre to the active team's edge. Right answer = +1 and the fire jumps sides;
+  fire hits your edge = you burn, the other team +1, round over. Jev judges voice answers.
+- **Landing** (`/`) — two game cards + global theme/language pickers + the Everyone/Kids switch.
+- **Kid mode** (global, `Shell.getKids()`, `pg-kids`, `html[data-kids]`): kid boards only
+  (`kids: true`), Rapid Fire kid categories + Addition/Subtraction, longer timers, more hints,
+  softer sounds, encouraging host lines (`KID_STR` merged over `STR`), illustrated kids poster.
 
 **New to this repo? Read `.agents/` first** — architecture, build guidelines, browser-testing
 and sound-validation rules, and the audio/voice gotchas. Human setup is in `README.md`.
@@ -57,6 +61,7 @@ and sound-validation rules, and the audio/voice gotchas. Human setup is in `READ
 - Each board: 10–15 answers, mixed difficulty (`common` 1 pt, `medium` 2, `obscure` 3; obscure means the funnier, less obvious answer).
 - Aliases should cover how people actually say it: Telugu script, English words, romanized Telugu, spelling variants.
 - Every Telugu answer needs a short English `gloss`; every Telugu board needs `promptGloss`.
+- Mark a board `kids: true` if it suits young children; kid mode shows only those boards.
 - A native Telugu speaker has not yet reviewed the Telugu text. Flag wording you're unsure of instead of guessing.
 
 ## Conventions
