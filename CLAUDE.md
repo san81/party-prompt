@@ -27,7 +27,8 @@ and sound-validation rules, and the audio/voice gotchas. Human setup is in `READ
 
 ## Layout
 
-- `server.js` HTTP server + API: `/api/{status,topics,match,match-one,warm}`; routes `/ /vibe /rapid`
+- `server.js` HTTP server + API: `/api/{status,topics,match,match-one,warm,feedback}`; routes `/ /vibe /rapid`
+- `lib/feedback.js` + `public/feedback.js` player feedback / high-fives → Discord webhook (`DISCORD_WEBHOOK_URL`)
 - `lib/matcher.js` `matchGuess()` (Vibe, board) and `matchOne()` (Rapid Fire, one answer); `lib/localMatch.js` stage 1; `lib/jev.js` stage 2
 - `lib/topics.js` languages (`LOCALES`); Vibe boards in `lib/topics/en.js` and `lib/topics/te.js`
 - `public/index.html` landing · `public/vibe.html` Vibe Guess · `public/rapid.html` Rapid Fire — each a single self-contained page, sounds synthesised with Web Audio

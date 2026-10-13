@@ -125,7 +125,8 @@ html[data-kids="on"] .hero .over { padding-top: 30px; background: linear-gradien
   @keyframes dash { to { stroke-dashoffset: -22 } }
 }
 
-.foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: auto; }
+.foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: 0; }
+#fbLanding { margin-top: auto; }
 @media (prefers-reduced-motion: reduce) { .game { transition: none; } }
 </style>
 </head>
@@ -310,10 +311,12 @@ html[data-kids="on"] .hero .over { padding-top: 30px; background: linear-gradien
     <figcaption id="demoCap">Pick a category, start your turn, shout what you see. Stuck? A hint pops up — and when time's up, the answer waits for you.</figcaption>
   </figure>
 
+  <div id="fbLanding"></div>
   <p class="foot" id="foot">English &amp; తెలుగు · host voice · pick your theme</p>
 </div>
 
 <script src="/theme.js"></script>
+<script src="/feedback.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
 
@@ -413,6 +416,7 @@ async function boot() {
   Shell.fillLangSelect($('#langSel'), locales);
   applyLang(Shell.getLang());
   window.addEventListener('langchange', (e) => applyLang(e.detail));
+  Feedback.mount($('#fbLanding'), () => ({ game: 'landing' }), { made: true });
   $('#modeAll').onclick = () => Shell.setKids(false);
   $('#modeKids').onclick = () => Shell.setKids(true);
   window.addEventListener('kidschange', () => applyLang(curLang));

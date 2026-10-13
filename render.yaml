@@ -9,3 +9,5 @@ services:
         value: "20"
       - key: TYPESAFE_API_KEY
         sync: false
+      - key: DISCORD_WEBHOOK_URL
+        sync: false

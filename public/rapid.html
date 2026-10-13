@@ -361,6 +361,7 @@ html[data-kids="on"] .boom { display: none; }
     <h1 id="winner"></h1>
     <ol class="standings" id="standings"></ol>
     <div class="row"><button class="primary" id="againBtn">Play again</button><a class="ghost" href="/" id="menuBtn2">← Menu</a></div>
+    <div id="fbRapid"></div>
   </section>
 
   <!-- ===== Match log ===== -->
@@ -396,6 +397,7 @@ html[data-kids="on"] .boom { display: none; }
 </div>
 
 <script src="/theme.js"></script>
+<script src="/feedback.js"></script>
 <script src="/rapid/items.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
@@ -1295,6 +1297,7 @@ async function boot() {
   Shell.fillLangSelect($('#langSel'), locales);
   buildSecsSelect();
   applyLang(Shell.getLang());
+  Feedback.mount($('#fbRapid'), () => ({ game: 'rapid', category: S.category?.key, result: S.teams.map(t => t.score).join('–') }));
   window.addEventListener('langchange', (e) => applyLang(e.detail));
   try {
     const st = await fetch('/api/status').then(r => r.json());

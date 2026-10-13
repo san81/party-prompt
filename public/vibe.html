@@ -253,6 +253,8 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
         <ol class="leaders" id="leaders"></ol>
         <div class="row"><button type="button" class="ghost" id="resetScores">Reset scores</button></div>
       </section>
+
+      <section class="card" id="fbVibe"></section>
     </aside>
   </main>
 
@@ -318,6 +320,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 </div>
 
 <script src="/theme.js"></script>
+<script src="/feedback.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1284,6 +1287,7 @@ addEventListener('themechange', () => requestAnimationFrame(drawWheel));
 
 async function boot() {
   Shell.fillThemeSelect($('#themeSel'));
+  Feedback.mount($('#fbVibe'), () => ({ game: 'vibe', category: S.topic?.id || '' }));
   // Global language: re-apply when changed from anywhere (bar, landing, the other game).
   window.addEventListener('langchange', (e) => { if (S.locales[e.detail] && e.detail !== S.locale) { $('#lang').value = e.detail; setLocale(e.detail); } });
   setToggle($('#musicBtn'), Sound.prefs.music); setToggle($('#sfxBtn'), Sound.prefs.sfx); setToggle($('#hostBtn'), S.hostOn);

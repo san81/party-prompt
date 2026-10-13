@@ -6,6 +6,7 @@ import { config, jevConfigured } from './lib/config.js';
 import { TOPICS, POINTS, LOCALES, topicById } from './lib/topics.js';
 import { matchGuess, matchOne } from './lib/matcher.js';
 import { askJev } from './lib/jev.js';
+import { handleFeedback, clientAddress, feedbackConfigured } from './lib/feedback.js';
 
 const PUBLIC = join(config.root, 'public');
 const LOG = join(config.root, 'logs', 'matches.jsonl');
@@ -30,7 +31,7 @@ async function readJson(req) {
 }
 
 const routes = {
-  'GET /api/status': () => ({ jev: jevConfigured(), model: config.jevModel, accept: config.accept, confirm: config.confirm, multiMatch: config.multiMatch }),
+  'GET /api/status': () => ({ jev: jevConfigured(), model: config.jevModel, accept: config.accept, confirm: config.confirm, multiMatch: config.multiMatch, feedback: feedbackConfigured() }),
 
   'GET /api/topics': () => ({
     points: POINTS,
@@ -57,6 +58,9 @@ const routes = {
     appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), game: 'rapid', expected, category, guess, ...result }) + '\n').catch(() => {});
     return result;
   },
+
+  // Player feedback / high-fives → Discord webhook (see lib/feedback.js).
+  'POST /api/feedback': async (req) => handleFeedback(await readJson(req), { address: clientAddress(req), userAgent: req.headers['user-agent'] }),
 
   // Opens the HTTPS connection before a turn starts; a cold connection adds ~1s to the first guess.
   'POST /api/warm': async () => {
@@ -96,4 +100,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(config.port, () => {
   console.log(`Party Guess running at http://localhost:${config.port}`);
   console.log(jevConfigured() ? `Jev matching on (${config.jevModel})` : 'No TYPESAFE_API_KEY found: local matching only');
+  console.log(feedbackConfigured() ? 'Feedback goes to Discord' : 'No DISCORD_WEBHOOK_URL: feedback is only logged locally');
 });

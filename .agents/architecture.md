@@ -54,6 +54,18 @@ Both games are two-stage: a free/instant local check first, Jev only when needed
 - Telugu host voice depends on a device TTS voice; most devices have none → captions only (by
   design). Test spoken host with English.
 
+## Feedback / high-fives
+
+- `public/feedback.js` → `Feedback.mount(el, getContext, { made })` renders the 🙌 / 💌 row
+  (landing footer, Rapid Fire winner screen, Vibe side panel) and a `<dialog>` with emoji
+  rating, message and optional contact (hidden in kid mode). Strings en + te inside the file.
+- `POST /api/feedback` (`lib/feedback.js`): honeypot field `website`, length caps, whitelisted
+  context keys, one high-five and one message per address per 15 s, `allowed_mentions` off.
+  Appends `logs/feedback.jsonl` (lost on Render redeploys) and forwards to the Discord webhook
+  in `DISCORD_WEBHOOK_URL`, the durable copy. Without the env var it only logs locally.
+- Test locally with a fake webhook: a tiny HTTP server that prints POST bodies, and
+  `DISCORD_WEBHOOK_URL=http://localhost:<port>/hook npm start`.
+
 ## Kid mode (global)
 
 - `Shell.getKids()/setKids()/bindKidsToggle()` in theme.js persist `localStorage['pg-kids']`,

@@ -79,6 +79,16 @@ What needs a real device to confirm:
 
 Adding a language means one entry in `LOCALES` and some topics in `lib/topics.js`, a strings block in `public/index.html`, and eval cases.
 
+## Player feedback
+
+Every page has a 🙌 High-five and 💌 Send feedback button. Submissions go to a Discord channel:
+
+1. In Discord, open a (private) channel → ⚙ Edit Channel → Integrations → Webhooks → New Webhook → Copy Webhook URL.
+2. Put it in `.env` as `DISCORD_WEBHOOK_URL=...` locally, and in the Render dashboard (Environment) for the live site.
+3. Restart. The server log says "Feedback goes to Discord" and `/api/status` shows `feedback: true`.
+
+Without the URL, feedback is only appended to `logs/feedback.jsonl`, which Render wipes on each deploy.
+
 ## Validate end to end
 
 Cheapest and most decisive first. Steps 1 to 3 need only a laptop and a key; the whole run costs well under a cent.
