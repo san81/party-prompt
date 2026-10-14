@@ -76,8 +76,9 @@ Both games are two-stage: a free/instant local check first, Jev only when needed
   hint on a hidden tile after 10 s without a score, major-key music, softer buzzer/miss.
 - Rapid Fire: `KID_CATS` (Addition, Subtraction, Alphabet, Animals, Kitchen), 10–30 s shots,
   three hints (maths: dots → counting strategy → range; words: … → `Z _ B _ A` mask), toy-like
-  sounds, star burst instead of an explosion. Maths sums are generated client-side
-  (`mathDeck`); answers are read locally by `readNumber` (digits, English, Telugu script,
+  sounds, star burst instead of an explosion. Maths sums come from `mathPool` (all 100
+  additions, 145 subtractions); decks are built by `deckFor` (no repeats per game, unseen-first
+  across games via `rapid-seen-<category>`); answers are read locally by `readNumber` (digits, English, Telugu script,
   romanized Telugu), otherwise `match-one` with `kind: 'number'`.
 - Landing: Everyone/Kids switch; the hero photo is replaced by an inline SVG kids poster.
 - Kid palettes: `KID_THEMES` (candy (default), jungle, space) in theme.js/theme.css. While Kids

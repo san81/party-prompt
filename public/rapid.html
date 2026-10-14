@@ -528,19 +528,13 @@ const MATH_CATS = [
   { key: 'addition', en: 'Addition', te: 'కూడికలు', op: '+' },
   { key: 'subtraction', en: 'Subtraction', te: 'తీసివేతలు', op: '-' },
 ];
-// Fresh sums for a round: addition up to 10 + 10, subtraction from up to 15, never below 0.
-function mathDeck(op) {
-  const seen = new Set(), deck = [];
-  while (deck.length < 30) {
-    let a, b;
-    if (op === '+') { a = 1 + Math.floor(Math.random() * 10); b = 1 + Math.floor(Math.random() * 10); }
-    else { a = 2 + Math.floor(Math.random() * 14); b = 1 + Math.floor(Math.random() * (a - 1)); }
-    const k = `${a}${op}${b}`;
-    if (seen.has(k) && seen.size < 60) continue;
-    seen.add(k);
-    deck.push({ math: true, a, b, op, answer: String(op === '+' ? a + b : a - b) });
-  }
-  return deck;
+// Every sum a kid can get: addition 1–10 + 1–10, subtraction from up to 20 taking away
+// at most 10, never below 0. Decks draw from these pools (see deckFor).
+function mathPool(op) {
+  const pool = [];
+  if (op === '+') { for (let a = 1; a <= 10; a++) for (let b = 1; b <= 10; b++) pool.push({ math: true, a, b, op, answer: String(a + b) }); }
+  else { for (let a = 2; a <= 20; a++) for (let b = 1; b <= Math.min(a - 1, 10); b++) pool.push({ math: true, a, b, op, answer: String(a - b) }); }
+  return pool;
 }
 
 /* Category descriptions (shown on setup) and showcase hints (animals; others fall back to
@@ -593,7 +587,7 @@ const HINTS = {
 const S = {
   lang: 'en-US', jev: false, category: null,
   teams: [], curTeam: 0, rounds: 3, roundNo: 0, shotSecs: 10,
-  deck: [], item: null, seq: 0,
+  deck: [], item: null, seq: 0, shown: new Set(),
   status: 'setup', deadline: 0, remaining: 0, clockTimer: null, lastSec: null,
   imgShownAt: 0, hintLevel: 0,
   soundOn: true, hostOn: true, log: [], kids: Shell.getKids(),
@@ -930,7 +924,26 @@ function buildSecsSelect() {
   const opts = S.kids ? [10, 15, 20, 30] : [5, 8, 10, 15], def = S.kids ? 20 : 10;
   $('#secs').innerHTML = opts.map(n => `<option value="${n}"${n === def ? ' selected' : ''}>${n}</option>`).join('');
 }
-const deckFor = (cat) => cat.op ? mathDeck(cat.op) : shuffle([...(window.RAPID_ITEMS[cat.key] || [])]);
+// Decks never repeat a question within a game until the category's pool runs out, and
+// prefer questions this device hasn't shown before (remembered per category).
+const itemId = (it) => (it.math ? `${it.a}${it.op}${it.b}` : it.file);
+const seenKey = (cat) => `rapid-seen-${cat.key}`;
+function loadSeen(cat) { try { return new Set(JSON.parse(localStorage.getItem(seenKey(cat)) || '[]')); } catch { return new Set(); } }
+function saveSeen(cat, set) { try { localStorage.setItem(seenKey(cat), JSON.stringify([...set])); } catch {} }
+function deckFor(cat) {
+  const pool = cat.op ? mathPool(cat.op) : [...(window.RAPID_ITEMS[cat.key] || [])];
+  const seen = loadSeen(cat), notThisGame = (it) => !S.shown.has(itemId(it));
+  let fresh = pool.filter(it => notThisGame(it) && !seen.has(itemId(it)));
+  if (!fresh.length) {                       // every question seen before: start the rotation again
+    saveSeen(cat, new Set());
+    fresh = pool.filter(notThisGame);
+    if (!fresh.length) {                     // this game alone used the whole pool
+      S.shown.clear();
+      fresh = pool.filter(it => !S.item || itemId(it) !== itemId(S.item));
+    }
+  }
+  return shuffle(fresh);
+}
 // Kid mode is read when a game starts; a switch mid-game applies from the next setup screen.
 function applyKids() {
   S.kids = Shell.getKids();
@@ -950,6 +963,7 @@ function startGame() {
   ];
   S.shotSecs = Number($('#secs').value);
   S.rounds = Number($('#rounds').value);
+  S.shown = new Set();
   S.deck = deckFor(S.category);
   S.roundNo = 0;
   $('#setup').hidden = true; $('#final').hidden = true;
@@ -1054,6 +1068,8 @@ function renderPause() {
 function nextImage() {
   if (!S.deck.length) S.deck = deckFor(S.category);
   S.item = S.deck.pop();
+  const id = itemId(S.item), seen = loadSeen(S.category);
+  S.shown.add(id); seen.add(id); saveSeen(S.category, seen);
   S.seq++;    // invalidate any in-flight guess for the previous image
   S.imgShownAt = Date.now(); S.hintLevel = 0;
   clearConfirm();

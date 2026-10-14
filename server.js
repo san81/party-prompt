@@ -40,10 +40,13 @@ const routes = {
   }),
 
   'POST /api/match': async (req) => {
-    const { topicId, guess, player } = await readJson(req);
-    const topic = topicById(topicId);
-    if (!topic) return [400, { error: `Unknown topic "${topicId}"` }];
+    const { topicId, guess, player, keys } = await readJson(req);
+    const full = topicById(topicId);
+    if (!full) return [400, { error: `Unknown topic "${topicId}"` }];
     if (typeof guess !== 'string' || !guess.trim()) return [400, { error: 'Send a non-empty guess.' }];
+    // A turn shows a random subset of the board's pool; match only against what is on screen.
+    const shown = Array.isArray(keys) ? full.answers.filter((a) => keys.includes(a.key)) : [];
+    const topic = shown.length >= 3 ? { ...full, answers: shown } : full;
     const result = await matchGuess(topic, guess.slice(0, 300));
     appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), topicId, player, ...result }) + '\n').catch(() => {});
     return result;

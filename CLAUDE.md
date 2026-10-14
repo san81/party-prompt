@@ -52,14 +52,16 @@ and sound-validation rules, and the audio/voice gotchas. Human setup is in `READ
 - Guesses resolve in parallel, tagged by sequence number. A guess that resolves after the buzzer never scores.
 - Music is silenced while the talk button is held (the mic would hear it) and dips while the host speaks.
 - The host never talks over a player holding the button, except for turn announcements and "Did you mean…?"
-- Topics are drawn at random per language without repeats until all are used; board squares are shuffled.
+- Topics are drawn at random per language without repeats until all are used; each turn's board is a rotating subset of the pool (`boardFor`), and `/api/match` gets its `keys` so only on-screen answers can score.
+- Rapid Fire decks come from each category's full pool (all sums for maths) with no repeats in a game; `rapid-seen-<category>` makes the next game start with unseen questions.
 - When the device has no voice for the language, the host shows captions only. Never read Telugu with an English voice.
 
 ## Writing topics
 
 - Boards must be fun and relatable, never a knowledge test. Think power cuts, homework excuses, things Amma says, gully cricket. No trivia, dates, place facts or "name the ritual" boards.
 - Telugu boards are written natively, not translated from English. Include both Andhra and Telangana words as aliases (బొబ్బట్లు/భక్ష్యాలు, గేదెలు/బర్రెలు).
-- Each board: 10–15 answers, mixed difficulty (`common` 1 pt, `medium` 2, `obscure` 3; obscure means the funnier, less obvious answer).
+- Each board is a pool of 18–30 answers, mixed difficulty (`common` 1 pt, `medium` 2, `obscure` 3; obscure means the funnier, less obvious answer). A turn shows `SHOW` (5/4/3, `lib/topics.js`) picked at random, preferring answers not shown before on that device, so every difficulty needs spares; `npm run lint-topics` enforces it.
+- New answers must not overlap existing ones in meaning (the eval matches against the whole pool); re-run `npm run eval` and keep false positives at the baseline.
 - Aliases should cover how people actually say it: Telugu script, English words, romanized Telugu, spelling variants.
 - Every Telugu answer needs a short English `gloss`; every Telugu board needs `promptGloss`.
 - Mark a board `kids: true` if it suits young children; kid mode shows only those boards.

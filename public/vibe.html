@@ -955,7 +955,7 @@ async function submitGuess(text) {
   let r;
   try {
     const res = await fetch('/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topicId: S.topic.id, guess: text, player: S.player }) });
+      body: JSON.stringify({ topicId: S.topic.id, guess: text, player: S.player, keys: S.topic.answers.map(a => a.key) }) });
     r = await res.json();
     if (!res.ok) throw new Error(r.error || res.status);
   } catch (e) { setFeed(li, 'miss', 'error'); logRow({ guess: text, outcome: 'error', error: String(e.message) }); return; }
@@ -1022,13 +1022,34 @@ function nextTopic() {
   return S.allTopics.find(t => t.id === id);
 }
 
+// Each board is a pool; a turn shows SHOW answers per difficulty, chosen at random and
+// preferring ones this device hasn't shown for that board yet (remembered per board).
+const SHOW = { common: 5, medium: 4, obscure: 3 };
+function boardFor(topic) {
+  const key = `sg-seen-${topic.id}`, all = topic.answers.map(a => a.key);
+  let seen = new Set(load(key, []).filter(k => all.includes(k)));
+  const pick = [], spare = [];
+  for (const [d, n] of Object.entries(SHOW)) {
+    const tier = topic.answers.filter(a => a.difficulty === d);
+    const fresh = shuffle(tier.filter(a => !seen.has(a.key))), old = shuffle(tier.filter(a => seen.has(a.key)));
+    const ordered = [...fresh, ...old];
+    pick.push(...ordered.slice(0, n)); spare.push(...ordered.slice(n));
+  }
+  const want = Object.values(SHOW).reduce((a, b) => a + b, 0);
+  while (pick.length < want && spare.length) pick.push(spare.shift());   // a thin tier borrows from the others
+  pick.forEach(a => seen.add(a.key));
+  if (seen.size >= all.length) seen = new Set(pick.map(a => a.key));    // whole pool shown: start the rotation again
+  save(key, [...seen]);
+  return { ...topic, answers: pick };
+}
+
 async function startTurn() {
   if (!topicsFor(S.locale).length) { $('#wheelSub').textContent = 'No topics for this language yet.'; return; }
   warmMic();   // request mic permission now, during the untimed intro, not when the clock starts
   pickVoice();
   S.turnId++; S.status = 'intro'; S.matched = new Set(); S.turnScore = 0;
   S.halfDone = false; S.warned = false; S.lastSec = null; S.lastHitAt = 0; S.lastHintAt = 0;
-  S.topic = nextTopic();
+  S.topic = boardFor(nextTopic());
   clearConfirm();
   $('#wheelView').hidden = true; $('#stage').hidden = false;
   $('#feed').innerHTML = ''; $('#live').textContent = '';

@@ -5,3 +5,4 @@ eval/results-*.json
 eval/probe-*.json
 CLAUDE.local.md
 .claude/settings.local.json
+*.swp
