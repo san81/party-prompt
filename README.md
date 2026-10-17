@@ -89,6 +89,11 @@ Every page has a 🙌 High-five and 💌 Send feedback button. Submissions go to
 
 Without the URL, feedback is only appended to `logs/feedback.jsonl`, which Render wipes on each deploy.
 
+## Sharing
+
+- **Link previews:** sharing the site on WhatsApp, Instagram or X shows a picture and description. Each page has `og:` tags whose absolute URLs the server fills in from `SITE_URL`, or Render's own `RENDER_EXTERNAL_URL`. The images are drawn from `tools/og-cards.html`; edit it and run `npm run og-images` (needs Google Chrome on macOS) to redraw them. After deploying, WhatsApp may cache an old preview for a while.
+- **Share result:** the Vibe turn result and Rapid Fire final screen have a 📸 Share result button. It draws a square card in the current theme with the score and a "play free" link (tagged `utm_source=share` for Analytics). Phones open the share sheet with the image; computers get a dialog with download, WhatsApp and copy-link.
+
 ## Traffic analytics
 
 Google Analytics 4 is off until `GA_MEASUREMENT_ID` is set:

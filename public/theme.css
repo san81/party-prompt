@@ -192,3 +192,11 @@ html[data-theme="space"] {
 .fb-close { background: none; border: 1px solid var(--line); color: var(--muted); }
 .fb-send { background: var(--brass); color: var(--brass-ink); border: 0; }
 @media (prefers-reduced-motion: reduce) { .fb-pop { animation: none; } }
+
+/* Share result (public/share.js) */
+.share-btn { background: var(--mint); color: var(--stage); border: 0; border-radius: 999px; padding: 10px 20px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
+.share-btn:disabled { opacity: .6; cursor: progress; }
+.share-dialog { max-width: min(92vw, 460px); }
+.share-img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; }
+.share-actions { flex-wrap: wrap; justify-content: center; }
+.share-actions a.fb-btn { text-decoration: none; }

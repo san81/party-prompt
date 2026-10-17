@@ -11,6 +11,7 @@
     "start": "node server.js",
     "eval": "node eval/run.js",
     "probe": "node eval/probe-language.js",
-    "lint-topics": "node eval/lint-topics.js"
+    "lint-topics": "node eval/lint-topics.js",
+    "og-images": "sh tools/og-images.sh"
   }
 }

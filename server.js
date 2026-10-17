@@ -17,6 +17,15 @@ const TYPES = {
   '.mp3': 'audio/mpeg', '.ico': 'image/x-icon',
 };
 
+// SITE_URL / RENDER_EXTERNAL_URL when set; otherwise the request's own host (only safe characters).
+function siteOrigin(req) {
+  if (config.siteUrl) return config.siteUrl;
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+  if (!/^[a-z0-9.-]+(:\d+)?$/i.test(host)) return '';
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https' ? 'https' : 'http';
+  return `${proto}://${host}`;
+}
+
 const send = (res, status, body, type = 'application/json') => {
   res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
   res.end(Buffer.isBuffer(body) ? body : typeof body === 'string' ? body : JSON.stringify(body));
@@ -94,6 +103,8 @@ const server = http.createServer(async (req, res) => {
     const rel = pretty[pathname] || normPath(pathname).replace(/^([/\\])+/, '');
     if (rel.includes('..')) return send(res, 400, { error: 'Bad path' });
     const file = await readFile(join(PUBLIC, rel));   // Buffer — sent as-is so images/audio aren't corrupted
+    // Link previews need absolute URLs, so pages carry __ORIGIN__ and get the site's origin here.
+    if (extname(rel) === '.html') return send(res, 200, file.toString('utf8').replaceAll('__ORIGIN__', siteOrigin(req)), TYPES['.html']);
     send(res, 200, file, TYPES[extname(rel)] || 'text/plain');
   } catch (e) {
     if (e.code === 'ENOENT') return send(res, 404, { error: 'Not found' });

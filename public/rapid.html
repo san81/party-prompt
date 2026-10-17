@@ -3,6 +3,17 @@
 <head>
 <meta charset="utf-8">
 <title>Rapid Fire · Party Games</title>
+<meta name="description" content="Pink vs Blue: name the picture before the fire reaches your side. A free voice party game, with kids maths.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Party Games">
+<meta property="og:title" content="Rapid Fire">
+<meta property="og:description" content="Pink vs Blue: name the picture before the fire reaches your side. A free voice party game, with kids maths.">
+<meta property="og:url" content="__ORIGIN__/rapid">
+<meta property="og:image" content="__ORIGIN__/img/og-rapid.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1a0b2e">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>try{var k=localStorage.getItem('pg-kids')==='1',d=document.documentElement;d.dataset.kids=k?'on':'off';d.dataset.theme=k?(localStorage.getItem('pg-kids-theme')||'candy'):(localStorage.getItem('pg-theme')||'celebration')}catch(e){document.documentElement.dataset.theme='celebration'}</script>
 <script src="/analytics.js"></script>
@@ -362,6 +373,7 @@ html[data-kids="on"] .boom { display: none; }
     <h1 id="winner"></h1>
     <ol class="standings" id="standings"></ol>
     <div class="row"><button class="primary" id="againBtn">Play again</button><a class="ghost" href="/" id="menuBtn2">← Menu</a></div>
+    <div id="shareRapid" class="share-row"></div>
     <div id="fbRapid"></div>
   </section>
 
@@ -399,6 +411,7 @@ html[data-kids="on"] .boom { display: none; }
 
 <script src="/theme.js"></script>
 <script src="/feedback.js"></script>
+<script src="/share.js"></script>
 <script src="/rapid/items.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
@@ -424,6 +437,7 @@ const STR = {
     sayBurned: (l, w) => `Boom! ${l} burned. Point to ${w}.`,
     sayWin: (n, s) => `${n} wins with ${s} ${plural(s, 'point', 'points')}!`, sayTie: "It's a tie!",
     winTitle: (n) => `${n} wins!`, tieTitle: "It's a tie!",
+    shareText: (a, b, cat) => `${a.name} ${a.score} – ${b.score} ${b.name} in Rapid Fire (${cat})! Think your team can beat that? 🔥`,
     micBlocked: 'Microphone blocked. Allow it in the address bar, or use the Got it / Skip buttons.',
     noVoice: 'No voice for this language on this device — the host shows captions only.',
     serverOff: 'Open through the server: run "npm start" and go to http://localhost:3000/rapid.',
@@ -461,6 +475,7 @@ const STR = {
     sayBurned: (l, w) => `బూమ్! ${l} కాలిపోయారు. ${w} కి పాయింట్.`,
     sayWin: (n, s) => `${s} ${plural(s, 'పాయింట్', 'పాయింట్లు')}తో ${n} గెలిచారు!`, sayTie: 'టై అయింది!',
     winTitle: (n) => `${n} గెలిచారు!`, tieTitle: 'టై అయింది!',
+    shareText: (a, b, cat) => `రాపిడ్ ఫైర్ (${cat}): ${a.name} ${a.score} – ${b.score} ${b.name}! మీ టీమ్ దాటగలదా? 🔥`,
     micBlocked: 'మైక్రోఫోన్ అనుమతి లేదు. అడ్రస్ బార్‌లో అనుమతి ఇవ్వండి, లేదా సరైనది / వదిలేయ్ బటన్లు వాడండి.',
     noVoice: 'ఈ పరికరంలో తెలుగు వాయిస్ లేదు — హోస్ట్ మాటలు తెరపై మాత్రమే కనిపిస్తాయి.',
     serverOff: 'సర్వర్ ద్వారా తెరవండి: "npm start" అమలు చేసి http://localhost:3000/rapid కి వెళ్ళండి.',
@@ -1316,6 +1331,16 @@ async function boot() {
   Shell.fillLangSelect($('#langSel'), locales);
   buildSecsSelect();
   applyLang(Shell.getLang());
+  Share.mount($('#shareRapid'), () => {
+    const cat = S.category[S.lang === 'te-IN' ? 'te' : 'en'];
+    const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    return {
+      key: 'rapid', game: 'RAPID FIRE', title: $('#winner').textContent, small: cat,
+      teams: S.teams.map((t, i) => ({ name: t.name, score: t.score, color: css(`--team${i + 1}`) })),
+      text: T().shareText(S.teams[0], S.teams[1], cat),
+      url: `${location.origin}/rapid?utm_source=share&utm_medium=result_card`,
+    };
+  });
   Feedback.mount($('#fbRapid'), () => ({ game: 'rapid', category: S.category?.key, result: S.teams.map(t => t.score).join('–') }));
   window.addEventListener('langchange', (e) => applyLang(e.detail));
   try {

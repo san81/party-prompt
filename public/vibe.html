@@ -1,6 +1,17 @@
 <!doctype html>
 <html lang="en">
 <title>Vibe Guess · Party Games</title>
+<meta name="description" content="Describe answers your way and the AI host gets the vibe. A free voice party game in English and Telugu.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Party Games">
+<meta property="og:title" content="Vibe Guess">
+<meta property="og:description" content="Describe answers your way and the AI host gets the vibe. A free voice party game in English and Telugu.">
+<meta property="og:url" content="__ORIGIN__/vibe">
+<meta property="og:image" content="__ORIGIN__/img/og-vibe.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1a0b2e">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>try{var k=localStorage.getItem('pg-kids')==='1',d=document.documentElement;d.dataset.kids=k?'on':'off';d.dataset.theme=k?(localStorage.getItem('pg-kids-theme')||'candy'):(localStorage.getItem('pg-theme')||'celebration')}catch(e){document.documentElement.dataset.theme='celebration'}</script>
@@ -298,6 +309,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
       <div class="result" id="result" hidden>
         <p class="big" id="resultBig"></p>
         <p id="resultSmall"></p>
+        <div id="shareVibe"></div>
       </div>
       <button class="primary" id="backBtn" hidden>Back to the wheel</button>
       <p class="note" id="stageNote"></p>
@@ -334,6 +346,7 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 
 <script src="/theme.js"></script>
 <script src="/feedback.js"></script>
+<script src="/share.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -362,6 +375,7 @@ const STR = {
     sayTime: (p, found, total, pts, missed) => `Time's up! ${p}, you found ${found} of ${total} for ${pts} ${plural(pts, 'point', 'points')}. ${missed.length ? `You missed ${missed.join(' and ')}.` : 'You cleared the whole board!'}`,
     resultBig: (pts) => `${pts} ${plural(pts, 'point', 'points')}`,
     resultSmall: (found, total) => `Found ${found} of ${total}`,
+    shareText: (pts, topic) => `I scored ${pts} ${plural(pts, 'point', 'points')} on “${topic}” in Vibe Guess! Can you beat me? 🎉`,
     micBlocked: 'Microphone blocked. Allow it in the browser address bar, or type guesses below.',
     noVoice: 'No English voice on this device, so the host shows captions only.',
     yesWords: ['yes', 'yeah', 'yep', 'yup', 'correct', 'right', 'sure', 'uh huh', 'yes please', 'thats it', 'that one', 'haan', 'ha'],
@@ -386,6 +400,7 @@ const STR = {
     sayTime: (p, found, total, pts, missed) => `టైమ్ అప్! ${p}, ${total} లో ${found} కనిపెట్టారు, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}. ${missed.length ? `మిస్ అయినవి: ${missed.join(', ')}.` : 'బోర్డు మొత్తం పూర్తి చేశారు!'}`,
     resultBig: (pts) => `${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}`,
     resultSmall: (found, total) => `${total} లో ${found} కనిపెట్టారు`,
+    shareText: (pts, topic) => `వైబ్ గెస్‌లో “${topic}” అంశంపై నాకు ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')} వచ్చాయి! మీరు దాటగలరా? 🎉`,
     micBlocked: 'మైక్రోఫోన్ అనుమతి లేదు. బ్రౌజర్‌లో అనుమతి ఇవ్వండి, లేదా కింద టైప్ చేయండి.',
     noVoice: 'ఈ పరికరంలో తెలుగు వాయిస్ లేదు, కాబట్టి హోస్ట్ మాటలు తెరపై మాత్రమే కనిపిస్తాయి.',
     yesWords: ['అవును', 'అవునండి', 'ఆ', 'హా', 'అదే', 'కరెక్ట్', 'ఔను', 'yes', 'yeah', 's', 'correct'],
@@ -1374,6 +1389,13 @@ addEventListener('themechange', () => requestAnimationFrame(drawWheel));
 
 async function boot() {
   Shell.fillThemeSelect($('#themeSel'));
+  Share.mount($('#shareVibe'), () => ({
+    key: 'vibe', game: 'VIBE GUESS', title: S.player, big: T().resultBig(S.turnScore), small: S.topic.prompt,
+    note: T().resultSmall(S.matched.size, S.topic.answers.length),
+    chips: [...S.matched].map(label),
+    text: T().shareText(S.turnScore, S.topic.prompt),
+    url: `${location.origin}/vibe?utm_source=share&utm_medium=result_card`,
+  }));
   Feedback.mount($('#fbVibe'), () => ({ game: 'vibe', category: S.topic?.id || '' }));
   // Global language: re-apply when changed from anywhere (bar, landing, the other game).
   window.addEventListener('langchange', (e) => { if (S.locales[e.detail] && e.detail !== S.locale) { $('#lang').value = e.detail; setLocale(e.detail); } });

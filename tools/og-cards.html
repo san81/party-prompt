@@ -1,0 +1,101 @@
+<!doctype html>
+<!-- Link-preview images (WhatsApp, Instagram, X) for the three pages, 1200×630.
+     Regenerate with: npm run og-images  (needs Google Chrome; writes public/img/og-*.jpg)
+     Open /tools/og-cards.html?c=vibe in a browser to preview one. -->
+<html lang="en" data-theme="celebration">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;700&family=Noto+Sans+Telugu:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="../public/theme.css">
+<style>
+  html, body { margin: 0; background: var(--stage); }
+  .card { width: 1200px; height: 630px; position: relative; overflow: hidden; color: var(--ink); font-family: var(--body);
+    background: radial-gradient(900px 500px at 15% 0%, var(--panel), var(--stage)); }
+  .card[hidden] { display: none; }
+  h1 { font-family: var(--display); font-weight: 400; color: var(--brass); margin: 0; line-height: 1; text-shadow: 0 0 40px rgba(255, 210, 63, .35); }
+  .sub { font-size: 34px; font-weight: 700; margin: 0; }
+  .te { font-size: 30px; color: var(--muted); margin: 0; }
+  .chips { display: flex; gap: 12px; flex-wrap: wrap; }
+  .chip { border: 2px solid var(--line); background: var(--panel); border-radius: 999px; padding: 8px 18px; font-size: 22px; font-weight: 700; }
+  .chip.hot { border-color: var(--mint); color: var(--mint); }
+  .copy { position: absolute; left: 64px; top: 64px; bottom: 64px; display: flex; flex-direction: column; gap: 22px; justify-content: center; }
+
+  /* landing: photo on the right, fading into the stage */
+  .photo { position: absolute; right: 0; top: 0; width: 640px; height: 630px; object-fit: cover; }
+  .photo-fade { position: absolute; right: 340px; top: 0; width: 300px; height: 630px; background: linear-gradient(90deg, var(--stage), transparent); }
+  #landing .copy { width: 620px; }
+  #landing h1 { font-size: 92px; }
+
+  /* vibe: a board of tiles */
+  #vibe .copy { width: 520px; }
+  #vibe h1 { font-size: 84px; }
+  .board { position: absolute; right: 56px; top: 92px; width: 560px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .board .q { grid-column: 1 / -1; font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  .tile { height: 66px; border-radius: 12px; background: var(--panel); border: 2px solid var(--line); display: flex; align-items: center; padding: 0 18px; gap: 14px; font-size: 24px; font-weight: 700; }
+  .tile .n { font-family: var(--display); color: var(--muted); font-size: 22px; }
+  .tile.hit { background: var(--brass); color: var(--brass-ink); border-color: var(--brass); }
+  .tile.hit .n { color: var(--brass-ink); }
+  .tile .pts { margin-left: auto; font-size: 18px; opacity: .8; }
+
+  /* rapid: pink and blue halves, fire in the middle */
+  #rapid { background: none; }
+  .half { position: absolute; top: 0; bottom: 0; width: 600px; }
+  .half.l { left: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--team1) 55%, var(--stage)), var(--stage)); }
+  .half.r { right: 0; background: linear-gradient(270deg, color-mix(in srgb, var(--team2) 55%, var(--stage)), var(--stage)); }
+  .fire { position: absolute; left: 600px; top: 0; bottom: 0; width: 330px; background: linear-gradient(90deg, var(--brass), var(--coral) 70%, transparent); opacity: .9; }
+  .team { position: absolute; top: 44px; font-family: var(--display); font-size: 40px; }
+  .team.l { left: 56px; } .team.r { right: 56px; }
+  .team b { display: block; font-size: 88px; line-height: 1; }
+  #rapid .center { position: absolute; left: 0; right: 0; bottom: 64px; text-align: center; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  #rapid h1 { font-size: 96px; }
+  .sum { position: absolute; left: 50%; top: 200px; transform: translateX(-50%); background: var(--stage); border: 3px solid var(--brass); border-radius: 22px; padding: 18px 40px;
+    font-family: var(--display); font-size: 80px; color: var(--ink); }
+  .sum b { color: var(--brass); font-weight: 400; }
+</style>
+</head>
+<body>
+<section class="card" id="landing" hidden>
+  <img class="photo" src="../public/img/play-together.jpg" alt="">
+  <div class="photo-fade"></div>
+  <div class="copy">
+    <h1>Party Games</h1>
+    <p class="sub">Shout answers. The AI host keeps score.</p>
+    <p class="te">పార్టీలో అందరూ కలిసి ఆడే ఆటలు</p>
+    <div class="chips"><span class="chip hot">Free</span><span class="chip">No app</span><span class="chip">English + తెలుగు</span><span class="chip">Kids mode</span></div>
+  </div>
+</section>
+
+<section class="card" id="vibe" hidden>
+  <div class="copy">
+    <h1>Vibe<br>Guess</h1>
+    <p class="sub">Say it your way. The host gets the vibe.</p>
+    <p class="te">మీ మాటల్లో చెప్పండి, హోస్ట్ అర్థం చేసుకుంటుంది</p>
+    <div class="chips"><span class="chip hot">Free</span><span class="chip">Voice</span><span class="chip">English + తెలుగు</span></div>
+  </div>
+  <div class="board">
+    <p class="q">Things you do when the power goes off 🔌</p>
+    <div class="tile hit"><span class="n">1</span>Light a candle<span class="pts">+1</span></div>
+    <div class="tile"><span class="n">2</span><span class="pts">+1</span></div>
+    <div class="tile"><span class="n">3</span><span class="pts">+3</span></div>
+    <div class="tile hit"><span class="n">4</span>Phone torch<span class="pts">+1</span></div>
+    <div class="tile"><span class="n">5</span><span class="pts">+2</span></div>
+    <div class="tile"><span class="n">6</span><span class="pts">+1</span></div>
+  </div>
+</section>
+
+<section class="card" id="rapid" hidden>
+  <div class="half l"></div><div class="half r"></div><div class="fire"></div>
+  <div class="team l" style="color: var(--team1)">Pink<b>7</b></div>
+  <div class="team r" style="color: var(--team2); text-align: right">Blue<b>5</b></div>
+  <div class="sum">8 + 6 = <b>?</b></div>
+  <div class="center">
+    <h1>Rapid Fire</h1>
+    <p class="sub">Pink vs Blue. Answer before the fire reaches you.</p>
+  </div>
+</section>
+<script>
+  const c = new URLSearchParams(location.search).get('c') || 'landing';
+  document.getElementById(c).hidden = false;
+</script>
+</body>
+</html>

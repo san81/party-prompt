@@ -29,6 +29,8 @@ and sound-validation rules, and the audio/voice gotchas. Human setup is in `READ
 
 - `server.js` HTTP server + API: `/api/{status,topics,match,match-one,warm,feedback}`, `/analytics.js`; routes `/ /vibe /rapid`
 - `lib/feedback.js` + `public/feedback.js` player feedback / high-fives → Discord webhook (`DISCORD_WEBHOOK_URL`)
+- `public/share.js` "Share result" card (canvas, current theme) on the Vibe result and Rapid Fire final screens: native share sheet on phones, download/WhatsApp dialog elsewhere. Links carry `utm_source=share`
+- Link previews: `og:*` tags in each page use `__ORIGIN__`, replaced by the server (`SITE_URL` / Render's `RENDER_EXTERNAL_URL` / request host). Images `public/img/og-*.jpg` come from `tools/og-cards.html` via `npm run og-images`
 - `lib/analytics.js` serves `/analytics.js`: GA4 when `GA_MEASUREMENT_ID` is set, and always a `track(name, params)` global (no-op without the ID). Never send player or team names
 - `lib/matcher.js` `matchGuess()` (Vibe, board) and `matchOne()` (Rapid Fire, one answer); `lib/localMatch.js` stage 1; `lib/jev.js` stage 2
 - `lib/topics.js` languages (`LOCALES`); Vibe boards in `lib/topics/en.js` and `lib/topics/te.js`
