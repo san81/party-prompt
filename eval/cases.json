@@ -125,5 +125,13 @@
   {"topic":"vantillu","guess":"అందరూ తినేముందే టిఫిన్ రెడీ అవలేదు","expect":["టిఫిన్ రెడీ కాకముందే హడావుడి"],"why":"contextual description"},
   {"topic":"vantillu","guess":"మసాలా వాసనకు తుమ్ము వచ్చింది","expect":["మసాలా వాసనకి తుమ్ము వచ్చిన"],"why":"near exact"},
   {"topic":"vantillu","guess":"కూరగాయలు కోసే శబ్దం","expect":["కత్తిపీట మీద కూరగాయలు కోసే శబ్దం"],"why":"partial match"},
-  {"topic":"vantillu","guess":"stove and cooker","expect":[],"why":"old board answer no longer present"}
+  {"topic":"vantillu","guess":"stove and cooker","expect":[],"why":"old board answer no longer present"},
+  {"topic": "diwali", "guess": "the dog was hiding the whole night", "expect": ["Dog hiding under the bed"], "why": "description of a scared pet"},
+  {"topic": "diwali", "guess": "my rocket went into the next house", "expect": ["Rocket flies into the neighbour's house"], "why": "contextual description"},
+  {"topic": "diwali", "guess": "that bomb never burst", "expect": ["Cracker that won't go off"], "why": "dud cracker described"},
+  {"topic": "diwali", "guess": "we lit lamps all around the house", "expect": ["Diyas"], "why": "lamps described"},
+  {"topic": "diwali", "guess": "kaju katli", "expect": ["Sweets"], "why": "specific sweet as alias"},
+  {"topic": "diwali", "guess": "amma made us take a head bath at 5 am", "expect": ["Early morning oil bath"], "why": "contextual description"},
+  {"topic": "diwali", "guess": "drawing patterns with colour powder at the door", "expect": ["Rangoli"], "why": "rangoli described"},
+  {"topic": "diwali", "guess": "homework", "expect": [], "why": "unrelated guess"}
 ]
