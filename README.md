@@ -89,6 +89,16 @@ Every page has a 🙌 High-five and 💌 Send feedback button. Submissions go to
 
 Without the URL, feedback is only appended to `logs/feedback.jsonl`, which Render wipes on each deploy.
 
+## Traffic analytics
+
+Google Analytics 4 is off until `GA_MEASUREMENT_ID` is set:
+
+1. At analytics.google.com, create a property, then Admin → Data streams → Add stream → Web with the site's URL. Copy the Measurement ID (`G-…`).
+2. Add `GA_MEASUREMENT_ID=G-…` in the Render dashboard (Environment). Leave it out of your local `.env` so play-testing isn't counted.
+3. Restart. The server log says "Google Analytics on".
+
+Each page loads `/analytics.js` from our server, which loads Google's tag only when the ID is set and always defines `track(name, params)`. Page views and traffic sources come automatically. The games also send `game_start` / `game_end` (game, topic or category, score), `kid_mode_change`, `language_change`, `high_five` and `feedback_sent`, each with `kid_mode` and `game_lang`. Player and team names are never sent. Google signals and ad personalisation are off because many players are children. To use `kid_mode`, `game_lang`, `game`, `topic` and `category` in reports, register them under Admin → Custom definitions.
+
 ## Validate end to end
 
 Cheapest and most decisive first. Steps 1 to 3 need only a laptop and a key; the whole run costs well under a cent.

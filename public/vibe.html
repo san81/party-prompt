@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>try{var k=localStorage.getItem('pg-kids')==='1',d=document.documentElement;d.dataset.kids=k?'on':'off';d.dataset.theme=k?(localStorage.getItem('pg-kids-theme')||'candy'):(localStorage.getItem('pg-theme')||'celebration')}catch(e){document.documentElement.dataset.theme='celebration'}</script>
+<script src="/analytics.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Telugu:wght@400;500;700&display=swap">
 <link rel="icon" href="/favicon.svg">
@@ -151,6 +152,11 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
 .typed { display: flex; gap: 8px; width: 100%; max-width: 420px; }
 .typed input { flex: 1; min-width: 0; }
 .typed button { border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0 14px; }
+.overtime { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center;
+  background: var(--panel); border: 1px solid var(--brass); border-radius: 12px; padding: 14px 16px; width: 100%; max-width: 420px; }
+.overtime p { margin: 0; font-family: var(--display); font-size: 22px; color: var(--brass); }
+.overtime .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.overtime .ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 12px 20px; font-weight: 700; font-size: 16px; }
 .result { text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .result p { margin: 0; }
 .result .big { font-family: var(--display); font-size: 28px; color: var(--brass); }
@@ -282,6 +288,13 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
         <input type="text" id="typedGuess" placeholder="Or type a guess" autocomplete="off" aria-label="Type a guess">
         <button type="submit" id="typedBtn">Guess</button>
       </form>
+      <div class="overtime" id="overtime" hidden>
+        <p id="overtimeQ"></p>
+        <div class="row">
+          <button class="primary" id="moreBtn"></button>
+          <button class="ghost" id="revealBtn"></button>
+        </div>
+      </div>
       <div class="result" id="result" hidden>
         <p class="big" id="resultBig"></p>
         <p id="resultSmall"></p>
@@ -343,6 +356,9 @@ const STR = {
     sayHit: (names, pts) => `${pick1(STR['en-US'].cheers)} ${names}, ${pts} ${plural(pts, 'point', 'points')}.`,
     sayAsk: (x) => `Did you mean ${x}?`,
     sayHalf: 'Halfway there! Speed up!', sayTen: 'Ten seconds!',
+    overtimeQ: (left) => `Time's up! ${left} still hidden`, moreBtn: (n) => `+${n} seconds`, revealBtn: 'Reveal answers',
+    sayOvertime: (p, left) => `Time's up, ${p}! ${left} ${plural(left, 'answer is', 'answers are')} still hidden. Want thirty more seconds, or shall I reveal?`,
+    sayMore: 'Thirty more seconds. Go!',
     sayTime: (p, found, total, pts, missed) => `Time's up! ${p}, you found ${found} of ${total} for ${pts} ${plural(pts, 'point', 'points')}. ${missed.length ? `You missed ${missed.join(' and ')}.` : 'You cleared the whole board!'}`,
     resultBig: (pts) => `${pts} ${plural(pts, 'point', 'points')}`,
     resultSmall: (found, total) => `Found ${found} of ${total}`,
@@ -364,6 +380,9 @@ const STR = {
     sayHit: (names, pts) => `${pick1(STR['te-IN'].cheers)} ${names}, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}.`,
     sayAsk: (x) => `${x} అంటున్నారా?`,
     sayHalf: 'సగం టైమ్ అయిపోయింది, స్పీడ్ పెంచండి!', sayTen: 'ఇంకా పది సెకన్లే!',
+    overtimeQ: (left) => `టైమ్ అప్! ఇంకా ${left} దాగి ఉన్నాయి`, moreBtn: (n) => `+${n} సెకన్లు`, revealBtn: 'సమాధానాలు చూపించు',
+    sayOvertime: (p, left) => `టైమ్ అప్, ${p}! ఇంకా ${left} సమాధానాలు దాగి ఉన్నాయి. ఇంకో ముప్పై సెకన్లు కావాలా, లేక సమాధానాలు చూపించమంటారా?`,
+    sayMore: 'ఇంకో ముప్పై సెకన్లు. మొదలుపెట్టండి!',
     sayTime: (p, found, total, pts, missed) => `టైమ్ అప్! ${p}, ${total} లో ${found} కనిపెట్టారు, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}. ${missed.length ? `మిస్ అయినవి: ${missed.join(', ')}.` : 'బోర్డు మొత్తం పూర్తి చేశారు!'}`,
     resultBig: (pts) => `${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}`,
     resultSmall: (found, total) => `${total} లో ${found} కనిపెట్టారు`,
@@ -382,6 +401,8 @@ const KID_STR = {
     cheers: ['Super star!', 'Great job!', 'Yay!', 'Wow!', 'Brilliant!', 'You got it!'],
     sayHit: (names, pts) => `${pick1(KID_STR['en-US'].cheers)} ${names}! ${pts} ${plural(pts, 'point', 'points')}.`,
     sayHalf: "Halfway there! You're doing great!", sayTen: 'Ten more seconds! Keep going!',
+    sayOvertime: (p, left) => `Great try, ${p}! ${left} ${plural(left, 'answer is', 'answers are')} still hiding. Want thirty more seconds, or shall we see them?`,
+    revealBtn: 'Show me the answers', sayMore: 'Thirty more seconds. You can do it!',
     sayTime: (p, found, total, pts, missed) => `Great playing, ${p}! You found ${found} of ${total} and got ${pts} ${plural(pts, 'point', 'points')}. ${missed.length ? `The board also had ${missed.join(' and ')}.` : 'You found them all. Amazing!'}`,
     notOnBoard: 'good try — try another!',
     hintNote: 'Stuck? Letter hints pop up on the board.',
@@ -392,6 +413,8 @@ const KID_STR = {
     cheers: ['సూపర్ స్టార్!', 'భలే!', 'హుర్రే!', 'వావ్!', 'శభాష్!', 'కరెక్ట్!'],
     sayHit: (names, pts) => `${pick1(KID_STR['te-IN'].cheers)} ${names}! ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}.`,
     sayHalf: 'సగం అయిపోయింది! చాలా బాగా ఆడుతున్నారు!', sayTen: 'ఇంకా పది సెకన్లు! ఆపకండి!',
+    sayOvertime: (p, left) => `బాగా ఆడారు, ${p}! ఇంకా ${left} సమాధానాలు దాక్కున్నాయి. ఇంకో ముప్పై సెకన్లు కావాలా, లేక చూద్దామా?`,
+    sayMore: 'ఇంకో ముప్పై సెకన్లు. మీరు చేయగలరు!',
     sayTime: (p, found, total, pts, missed) => `చాలా బాగా ఆడారు, ${p}! ${total} లో ${found} కనిపెట్టారు, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}. ${missed.length ? `బోర్డులో ఇవి కూడా ఉన్నాయి: ${missed.join(', ')}.` : 'అన్నీ కనిపెట్టేశారు. అద్భుతం!'}`,
     notOnBoard: 'మంచి ప్రయత్నం — ఇంకోటి చెప్పు!',
     hintNote: 'ఆగిపోయారా? బోర్డులో అక్షరం క్లూలు కనిపిస్తాయి.',
@@ -598,7 +621,7 @@ const S = {
   onceEach: load('sg-once', false), round: load('sg-round', 1),
   turnOrder: load('sg-order', 'wheel'), seqIndex: load('sg-seq', 0),  // 'wheel' | 'sequence'
   player: null, topic: null, matched: new Set(), turnScore: 0, status: 'wheel', turnId: 0,
-  deadline: 0, clockTimer: null, halfDone: false, warned: false, lastSec: null, seq: 0, confirm: null,
+  deadline: 0, clockStart: 0, clockSecs: 60, clockId: 0, extended: false, clockTimer: null, halfDone: false, warned: false, lastSec: null, seq: 0, confirm: null,
   hostOn: load('sg-host', true), log: [], lastTopic: null,
   kids: Shell.getKids(), lastHitAt: 0, lastHintAt: 0,
 };
@@ -951,7 +974,7 @@ function handleUtterance(text) {
 /* ======================= matching ======================= */
 async function submitGuess(text) {
   if (S.status !== 'playing') return;
-  const turnId = S.turnId, li = addFeed(text), t0 = performance.now();
+  const turnId = S.turnId, clockId = S.clockId, li = addFeed(text), t0 = performance.now();
   let r;
   try {
     const res = await fetch('/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -960,7 +983,7 @@ async function submitGuess(text) {
     if (!res.ok) throw new Error(r.error || res.status);
   } catch (e) { setFeed(li, 'miss', 'error'); logRow({ guess: text, outcome: 'error', error: String(e.message) }); return; }
   const roundTrip = Math.round(performance.now() - t0);
-  if (turnId !== S.turnId || S.status !== 'playing') { setFeed(li, 'miss', T().tooLate); logRow({ ...r, roundTrip, outcome: 'late' }); return; }
+  if (turnId !== S.turnId || clockId !== S.clockId || S.status !== 'playing') { setFeed(li, 'miss', T().tooLate); logRow({ ...r, roundTrip, outcome: 'late' }); return; }
   const fresh = r.hits.filter(k => !S.matched.has(k));
   const repeats = r.hits.filter(k => S.matched.has(k));
   let outcome;
@@ -1048,16 +1071,17 @@ async function startTurn() {
   warmMic();   // request mic permission now, during the untimed intro, not when the clock starts
   pickVoice();
   S.turnId++; S.status = 'intro'; S.matched = new Set(); S.turnScore = 0;
-  S.halfDone = false; S.warned = false; S.lastSec = null; S.lastHitAt = 0; S.lastHintAt = 0;
+  S.halfDone = false; S.warned = false; S.lastSec = null; S.lastHitAt = 0; S.lastHintAt = 0; S.extended = false;
   S.topic = boardFor(nextTopic());
+  track('game_start', { game: 'vibe', topic: S.topic.id, seconds: S.turnSecs });
   clearConfirm();
   $('#wheelView').hidden = true; $('#stage').hidden = false;
   $('#feed').innerHTML = ''; $('#live').textContent = '';
   $('#stageNote').textContent = [S.hostOn && !canSpeak ? T().noVoice : '', S.kids ? T().hintNote : ''].filter(Boolean).join(' ');
-  $('#backBtn').hidden = true; $('#result').hidden = true; $('#typed').hidden = false; $('#ptt').hidden = false;
+  $('#backBtn').hidden = true; $('#result').hidden = true; $('#overtime').hidden = true; $('#typed').hidden = false; $('#ptt').hidden = false;
   $('#who').textContent = S.player; $('#turnScore').textContent = '0';
   $('#topic').textContent = S.topic.prompt;
-  setClock(S.turnSecs);
+  S.clockSecs = S.turnSecs; setClock(S.turnSecs);
   // Shuffle the board so the easy answers aren't always in the first squares.
   const order = shuffle(S.topic.answers.map((_, i) => i));
   $('#board').innerHTML = order.map((ai, pos) => {
@@ -1081,8 +1105,13 @@ async function startTurn() {
 
 function startClock() {
   if (S.status !== 'intro') return;
+  runClock(S.turnSecs);
+}
+// Runs the turn clock for `secs`: the first run and the optional +30 s extra time both use it.
+function runClock(secs) {
   S.status = 'playing';
-  S.deadline = Date.now() + S.turnSecs * 1000;
+  S.clockId++;   // guesses sent before the buzzer never score in the extra time
+  S.clockSecs = secs; S.clockStart = Date.now(); S.deadline = S.clockStart + secs * 1000;
   Sound.sfx.go(); Sound.music.start();
   startListening();   // open the mic the instant the clock starts; button flips to pause
   renderMic();
@@ -1090,7 +1119,7 @@ function startClock() {
   S.clockTimer = setInterval(() => {
     const left = Math.max(0, (S.deadline - Date.now()) / 1000);
     setClock(left);
-    if (!S.halfDone && left <= S.turnSecs / 2) { S.halfDone = true; Sound.sfx.chime(); say(T().sayHalf); }
+    if (!S.halfDone && left <= S.clockSecs / 2) { S.halfDone = true; Sound.sfx.chime(); say(T().sayHalf); }
     const sec = Math.ceil(left);
     if (sec !== S.lastSec) {
       S.lastSec = sec;
@@ -1098,13 +1127,13 @@ function startClock() {
       if (sec === 10 && !S.warned) { S.warned = true; Sound.music.setIntense(true); say(T().sayTen); }
     }
     if (S.kids) maybeKidHint();
-    if (left <= 0) endTurn();
+    if (left <= 0) timeUp();
   }, 100);
 }
 // Kid mode: when nothing has scored for a while, show the first letter of one hidden
 // answer on its tile ("L _ _ _", first letter of each word). Graphemes, not code points, so Telugu stays intact.
 function maybeKidHint() {
-  const t = Date.now(), quiet = t - Math.max(S.lastHitAt, S.deadline - S.turnSecs * 1000);
+  const t = Date.now(), quiet = t - Math.max(S.lastHitAt, S.clockStart);
   if (quiet < 10000 || t - S.lastHintAt < 10000) return;
   const hidden = [...document.querySelectorAll('#board .tile:not(.hit):not(.hinted)')];
   if (!hidden.length) return;
@@ -1120,17 +1149,52 @@ function setClock(left) {
   $('#clock').textContent = Math.ceil(left);
   $('#clock').classList.toggle('hot', hot);
   $('#meter').classList.toggle('hot', hot);
-  $('#meter i').style.width = `${(left / S.turnSecs) * 100}%`;
+  $('#meter i').style.width = `${(left / S.clockSecs) * 100}%`;
+}
+
+// The clock ran out. Once per turn, if answers are still hidden, the player chooses:
+// 30 more seconds, or reveal now. The turn's score is only saved at the reveal.
+const EXTRA_SECS = 30;
+function timeUp() {
+  if (S.status !== 'playing') return;
+  const left = S.topic.answers.length - S.matched.size;
+  if (S.extended || !left) return endTurn();
+  S.status = 'choice';
+  clearInterval(S.clockTimer); setClock(0);
+  stopListening(); clearConfirm(); renderMic();
+  Sound.music.stop(); Sound.sfx.micEnd(); Sound.sfx.buzzer();
+  $('#typed').hidden = true; $('#ptt').hidden = true;
+  $('#overtimeQ').textContent = T().overtimeQ(left);
+  $('#moreBtn').textContent = T().moreBtn(EXTRA_SECS);
+  $('#revealBtn').textContent = T().revealBtn;
+  $('#overtime').hidden = false;
+  $('#moreBtn').focus();
+  say(T().sayOvertime(S.player, left), { interrupt: true });
+}
+async function extraTime() {
+  if (S.status !== 'choice') return;
+  S.extended = true; S.status = 'extra';   // nothing else may start the clock meanwhile
+  track('extra_time', { game: 'vibe', topic: S.topic.id, found: S.matched.size });
+  $('#overtime').hidden = true; $('#typed').hidden = false; $('#ptt').hidden = false;
+  S.halfDone = true; S.warned = false; S.lastSec = null; S.lastHintAt = 0;
+  await say(T().sayMore, { interrupt: true });
+  if (S.status === 'extra') runClock(EXTRA_SECS);
 }
 
 function endTurn() {
-  if (S.status !== 'playing') return;
+  if (S.status !== 'playing' && S.status !== 'choice') return;
+  const wasPlaying = S.status === 'playing';
   S.status = 'reveal';
-  clearInterval(S.clockTimer); setClock(0);
-  stopListening(); clearConfirm(); renderMic();
-  Sound.music.stop(); Sound.sfx.micEnd();
+  $('#overtime').hidden = true;
   const total = S.topic.answers.length, found = S.matched.size;
-  if (found === total) { Sound.sfx.cheer(); confetti(3); } else Sound.sfx.buzzer();
+  track('game_end', { game: 'vibe', topic: S.topic.id, found, total, score: S.turnScore, extra_time: S.extended });
+  if (wasPlaying) {
+    clearInterval(S.clockTimer); setClock(0);
+    stopListening(); clearConfirm(); renderMic();
+    Sound.music.stop(); Sound.sfx.micEnd();
+    if (found !== total) Sound.sfx.buzzer();
+  }
+  if (found === total) { Sound.sfx.cheer(); confetti(3); }
   $('#typed').hidden = true; $('#ptt').hidden = true;
   const missed = S.topic.answers.filter(a => !S.matched.has(a.key));
   for (const a of missed) {
@@ -1273,7 +1337,7 @@ function applyKids() {
   if (S.allTopics.length) setLocale(S.locale);
 }
 Shell.bindKidsToggle($('#kidsBtn'));
-window.addEventListener('kidschange', () => { if (S.status !== 'intro' && S.status !== 'playing') applyKids(); });
+window.addEventListener('kidschange', () => { if (!['intro', 'playing', 'choice', 'extra'].includes(S.status)) applyKids(); });
 $('#turnOrder').addEventListener('change', (e) => { S.turnOrder = e.target.value; save('sg-order', S.turnOrder); applyTurnOrderUI(); renderNames(); });
 $('#topicStyle').addEventListener('change', (e) => { S.style = e.target.value; save('sg-style', S.style); setLocale(S.locale); });
 
@@ -1301,6 +1365,8 @@ $('#typed').addEventListener('submit', (e) => {
   if (S.status === 'intro') startClock();
   handleUtterance(v);
 });
+$('#moreBtn').onclick = () => { Sound.resume(); extraTime(); };
+$('#revealBtn').onclick = () => endTurn();
 $('#confirmYes').onclick = () => resolveConfirm(true);
 $('#confirmNo').onclick = () => resolveConfirm(false);
 addEventListener('resize', drawWheel);

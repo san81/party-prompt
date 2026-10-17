@@ -7,6 +7,7 @@ import { TOPICS, POINTS, LOCALES, topicById } from './lib/topics.js';
 import { matchGuess, matchOne } from './lib/matcher.js';
 import { askJev } from './lib/jev.js';
 import { handleFeedback, clientAddress, feedbackConfigured } from './lib/feedback.js';
+import { analyticsScript, analyticsConfigured } from './lib/analytics.js';
 
 const PUBLIC = join(config.root, 'public');
 const LOG = join(config.root, 'logs', 'matches.jsonl');
@@ -86,6 +87,7 @@ const server = http.createServer(async (req, res) => {
       return Array.isArray(out) ? send(res, out[0], out[1]) : send(res, 200, out);
     }
     if (req.method !== 'GET') return send(res, 404, { error: 'Not found' });
+    if (url.pathname === '/analytics.js') return send(res, 200, analyticsScript(), TYPES['.js']);
     const pretty = { '/': 'index.html', '/vibe': 'vibe.html', '/rapid': 'rapid.html' };
     let pathname;
     try { pathname = decodeURIComponent(url.pathname); } catch { return send(res, 400, { error: 'Bad path' }); }
@@ -104,4 +106,5 @@ server.listen(config.port, () => {
   console.log(`Party Guess running at http://localhost:${config.port}`);
   console.log(jevConfigured() ? `Jev matching on (${config.jevModel})` : 'No TYPESAFE_API_KEY found: local matching only');
   console.log(feedbackConfigured() ? 'Feedback goes to Discord' : 'No DISCORD_WEBHOOK_URL: feedback is only logged locally');
+  console.log(analyticsConfigured() ? `Google Analytics on (${config.gaId})` : 'No GA_MEASUREMENT_ID: analytics off');
 });

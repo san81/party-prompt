@@ -50,6 +50,7 @@
     for (const k of Object.keys(context)) context[k] = String(context[k] ?? '');
     try {
       const r = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, context }) });
+      if (r.ok) window.track?.(body.kind === 'high-five' ? 'high_five' : 'feedback_sent', { rating: body.rating || undefined });
       return r.status === 429 ? 'wait' : r.ok ? 'ok' : 'fail';
     } catch { return 'fail'; }
   }

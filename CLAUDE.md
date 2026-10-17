@@ -27,8 +27,9 @@ and sound-validation rules, and the audio/voice gotchas. Human setup is in `READ
 
 ## Layout
 
-- `server.js` HTTP server + API: `/api/{status,topics,match,match-one,warm,feedback}`; routes `/ /vibe /rapid`
+- `server.js` HTTP server + API: `/api/{status,topics,match,match-one,warm,feedback}`, `/analytics.js`; routes `/ /vibe /rapid`
 - `lib/feedback.js` + `public/feedback.js` player feedback / high-fives → Discord webhook (`DISCORD_WEBHOOK_URL`)
+- `lib/analytics.js` serves `/analytics.js`: GA4 when `GA_MEASUREMENT_ID` is set, and always a `track(name, params)` global (no-op without the ID). Never send player or team names
 - `lib/matcher.js` `matchGuess()` (Vibe, board) and `matchOne()` (Rapid Fire, one answer); `lib/localMatch.js` stage 1; `lib/jev.js` stage 2
 - `lib/topics.js` languages (`LOCALES`); Vibe boards in `lib/topics/en.js` and `lib/topics/te.js`
 - `public/index.html` landing · `public/vibe.html` Vibe Guess · `public/rapid.html` Rapid Fire — each a single self-contained page, sounds synthesised with Web Audio
@@ -50,6 +51,7 @@ and sound-validation rules, and the audio/voice gotchas. Human setup is in `READ
 ## Game rules encoded in the client
 
 - Guesses resolve in parallel, tagged by sequence number. A guess that resolves after the buzzer never scores.
+- Vibe: when the clock runs out with answers still hidden, the player picks +30 s or Reveal, once per turn. The score is saved at the reveal; `S.clockId` makes guesses sent before the buzzer "too late" in the extra time.
 - Music is silenced while the talk button is held (the mic would hear it) and dips while the host speaks.
 - The host never talks over a player holding the button, except for turn announcements and "Did you mean…?"
 - Topics are drawn at random per language without repeats until all are used; each turn's board is a rotating subset of the pool (`boardFor`), and `/api/match` gets its `keys` so only on-screen answers can score.

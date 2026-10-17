@@ -37,6 +37,7 @@ window.Shell = (() => {
   const getLang = () => { try { return localStorage.getItem(LANG_KEY) || 'en-US'; } catch { return 'en-US'; } };
   function setLang(l) {
     try { localStorage.setItem(LANG_KEY, l); } catch {}
+    window.track?.('language_change');
     window.dispatchEvent(new CustomEvent('langchange', { detail: l }));
   }
 
@@ -48,6 +49,7 @@ window.Shell = (() => {
     applyKids(on);
     try { localStorage.setItem(KIDS_KEY, on ? '1' : '0'); } catch {}
     applyTheme(getTheme());          // switch to this mode's palette
+    window.track?.('kid_mode_change');
     window.dispatchEvent(new CustomEvent('kidschange', { detail: on }));
     window.dispatchEvent(new CustomEvent('themechange', { detail: getTheme() }));
   }
