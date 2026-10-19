@@ -33,9 +33,9 @@ and sound-validation rules, and the audio/voice gotchas. Human setup is in `READ
 - Link previews: `og:*` tags in each page use `__ORIGIN__`, replaced by the server (`SITE_URL` / Render's `RENDER_EXTERNAL_URL` / request host). Images `public/img/og-*.jpg` come from `tools/og-cards.html` via `npm run og-images`
 - `lib/analytics.js` serves `/analytics.js`: GA4 when `GA_MEASUREMENT_ID` is set, and always a `track(name, params)` global (no-op without the ID). Never send player or team names
 - `lib/matcher.js` `matchGuess()` (Vibe, board) and `matchOne()` (Rapid Fire, one answer); `lib/localMatch.js` stage 1; `lib/jev.js` stage 2
-- `lib/topics.js` languages (`LOCALES`); Vibe boards in `lib/topics/en.js` and `lib/topics/te.js`
+- `lib/topics.js` languages (`LOCALES`), board packs (`PACKS`: diwali, south, north); Vibe boards in `lib/topics/en.js` and `lib/topics/te.js`. A board joins packs with `packs: [...]`; Vibe's "Board pack" picker (or `/vibe?pack=diwali`) plays only that pack
 - `public/index.html` landing · `public/vibe.html` Vibe Guess · `public/rapid.html` Rapid Fire — each a single self-contained page, sounds synthesised with Web Audio
-- `public/theme.css` + `public/theme.js` shared design tokens (4 themes) and `window.Shell` (global theme + language); `public/rapid/items*` generated image manifest + assets
+- `public/theme.css` + `public/theme.js` shared design tokens (themes incl. 🪔 Diwali, offered in both grown-up and kid pickers, with twinkling lights) and `window.Shell` (global theme + language); `public/rapid/items*` generated image manifest + assets
 - `.agents/` architecture + build/test/sound rules for the next agent
 - `eval/` eval cases and scripts; `logs/matches.jsonl` gets every match the server makes
 
@@ -69,6 +69,7 @@ and sound-validation rules, and the audio/voice gotchas. Human setup is in `READ
 - Aliases should cover how people actually say it: Telugu script, English words, romanized Telugu, spelling variants.
 - Every Telugu answer needs a short English `gloss`; every Telugu board needs `promptGloss`.
 - Mark a board `kids: true` if it suits young children; kid mode shows only those boards.
+- Festival and regional boards join a pack (`packs: ['diwali', 'south']`); new pack ids go in `PACKS` (lint checks). The landing shows a Diwali banner from 1 Oct to 20 Nov (`FESTIVE` in `public/index.html`).
 - A native Telugu speaker has not yet reviewed the Telugu text. Flag wording you're unsure of instead of guessing.
 
 ## Conventions

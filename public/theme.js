@@ -8,6 +8,7 @@ window.THEMES = {
   midnight:    { label: '🌙 Midnight' },
   neon:        { label: '⚡ Neon' },
   daylight:    { label: '☀️ Daylight' },
+  diwali:      { label: '🪔 Diwali' },
 };
 // Kid mode has its own bright palettes; the picker shows these instead while Kids is on,
 // and each mode remembers its own choice.
@@ -15,6 +16,7 @@ window.KID_THEMES = {
   candy:  { label: '🍭 Candy' },
   jungle: { label: '🌴 Jungle' },
   space:  { label: '🚀 Space' },
+  diwali: { label: '🪔 Diwali' },
 };
 // Fallback language labels; games can pass the server's LOCALES to fillLangSelect instead.
 window.LOCALES_UI = { 'en-US': 'English', 'te-IN': 'తెలుగు' };

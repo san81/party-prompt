@@ -89,6 +89,19 @@ html[data-kids="on"] .hero .over { padding-top: 30px; background: linear-gradien
 .mode .seg button[aria-pressed="true"] { background: var(--brass); color: var(--brass-ink); box-shadow: var(--glow); }
 .mode .hintline { color: var(--muted); font-size: 13px; margin: 0; flex-basis: 100%; text-align: center; }
 
+/* Festival banner (Diwali season only, see FESTIVE) */
+.festive { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: 16px;
+  border: 1px solid var(--brass); background: linear-gradient(100deg, color-mix(in srgb, var(--brass) 18%, var(--panel)), var(--panel) 60%); box-shadow: var(--glow); }
+.festive[hidden] { display: none; }
+.festive .diya { font-size: 34px; line-height: 1; }
+.festive .ftext { flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.festive .ftext b { font-family: var(--display); font-weight: 400; font-size: 20px; color: var(--brass); }
+.festive .ftext span { color: var(--muted); font-size: 14px; }
+.festive .factions { display: flex; gap: 8px; flex-wrap: wrap; }
+.festive .fbtn { border: 1px solid var(--line); background: var(--stage); color: var(--ink); border-radius: 999px; padding: 9px 16px; font-weight: 700; font-size: 14px; text-decoration: none; cursor: pointer; }
+.festive .fbtn.primary { background: var(--brass); color: var(--brass-ink); border-color: var(--brass); }
+@media (prefers-reduced-motion: no-preference) { .festive .diya { animation: diya-flicker 2.4s ease-in-out infinite; } }
+@keyframes diya-flicker { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px var(--brass)); } 50% { transform: scale(1.06); filter: drop-shadow(0 0 12px var(--coral)); } }
 .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 8px; }
 .game { position: relative; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit;
   background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; overflow: hidden;
@@ -227,6 +240,15 @@ html[data-kids="on"] .hero .over { padding-top: 30px; background: linear-gradien
     <p class="hintline" id="modeHint"></p>
   </div>
 
+  <aside class="festive" id="festive" hidden>
+    <span class="diya" aria-hidden="true">🪔</span>
+    <div class="ftext"><b id="festTitle"></b><span id="festSub"></span></div>
+    <div class="factions">
+      <a class="fbtn primary" href="/vibe?pack=diwali&amp;utm_source=landing&amp;utm_medium=diwali_banner" id="festPlay"></a>
+      <button type="button" class="fbtn" id="festTheme"></button>
+    </div>
+  </aside>
+
   <div class="games">
     <a class="game" href="/vibe" id="cardVibe">
       <span class="emoji">🎙️</span>
@@ -352,7 +374,10 @@ const STR = {
     modeAll: '🎉 Everyone', modeKids: '🧒 Kids',
     modeHintAll: 'Kid mode switches every game to kid-friendly questions, longer timers, extra hints and gentle sounds.',
     modeHintKids: 'Kid mode is on in every game: easy boards, sums and letters, longer timers, extra hints and gentle sounds.',
+    festTitle: 'Happy Diwali! 🎆', festSub: 'New Diwali boards for Vibe Guess: relatives, shopping, South and North India mornings.',
+    festPlay: 'Play Diwali boards', festTheme: 'Light up the Diwali theme', festThemeOn: 'Diwali theme is on ✨',
     kids: {
+      festSub: 'Crackers, diyas, sweets and more: new Diwali boards to play together!',
       heroTitle: 'Kids Party Games', heroSub: 'Shout, count and laugh together!',
       vibeDesc: 'Find the hidden answers on a fun board — fruits, zoo animals, your school bag. Letter hints help when you get stuck.',
       vibeTags: ['Voice', 'Hints', 'Kids'],
@@ -380,7 +405,10 @@ const STR = {
     modeAll: '🎉 అందరూ', modeKids: '🧒 పిల్లలు',
     modeHintAll: 'పిల్లల మోడ్ ప్రతి గేమ్‌ను పిల్లలకు తగిన ప్రశ్నలు, ఎక్కువ సమయం, ఎక్కువ క్లూలు, మెత్తని శబ్దాలతో మారుస్తుంది.',
     modeHintKids: 'అన్ని గేమ్‌లలో పిల్లల మోడ్ ఆన్‌లో ఉంది: సులభమైన బోర్డులు, లెక్కలు, అక్షరాలు, ఎక్కువ సమయం, ఎక్కువ క్లూలు.',
+    festTitle: 'దీపావళి శుభాకాంక్షలు! 🎆', festSub: 'వైబ్ గెస్‌లో కొత్త దీపావళి బోర్డులు: టపాసులు, పిండివంటలు, పండుగ ముందు హడావుడి.',
+    festPlay: 'దీపావళి బోర్డులు ఆడండి', festTheme: 'దీపావళి థీమ్ పెట్టండి', festThemeOn: 'దీపావళి థీమ్ ఆన్‌లో ఉంది ✨',
     kids: {
+      festSub: 'టపాసులు, దీపాలు, స్వీట్లు: కలిసి ఆడటానికి కొత్త దీపావళి బోర్డులు!',
       heroTitle: 'పిల్లల పార్టీ గేమ్స్', heroSub: 'అందరూ కలిసి చెప్పండి, లెక్కపెట్టండి, నవ్వండి!',
       vibeDesc: 'సరదా బోర్డులో దాగిన సమాధానాలు కనిపెట్టండి — పండ్లు, జూ జంతువులు, స్కూల్ బ్యాగ్. ఆగిపోతే అక్షరం క్లూలు సాయం చేస్తాయి.',
       vibeTags: ['వాయిస్', 'క్లూలు', 'పిల్లలు'],
@@ -415,6 +443,24 @@ function applyLang(code) {
   $('#modeAll').textContent = T.modeAll; $('#modeKids').textContent = T.modeKids;
   $('#modeAll').setAttribute('aria-pressed', !kids); $('#modeKids').setAttribute('aria-pressed', kids);
   $('#modeHint').textContent = kids ? T.modeHintKids : T.modeHintAll;
+  renderFestive(T);
+}
+
+// Diwali season banner: shown each year from 1 October to 20 November (Diwali moves between
+// late October and mid November).
+const FESTIVE = { from: [10, 1], to: [11, 20] };
+function inFestiveSeason(d = new Date()) {
+  const md = (d.getMonth() + 1) * 100 + d.getDate();
+  return md >= FESTIVE.from[0] * 100 + FESTIVE.from[1] && md <= FESTIVE.to[0] * 100 + FESTIVE.to[1];
+}
+function renderFestive(T) {
+  if (!inFestiveSeason()) return;
+  $('#festive').hidden = false;
+  $('#festTitle').textContent = T.festTitle; $('#festSub').textContent = T.festSub;
+  $('#festPlay').textContent = T.festPlay;
+  const on = document.documentElement.dataset.theme === 'diwali';
+  $('#festTheme').textContent = on ? T.festThemeOn : T.festTheme;
+  $('#festTheme').disabled = on;
 }
 
 async function boot() {
@@ -431,6 +477,9 @@ async function boot() {
   Feedback.mount($('#fbLanding'), () => ({ game: 'landing' }), { made: true });
   $('#modeAll').onclick = () => Shell.setKids(false);
   $('#modeKids').onclick = () => Shell.setKids(true);
+  $('#festTheme').onclick = () => { Shell.setTheme('diwali'); track('theme_change', { theme: 'diwali', from: 'diwali_banner' }); };
+  window.addEventListener('themechange', () => applyLang(curLang));
+  $('#festPlay').addEventListener('click', () => track('diwali_banner_click'));
   window.addEventListener('kidschange', () => applyLang(curLang));
 
   try {

@@ -236,6 +236,9 @@ input[type=text], select { background: var(--stage); border: 1px solid var(--lin
               <option value="90">90 seconds</option>
             </select>
           </label>
+          <label class="field" for="pack">Board pack
+            <select id="pack"><option value="all">All boards</option></select>
+          </label>
           <label class="field" for="topicStyle">Topics
             <select id="topicStyle">
               <option value="all">All boards</option>
@@ -374,7 +377,7 @@ const STR = {
     sayMore: 'Thirty more seconds. Go!',
     sayTime: (p, found, total, pts, missed) => `Time's up! ${p}, you found ${found} of ${total} for ${pts} ${plural(pts, 'point', 'points')}. ${missed.length ? `You missed ${missed.join(' and ')}.` : 'You cleared the whole board!'}`,
     resultBig: (pts) => `${pts} ${plural(pts, 'point', 'points')}`,
-    resultSmall: (found, total) => `Found ${found} of ${total}`,
+    resultSmall: (found, total) => `Found ${found} of ${total}`, allBoards: 'All boards',
     shareText: (pts, topic) => `I scored ${pts} ${plural(pts, 'point', 'points')} on “${topic}” in Vibe Guess! Can you beat me? 🎉`,
     micBlocked: 'Microphone blocked. Allow it in the browser address bar, or type guesses below.',
     noVoice: 'No English voice on this device, so the host shows captions only.',
@@ -399,7 +402,7 @@ const STR = {
     sayMore: 'ఇంకో ముప్పై సెకన్లు. మొదలుపెట్టండి!',
     sayTime: (p, found, total, pts, missed) => `టైమ్ అప్! ${p}, ${total} లో ${found} కనిపెట్టారు, ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}. ${missed.length ? `మిస్ అయినవి: ${missed.join(', ')}.` : 'బోర్డు మొత్తం పూర్తి చేశారు!'}`,
     resultBig: (pts) => `${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')}`,
-    resultSmall: (found, total) => `${total} లో ${found} కనిపెట్టారు`,
+    resultSmall: (found, total) => `${total} లో ${found} కనిపెట్టారు`, allBoards: 'అన్ని బోర్డులు',
     shareText: (pts, topic) => `వైబ్ గెస్‌లో “${topic}” అంశంపై నాకు ${pts} ${plural(pts, 'పాయింట్', 'పాయింట్లు')} వచ్చాయి! మీరు దాటగలరా? 🎉`,
     micBlocked: 'మైక్రోఫోన్ అనుమతి లేదు. బ్రౌజర్‌లో అనుమతి ఇవ్వండి, లేదా కింద టైప్ చేయండి.',
     noVoice: 'ఈ పరికరంలో తెలుగు వాయిస్ లేదు, కాబట్టి హోస్ట్ మాటలు తెరపై మాత్రమే కనిపిస్తాయి.',
@@ -628,7 +631,9 @@ function confetti(bursts = 1) {
 
 /* ======================= state ======================= */
 const S = {
-  points: {}, allTopics: [], locales: {},
+  points: {}, allTopics: [], locales: {}, packs: {},
+  // Board pack ("diwali", "south"…); a ?pack= link (e.g. from the landing's Diwali banner) picks one.
+  pack: new URLSearchParams(location.search).get('pack') || load('sg-pack', 'all'),
   locale: (window.Shell ? Shell.getLang() : load('sg-locale', 'en-US')), style: load('sg-style', 'all'), turnSecs: load('sg-secs', 60),
   names: load('sg-names', ['Ravi', 'Lakshmi', 'Arjun', 'Divya', 'Kiran', 'Sneha']),
   scores: load('sg-scores', {}),       // name -> { points, turns }
@@ -642,8 +647,17 @@ const S = {
 };
 const T = () => { const base = STR[S.locale] || STR['en-US']; return S.kids ? { ...base, ...(KID_STR[S.locale] || KID_STR['en-US']) } : base; };
 // Kid mode plays only boards marked kids: true.
+// Packs that have boards for this language (and kid mode).
+function packsFor(loc) {
+  const base = S.allTopics.filter(t => t.locale === loc && (!S.kids || t.kids));
+  return Object.keys(S.packs).filter(p => base.some(t => t.packs.includes(p)));
+}
 function topicsFor(loc) {
   const all = S.allTopics.filter(t => t.locale === loc && (!S.kids || t.kids));
+  if (S.pack !== 'all') {   // a chosen pack overrides the style filter
+    const inPack = all.filter(t => t.packs.includes(S.pack));
+    if (inPack.length) return inPack;
+  }
   if (S.style === 'all' || S.kids) return all;   // kids play every kid board, whatever the style filter
   const styled = all.filter(t => t.style === S.style);
   return styled.length ? styled : all;
@@ -1053,7 +1067,8 @@ function clearConfirm() { if (S.confirm) clearTimeout(S.confirm.timer); S.confir
 // Random topic without repeats: each language keeps a shuffled deck that refills when empty.
 function nextTopic() {
   const pool = topicsFor(S.locale).map(t => t.id);
-  const key = S.kids ? `sg-deck-${S.locale}-kids` : `sg-deck-${S.locale}-${S.style}`;
+  const pack = packsFor(S.locale).includes(S.pack) ? `-${S.pack}` : '';
+  const key = (S.kids ? `sg-deck-${S.locale}-kids` : `sg-deck-${S.locale}-${S.style}`) + pack;
   let deck = load(key, []).filter(id => pool.includes(id));
   if (!deck.length) { deck = shuffle(pool.filter(id => id !== S.lastTopic)); if (!deck.length) deck = shuffle([...pool]); }
   const id = deck.pop(); save(key, deck); S.lastTopic = id;
@@ -1088,7 +1103,7 @@ async function startTurn() {
   S.turnId++; S.status = 'intro'; S.matched = new Set(); S.turnScore = 0;
   S.halfDone = false; S.warned = false; S.lastSec = null; S.lastHitAt = 0; S.lastHintAt = 0; S.extended = false;
   S.topic = boardFor(nextTopic());
-  track('game_start', { game: 'vibe', topic: S.topic.id, seconds: S.turnSecs });
+  track('game_start', { game: 'vibe', topic: S.topic.id, pack: S.pack, seconds: S.turnSecs });
   clearConfirm();
   $('#wheelView').hidden = true; $('#stage').hidden = false;
   $('#feed').innerHTML = ''; $('#live').textContent = '';
@@ -1282,6 +1297,7 @@ function setLocale(code) {
   if (window.Shell && Shell.getLang() !== code) Shell.setLang(code);   // keep the global language in sync
   document.documentElement.lang = code.split('-')[0];
   pickVoice();
+  buildPackSelect();
   const n = topicsFor(code).length;
   const notes = [`${n} ${plural(n, 'topic', 'topics')} in ${S.locales[code]?.name ?? code}, picked at random without repeats.`];
   if (!SR) notes.push('Voice input needs Chrome, Edge or Safari. You can still type guesses.');
@@ -1290,6 +1306,14 @@ function setLocale(code) {
   $('#typedGuess').placeholder = T().typePh; $('#typedBtn').textContent = T().guessBtn;
   $('#confirmYes').textContent = T().yes; $('#confirmNo').textContent = T().no;
   if (S.turnOrder === 'sequence') showNextUp();
+}
+function buildPackSelect() {
+  const avail = packsFor(S.locale);
+  const label = (p) => S.packs[p][S.locale] || S.packs[p]['en-US'];
+  $('#pack').innerHTML = `<option value="all">${esc(T().allBoards)}</option>` + avail.map(p => `<option value="${p}">${esc(label(p))}</option>`).join('');
+  $('#pack').value = avail.includes(S.pack) ? S.pack : 'all';   // keep the saved pack for when it's available again
+  $('#pack').closest('label').hidden = !avail.length;
+  $('#topicStyle').closest('label').hidden = S.kids || $('#pack').value !== 'all';   // a pack replaces the style filter
 }
 function setToggle(btn, on) { btn.setAttribute('aria-pressed', on); }
 
@@ -1354,6 +1378,7 @@ function applyKids() {
 Shell.bindKidsToggle($('#kidsBtn'));
 window.addEventListener('kidschange', () => { if (!['intro', 'playing', 'choice', 'extra'].includes(S.status)) applyKids(); });
 $('#turnOrder').addEventListener('change', (e) => { S.turnOrder = e.target.value; save('sg-order', S.turnOrder); applyTurnOrderUI(); renderNames(); });
+$('#pack').addEventListener('change', (e) => { S.pack = e.target.value || 'all'; save('sg-pack', S.pack); setLocale(S.locale); track('pack_change', { pack: S.pack }); });
 $('#topicStyle').addEventListener('change', (e) => { S.style = e.target.value; save('sg-style', S.style); setLocale(S.locale); });
 
 $('#musicBtn').onclick = (e) => { const on = !Sound.prefs.music; Sound.setMusic(on); setToggle(e.currentTarget, on); };
@@ -1410,7 +1435,8 @@ async function boot() {
   renderNames(); renderLeaders();
   try {
     const [status, data] = await Promise.all([fetch('/api/status').then(r => r.json()), fetch('/api/topics').then(r => r.json())]);
-    S.allTopics = data.topics; S.points = data.points; S.locales = data.locales;
+    S.allTopics = data.topics; S.points = data.points; S.locales = data.locales; S.packs = data.packs || {};
+    if (new URLSearchParams(location.search).has('pack')) save('sg-pack', S.pack);
     $('#lang').innerHTML = Object.entries(S.locales).map(([code, l]) => `<option value="${code}">${esc(l.name)}</option>`).join('');
     if (!S.locales[S.locale]) S.locale = 'en-US';
     $('#lang').value = S.locale; setLocale(S.locale);

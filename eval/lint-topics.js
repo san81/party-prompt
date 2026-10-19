@@ -3,7 +3,7 @@
 // should hold a pool of 18 to 30 answers with spares in every difficulty. Usage: npm run lint-topics
 import { TOPICS, LOCALES, localeOf } from '../lib/topics.js';
 import { localMatch, normalize } from '../lib/localMatch.js';
-import { SHOW } from '../lib/topics.js';
+import { SHOW, PACKS } from '../lib/topics.js';
 
 const problems = [];
 const warn = (topic, msg) => problems.push(`${topic.id}: ${msg}`);
@@ -36,6 +36,7 @@ for (const topic of TOPICS) {
     }
   }
   if (topic.locale !== 'en-US' && !topic.promptGloss) warn(topic, 'no promptGloss');
+  for (const p of topic.packs || []) if (!PACKS[p]) warn(topic, `unknown pack "${p}" (add it to PACKS in lib/topics.js)`);
 }
 
 const byLocale = {};

@@ -99,6 +99,37 @@ html[data-theme="daylight"] {
   --team1: #d93365; --team2: #2b7fd1;   /* Rapid Fire sides: Pink (left) and Blue (right) */
 }
 
+/* ---- Diwali (festival night: marigold gold, diya flame, rani pink, peacock teal; dark) ----
+   Offered in both pickers. A string of twinkling lights runs along the top of every page. */
+html[data-theme="diwali"] {
+  color-scheme: dark;
+  --stage: #1b0a24;
+  --panel: #2d1239;
+  --line: #57244f;
+  --ink: #fff3dc;
+  --muted: #e3b98c;
+  --brass: #ffb627;
+  --brass-ink: #3a1600;
+  --coral: #ff5e3a;
+  --mint: #39d6b0;
+  --glow: 0 0 28px rgba(255, 182, 39, .38);
+  --seg1: #ffb627; --seg2: #e83f8a; --seg3: #18b6a8; --seg4: #ff7a1a; --seg5: #9b5de5; --seg6: #ffd56b;
+  --seg-ink: #1b0a24;
+  --team1: #ff4f9a; --team2: #4cb3ff;
+}
+html[data-theme="diwali"] body::before, html[data-theme="diwali"] body::after {
+  content: ''; position: fixed; left: 0; right: 0; top: 0; height: 16px; z-index: 60; pointer-events: none;
+  background: radial-gradient(circle at 50% 55%, var(--seg1) 0 2.5px, color-mix(in srgb, var(--seg1) 45%, transparent) 3.5px, transparent 8px) 0 0 / 40px 16px repeat-x;
+}
+html[data-theme="diwali"] body::after {
+  background: radial-gradient(circle at 50% 55%, var(--seg2) 0 2.5px, color-mix(in srgb, var(--seg2) 45%, transparent) 3.5px, transparent 8px) 20px 0 / 40px 16px repeat-x;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="diwali"] body::before { animation: diwali-twinkle 1.6s ease-in-out infinite alternate; }
+  html[data-theme="diwali"] body::after { animation: diwali-twinkle 1.6s ease-in-out infinite alternate-reverse; }
+}
+@keyframes diwali-twinkle { from { opacity: .35; } to { opacity: 1; } }
+
 /* ==== Kid-mode palettes (shown in the picker only while Kids is on) ==== */
 
 /* ---- Candy (kids default: bubblegum pink + sky, light) ---- */

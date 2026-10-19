@@ -3,7 +3,7 @@ import http from 'node:http';
 import { readFile, appendFile } from 'node:fs/promises';
 import { join, extname, normalize as normPath } from 'node:path';
 import { config, jevConfigured } from './lib/config.js';
-import { TOPICS, POINTS, LOCALES, topicById } from './lib/topics.js';
+import { TOPICS, POINTS, LOCALES, PACKS, topicById } from './lib/topics.js';
 import { matchGuess, matchOne } from './lib/matcher.js';
 import { askJev } from './lib/jev.js';
 import { handleFeedback, clientAddress, feedbackConfigured } from './lib/feedback.js';
@@ -46,7 +46,8 @@ const routes = {
   'GET /api/topics': () => ({
     points: POINTS,
     locales: Object.fromEntries(Object.entries(LOCALES).map(([code, l]) => [code, { name: l.name, speech: l.speech }])),
-    topics: TOPICS.map(({ id, locale, style, kids, prompt, answers }) => ({ id, locale, style, kids: Boolean(kids), prompt, answers: answers.map(({ key, text, difficulty }) => ({ key, text, difficulty })) })),
+    packs: PACKS,
+    topics: TOPICS.map(({ id, locale, style, kids, packs, prompt, answers }) => ({ id, locale, style, kids: Boolean(kids), packs: packs || [], prompt, answers: answers.map(({ key, text, difficulty }) => ({ key, text, difficulty })) })),
   }),
 
   'POST /api/match': async (req) => {
